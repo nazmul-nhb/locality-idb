@@ -11,4 +11,5 @@ export default defineConfig({
 		'nhb-toolbox/object/types',
 	],
 	treeshake: true,
+	inlineOnly: false,
 });
