@@ -19,7 +19,6 @@ export class Locality<
 	readonly #name: DBName;
 	readonly #version: Version;
 	readonly #schema: Schema;
-	readonly #defaultValue?: $InferRow<Schema[keyof Schema]['columns']>;
 
 	#db!: IDBDatabase;
 	#readyPromise: Promise<void>;
@@ -30,8 +29,6 @@ export class Locality<
 		this.#schema = config.schema;
 
 		const store = this.#buildStoresConfig();
-
-		this.#defaultValue;
 
 		this.#readyPromise = openDBWithStores(this.#name, this.#version, store).then((db) => {
 			this.#db = db;
