@@ -72,19 +72,19 @@ export class Locality<
 	/**
 	 * Select records from a table.
 	 */
-	select<T extends keyof Schema>(table: T) {
-		return new SelectQuery<$InferRow<Schema[T]['columns']>>(
-			table as string,
-			() => this.#db,
-			this.#readyPromise
-		);
+	select<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
+		table: T
+	): SelectQuery<Row> {
+		return new SelectQuery<Row>(table as string, () => this.#db, this.#readyPromise);
 	}
 
 	/**
 	 * Insert record into a table.
 	 */
-	insert<T extends keyof Schema>(table: T) {
-		return new InsertQuery<InferInsertType<Schema[T]>>(
+	insert<T extends keyof Schema, Data extends InferInsertType<Schema[T]>>(
+		table: T
+	): InsertQuery<Data> {
+		return new InsertQuery<Data>(
 			table as string,
 			() => this.#db,
 			this.#readyPromise,
@@ -95,8 +95,10 @@ export class Locality<
 	/**
 	 * Update records.
 	 */
-	update<T extends keyof Schema>(table: T) {
-		return new UpdateQuery<$InferRow<Schema[T]['columns']>, Schema[T]>(
+	update<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
+		table: T
+	): UpdateQuery<Row, Schema[T]> {
+		return new UpdateQuery<Row, Schema[T]>(
 			table as string,
 			() => this.#db,
 			this.#readyPromise
@@ -106,15 +108,17 @@ export class Locality<
 	/**
 	 * Delete records.
 	 */
-	delete<T extends keyof Schema>(table: T) {
+	delete<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
+		table: T
+	): DeleteQuery<Row> {
 		const columns = this.#schema[table].columns;
 		const keyField = Object.entries(columns).find(([_, col]) => col.primaryKey)?.[0];
 
-		return new DeleteQuery<$InferRow<Schema[T]['columns']>>(
+		return new DeleteQuery<Row>(
 			table as string,
 			() => this.#db,
 			this.#readyPromise,
-			keyField as string
+			keyField as keyof Row
 		);
 	}
 }

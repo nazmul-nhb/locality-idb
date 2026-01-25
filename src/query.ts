@@ -1,10 +1,13 @@
-import { sortAnArray } from 'nhb-toolbox';
+import { isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
 import { uuid } from 'nhb-toolbox/hash';
-import type { GenericObject, NestedPrimitiveKey } from 'nhb-toolbox/object/types';
 import type { Table } from './core';
-import type { ColumnDefinition, InferUpdateType } from './types';
-
-export type SortDirection = 'asc' | 'desc';
+import type {
+	ColumnDefinition,
+	GenericObject,
+	InferUpdateType,
+	NestedPrimitiveKey,
+	SortDirection,
+} from './types';
 
 /**
  * Select query builder.
@@ -57,18 +60,9 @@ export class SelectQuery<T extends GenericObject> {
 
 				// Apply orderBy
 				if (this.#orderByKey) {
-					// results.sort((a, b) => {
-					// 	const aVal = a[this.orderByKey as keyof T];
-					// 	const bVal = b[this.orderByKey as keyof T];
-					// 	const cmp =
-					// 		aVal < bVal ? -1
-					// 		: aVal > bVal ? 1
-					// 		: 0;
-					// 	return this.orderByDir === 'asc' ? cmp : -cmp;
-					// });
 					results = sortAnArray(results, {
 						sortOrder: this.#orderByDir,
-						sortByField: this.#orderByKey,
+						sortByField: this.#orderByKey as any,
 					});
 				}
 
@@ -95,11 +89,11 @@ export class SelectQuery<T extends GenericObject> {
  * Insert query builder.
  */
 export class InsertQuery<T extends GenericObject> {
-	private table: string;
-	private dbGetter: () => IDBDatabase;
-	private readyPromise: Promise<void>;
-	private dataToInsert: T[] = [];
-	private columns?: ColumnDefinition;
+	#table: string;
+	#dbGetter: () => IDBDatabase;
+	#readyPromise: Promise<void>;
+	#dataToInsert: T[] = [];
+	#columns?: ColumnDefinition;
 
 	constructor(
 		table: string,
@@ -107,30 +101,30 @@ export class InsertQuery<T extends GenericObject> {
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition
 	) {
-		this.table = table;
-		this.dbGetter = dbGetter;
-		this.readyPromise = readyPromise;
-		this.columns = columns;
+		this.#table = table;
+		this.#dbGetter = dbGetter;
+		this.#readyPromise = readyPromise;
+		this.#columns = columns;
 	}
 
 	values(data: T | T[]) {
-		this.dataToInsert = Array.isArray(data) ? data : [data];
+		this.#dataToInsert = Array.isArray(data) ? data : [data];
 		return this;
 	}
 
-	async run(): Promise<void> {
-		await this.readyPromise;
+	async run() {
+		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const transaction = this.dbGetter().transaction(this.table, 'readwrite');
-			const store = transaction.objectStore(this.table);
+			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
+			const store = transaction.objectStore(this.#table);
 
-			const promises: Promise<void>[] = this.dataToInsert.map((data) => {
+			const promises: Promise<void>[] = this.#dataToInsert.map((data) => {
 				return new Promise((res, rej) => {
 					// Apply default values for missing fields
 					const recordWithDefaults = { ...data };
 
-					if (this.columns) {
-						Object.entries(this.columns).forEach(([fieldName, column]) => {
+					if (this.#columns) {
+						Object.entries(this.#columns).forEach(([fieldName, column]) => {
 							if (
 								!(fieldName in recordWithDefaults) &&
 								column.defaultValue !== undefined
@@ -160,7 +154,7 @@ export class InsertQuery<T extends GenericObject> {
 
 			transaction.oncomplete = () =>
 				Promise.all(promises)
-					.then(() => resolve())
+					.then(() => resolve({ success: true }))
 					.catch(reject);
 			transaction.onerror = () => reject(transaction.error);
 		});
@@ -171,37 +165,38 @@ export class InsertQuery<T extends GenericObject> {
  * Update query builder.
  */
 export class UpdateQuery<T extends GenericObject, S extends Table> {
-	private table: string;
-	private dbGetter: () => IDBDatabase;
-	private readyPromise: Promise<void>;
-	private dataToUpdate?: InferUpdateType<S>;
-	private whereCondition?: (row: T) => boolean;
+	#table: string;
+	#dbGetter: () => IDBDatabase;
+	#readyPromise: Promise<void>;
+	#dataToUpdate?: InferUpdateType<S>;
+	#whereCondition?: (row: T) => boolean;
 
 	constructor(table: string, dbGetter: () => IDBDatabase, readyPromise: Promise<void>) {
-		this.table = table;
-		this.dbGetter = dbGetter;
-		this.readyPromise = readyPromise;
+		this.#table = table;
+		this.#dbGetter = dbGetter;
+		this.#readyPromise = readyPromise;
 	}
 
 	set(values: InferUpdateType<S>) {
-		this.dataToUpdate = values;
+		this.#dataToUpdate = values;
 		return this;
 	}
 
 	where(predicate: (row: T) => boolean) {
-		this.whereCondition = predicate;
+		this.#whereCondition = predicate;
 		return this;
 	}
 
 	async run(): Promise<number> {
-		await this.readyPromise;
-		if (!this.dataToUpdate) {
-			throw new Error('No values set for update');
+		await this.#readyPromise;
+
+		if (!isNotEmptyObject(this.#dataToUpdate)) {
+			throw new Error('No values set for update!');
 		}
 
 		return new Promise((resolve, reject) => {
-			const transaction = this.dbGetter().transaction(this.table, 'readwrite');
-			const store = transaction.objectStore(this.table);
+			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
+			const store = transaction.objectStore(this.#table);
 			const request = store.getAll();
 
 			let updateCount = 0;
@@ -209,18 +204,20 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 			request.onsuccess = () => {
 				let rows: T[] = request.result;
 
-				if (this.whereCondition) {
-					rows = rows.filter(this.whereCondition);
+				if (this.#whereCondition) {
+					rows = rows.filter(this.#whereCondition);
 				}
 
 				const updatePromises = rows.map((row) => {
 					return new Promise<void>((res, rej) => {
-						const updatedRow = { ...row, ...this.dataToUpdate };
+						const updatedRow = { ...row, ...this.#dataToUpdate };
 						const putRequest = store.put(updatedRow);
+
 						putRequest.onsuccess = () => {
 							updateCount++;
 							res();
 						};
+
 						putRequest.onerror = () => rej(putRequest.error);
 					});
 				});
@@ -239,34 +236,34 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
  * Delete query builder.
  */
 export class DeleteQuery<T extends GenericObject> {
-	private table: string;
-	private dbGetter: () => IDBDatabase;
-	private readyPromise: Promise<void>;
-	private keyField: string;
-	private whereCondition?: (row: T) => boolean;
+	#table: string;
+	#dbGetter: () => IDBDatabase;
+	#readyPromise: Promise<void>;
+	#keyField: keyof T;
+	#whereCondition?: (row: T) => boolean;
 
 	constructor(
 		table: string,
 		dbGetter: () => IDBDatabase,
 		readyPromise: Promise<void>,
-		keyField: string
+		keyField: keyof T
 	) {
-		this.table = table;
-		this.dbGetter = dbGetter;
-		this.readyPromise = readyPromise;
-		this.keyField = keyField;
+		this.#table = table;
+		this.#dbGetter = dbGetter;
+		this.#readyPromise = readyPromise;
+		this.#keyField = keyField;
 	}
 
 	where(predicate: (row: T) => boolean) {
-		this.whereCondition = predicate;
+		this.#whereCondition = predicate;
 		return this;
 	}
 
 	async run(): Promise<number> {
-		await this.readyPromise;
+		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const transaction = this.dbGetter().transaction(this.table, 'readwrite');
-			const store = transaction.objectStore(this.table);
+			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
+			const store = transaction.objectStore(this.#table);
 			const request = store.getAll();
 
 			let deleteCount = 0;
@@ -274,18 +271,20 @@ export class DeleteQuery<T extends GenericObject> {
 			request.onsuccess = () => {
 				let rows: T[] = request.result;
 
-				if (this.whereCondition) {
-					rows = rows.filter(this.whereCondition);
+				if (this.#whereCondition) {
+					rows = rows.filter(this.#whereCondition);
 				}
 
 				const deletePromises = rows.map((row) => {
 					return new Promise<void>((res, rej) => {
-						const key = (row as any)[this.keyField];
+						const key = row[this.#keyField];
 						const delRequest = store.delete(key);
+
 						delRequest.onsuccess = () => {
 							deleteCount++;
 							res();
 						};
+
 						delRequest.onerror = () => rej(delRequest.error);
 					});
 				});

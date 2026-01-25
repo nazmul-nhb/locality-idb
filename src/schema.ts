@@ -1,8 +1,5 @@
-/* locality/schema.ts */
-
-import type { $UUID } from 'nhb-toolbox/hash/types';
 import { Column, Table } from './core';
-import type { ColumnDefinition, SchemaDefinition, Timestamp } from './types';
+import type { $UUID, ColumnDefinition, SchemaDefinition, Timestamp } from './types';
 
 /**
  * Defines a Locality database schema.

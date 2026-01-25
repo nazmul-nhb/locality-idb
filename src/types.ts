@@ -1,6 +1,96 @@
-import type { Prettify } from 'nhb-toolbox/utils/types';
 import type { Column, Table } from './core';
-import type { $UUID } from 'nhb-toolbox/hash/types';
+
+/** Union of Basic Primitive Types (i.e. `string | number | boolean`) */
+export type BasicPrimitive = string | number | boolean;
+/** Union of All Primitive Types (i.e. `string | number | boolean | symbol | bigint | null | undefined`) */
+export type Primitive = string | number | boolean | symbol | bigint | null | undefined;
+/** Union of Normal Primitive Types (i.e. `string | number | boolean | null | undefined`) */
+export type NormalPrimitive = string | number | boolean | null | undefined;
+/** A generic class constructor */
+export type Constructor = new (...args: any[]) => any;
+/** Generic function type */
+export type GenericFn = (...args: any[]) => any;
+/** Generic function type that returns `void` */
+export type VoidFn = (...args: any[]) => void;
+/** Asynchronous function type */
+export type AsyncFunction<T> = (...args: any[]) => Promise<T>;
+/** Interface representing a date-like object. */
+export interface DateLike {
+	toJSON?(): string;
+	toISOString?(): string;
+	toString?(): string;
+	format?(): string;
+	toISO?(): string;
+	toFormat?(format: string): string;
+	plus?(...args: unknown[]): unknown;
+	minus?(...args: unknown[]): unknown;
+	equals?(...args: unknown[]): boolean;
+	getClass?(): unknown;
+	constructor?: {
+		name: string;
+	};
+}
+/** Advanced types to exclude from counting as object key */
+export type AdvancedTypes =
+	| Array<unknown>
+	| File
+	| FileList
+	| Blob
+	| Date
+	| RegExp
+	| Constructor
+	| DateLike
+	| WeakMap<WeakKey, unknown>
+	| WeakSet<WeakKey>
+	| Map<unknown, unknown>
+	| Set<unknown>
+	| Function
+	| GenericFn
+	| VoidFn
+	| AsyncFunction<unknown>
+	| Promise<unknown>
+	| Error
+	| EvalError
+	| RangeError
+	| ReferenceError
+	| SyntaxError
+	| TypeError
+	| URIError
+	| bigint
+	| symbol;
+
+/** - Extract only primitive keys from an object, including nested dot-notation keys. */
+export type NestedPrimitiveKey<T> =
+	T extends AdvancedTypes ? never
+	: T extends GenericObject ?
+		{
+			[K in keyof T & string]: T[K] extends Function ? never
+			: T[K] extends NormalPrimitive ? K
+			: T[K] extends GenericObject ? `${K}.${NestedPrimitiveKey<T[K]>}`
+			: never;
+		}[keyof T & string]
+	:	never;
+
+/** - Generic object but with `any` value */
+export type GenericObject = Record<string, any>;
+/**
+ * * Forces TypeScript to simplify a complex or inferred type into a more readable flat object.
+ *
+ * *Useful when working with utility types like `Merge`, `Omit`, etc., that produce deeply nested or unresolved intersections.*
+ *
+ * @example
+ * type A = { a: number };
+ * type B = { b: string };
+ * type Merged = A & B;
+ * type Pretty = Prettify<Merged>;
+ * // Type will now display as: { a: number; b: string }
+ */
+export type Prettify<T> = {
+	[K in keyof T]: T[K];
+} & {};
+
+/** General 5 parts UUID string type */
+export type $UUID = `${string}-${string}-${string}-${string}-${string}`;
 
 export type SchemaDefinition<T extends ColumnDefinition = ColumnDefinition> = Record<
 	string,
@@ -26,9 +116,16 @@ type ExtractColumnType<C> = C extends { [ColumnTypeSymbol]: infer U } ? U : neve
 /**
  * Extracts inferred row type from columns.
  */
-export type $InferRow<T extends ColumnDefinition> = {
-	[K in keyof T]: ExtractColumnType<T[K]>;
-};
+export type $InferRow<T extends ColumnDefinition> = Prettify<
+	Omit<
+		{
+			[K in keyof T]: ExtractColumnType<T[K]>;
+		},
+		$InferOptionalField<T>
+	> & {
+		[K in $InferOptionalField<T>]?: ExtractColumnType<T[K]>;
+	}
+>;
 
 /**
  * Finds the field name with autoIncrement set to true.
@@ -83,6 +180,8 @@ export type $InferTimestamp<T extends ColumnDefinition> = {
 export type Timestamp =
 	`${number}-${number}-${number}T${number}:${number}:${number}.${number}${'Z' | `${'+' | '-'}${number}:${number}`}`;
 
+export type SortDirection = 'asc' | 'desc';
+
 /**
  * Creates a type for insert operations with auto-increment field optional.
  */
@@ -91,16 +190,16 @@ export type InferInsertType<T extends Table> = Prettify<
 		$InferRow<T['columns']>,
 		| $InferAutoField<T['columns']>
 		| $InferDefaultField<T['columns']>
-		| $InferOptionalField<T['columns']>
 		| $InferTimestamp<T['columns']>
 		| $InferUUIDField<T['columns']>
 	> & {
 		[K in
 			| $InferAutoField<T['columns']>
 			| $InferDefaultField<T['columns']>
-			| $InferOptionalField<T['columns']>
 			| $InferTimestamp<T['columns']>
-			| $InferUUIDField<T['columns']>]?: $InferRow<T['columns']>[K];
+			| $InferUUIDField<T['columns']>]?: K extends keyof $InferRow<T['columns']> ?
+			$InferRow<T['columns']>[K]
+		:	never;
 	}
 >;
 

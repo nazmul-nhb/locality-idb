@@ -14,7 +14,10 @@
 		"esModuleInterop": true,
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"pretty": true,
+		"checkJs": true,
+		"useUnknownInCatchVariables": true
 	},
 	"include": ["src"]
 }
