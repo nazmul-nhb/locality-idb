@@ -1,3 +1,2 @@
-export function fn() {
-	return 'Hello, tsdown!';
-}
+export { Locality } from './client';
+export type * from './types';

@@ -1,8 +1,14 @@
 {
   "name": "locality-idb",
   "type": "module",
-  "version": "0.0.5-b",
+  "sideEffects": false,
+  "version": "0.1.0",
   "description": "SQL-like query (Drizzle style) for IndexedDB",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
   "author": {
     "name": "Nazmul Hassan",
     "email": "nazmulnhb@gmail.com",
@@ -29,11 +35,6 @@
   "bugs": {
     "url": "https://github.com/nazmul-nhb/locality-idb/issues"
   },
-  "exports": {
-    ".": "./dist/index.mjs",
-    "./package.json": "./package.json"
-  },
-  "types": "./dist/index.d.mts",
   "publishConfig": {
     "access": "public"
   },

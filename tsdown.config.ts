@@ -2,5 +2,7 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig({
 	exports: true,
-	// ...config options
+	unbundle: false,
+	external: [],
+	treeshake: true,
 });
