@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" type="image/svg+xml" href="/typescript.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="/src/style.css" />
+		<title>Practice IndexedDB</title>
+	</head>
+	<body class="bg-linear-to-br from-blue-50 to-indigo-100 min-h-screen p-4 sm:p-6">
+		<main class="max-w-2xl mx-auto">
+			<!-- Header -->
+			<div class="text-center mb-8">
+				<h1 class="text-4xl sm:text-5xl font-bold text-gray-800 mb-2">My Tasks</h1>
+				<p class="text-gray-600">Stay organized with IndexedDB</p>
+			</div>
+
+			<!-- Stats Card -->
+			<div class="grid grid-cols-2 gap-4 mb-8">
+				<div class="bg-white rounded-xl shadow-md p-6 text-center">
+					<div class="text-3xl font-bold text-blue-600" id="statsTotal">0</div>
+					<div class="text-gray-600 text-sm mt-1">Total Tasks</div>
+				</div>
+				<div class="bg-white rounded-xl shadow-md p-6 text-center">
+					<div class="text-3xl font-bold text-green-600" id="statsCompleted">0</div>
+					<div class="text-gray-600 text-sm mt-1">Completed</div>
+				</div>
+			</div>
+
+			<!-- Input Card -->
+			<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+				<div class="flex gap-3">
+					<input
+						id="todoInput"
+						type="text"
+						placeholder="Add a new task..."
+						class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					/>
+					<button
+						id="addBtn"
+						class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg cursor-pointer hover:bg-blue-700 transition-colors active:scale-95"
+					>
+						Add
+					</button>
+				</div>
+			</div>
+
+			<!-- Todos List -->
+			<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+				<ul id="todoList" class="space-y-3">
+					<!-- Todos will be rendered here -->
+				</ul>
+			</div>
+
+			<!-- Footer Actions -->
+			<div class="text-center">
+				<button
+					id="clearCompleted"
+					class="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+				>
+					Clear Completed
+				</button>
+			</div>
+		</main>
+		<script type="module" src="/src/main.ts"></script>
+	</body>
+</html>

@@ -20,10 +20,10 @@ export default [
 		],
 	},
 	{
-		files: ['src/**/*.ts'],
+		files: ['demo/**/*.{ts,js}'],
 		languageOptions: {
 			globals: {
-				...globals.node,
+				// ...globals.node,
 				...globals.browser,
 				process: 'readonly',
 			},
@@ -31,7 +31,7 @@ export default [
 			ecmaVersion: 'latest',
 			sourceType: 'module',
 			parserOptions: {
-				project: ['tsconfig.json'],
+				project: ['demo/tsconfig.json'],
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
@@ -51,8 +51,6 @@ export default [
 			// 'no-console': ['warn', { allow: ['info', 'warn', 'error', 'table'] }],
 			'no-undef': 'off',
 			'@typescript-eslint/no-empty-object-type': 'off',
-			'@typescript-eslint/no-unnecessary-type-constraint': 'off',
-			'@typescript-eslint/no-explicit-any': 'off',
 			'@typescript-eslint/no-unused-expressions': 'error',
 			'@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
 			'no-unused-vars': [
@@ -90,10 +88,10 @@ export default [
 		files: ['src/**/*types.ts', 'src/**/*interfaces.ts'],
 		rules: { 'no-unused-vars': 'off' },
 	},
-	// {
-	// 	files: ['src/classes/**/*.ts', 'src/**/*types.ts', 'src/**/types/*.ts'],
-	// 	rules: { '@typescript-eslint/no-explicit-any': 'off' },
-	// },
+	{
+		files: ['src/classes/**/*.ts', 'src/**/*types.ts', 'src/**/types/*.ts'],
+		rules: { '@typescript-eslint/no-explicit-any': 'off' },
+	},
 	{
 		files: ['**/*.js', '**/*.cjs'],
 		rules: { '@typescript-eslint/no-require-imports': 'off' },

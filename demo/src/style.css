@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+/* Smooth transitions */
+* {
+	@apply transition-all duration-200;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+	width: 4px;
+}
+
+::-webkit-scrollbar-track {
+	@apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+	@apply bg-blue-500 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	@apply bg-blue-600;
+}
