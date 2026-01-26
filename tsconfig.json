@@ -6,7 +6,7 @@
 		"module": "preserve",
 		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
-		// "types": ["node"],
+		"types": ["node"],
 		"strict": true,
 		"noUnusedLocals": true,
 		"declaration": true,
@@ -19,5 +19,5 @@
 		"checkJs": true,
 		"useUnknownInCatchVariables": true
 	},
-	"include": ["src"]
+	"include": ["src", "__test.ts"]
 }
