@@ -1,5 +1,62 @@
 import type { Column, Table } from './core';
 
+declare const __brand: unique symbol;
+type $Brand<B> = {
+	[__brand]: B;
+};
+/**
+ * * Creates a branded version of a base type by intersecting it with a unique compile-time marker.
+ *
+ * @param T - Base type to brand.
+ * @param B - Brand identifier used to distinguish this type from structurally similar types.
+ 
+ * @remarks Useful for preventing accidental mixing of structurally identical types, while keeping the runtime value unchanged.
+ *
+ * @example
+ * type UserId = Branded<string, 'UserId'>;
+ * const id = 'abc123' as UserId;
+ */
+export type Branded<T, B> = T & $Brand<B>;
+/**
+ * * Broadens a literal union (typically `string` or `number`) to also accept any other value of the base type, without losing IntelliSense autocomplete for the provided literals.
+ *
+ * *This is especially useful in API design where you want to provide suggestions for common options but still allow flexibility for custom user-defined values.*
+ *
+ * @example
+ * // ✅ String literal usage
+ * type Variant = LooseLiteral<'primary' | 'secondary'>;
+ * const v1: Variant = 'primary';  // suggested
+ * const v2: Variant = 'custom';   // also valid
+ *
+ * // ✅ Number literal usage
+ * type StatusCode = LooseLiteral<200 | 404 | 500>;
+ * const s1: StatusCode = 200;     // suggested
+ * const s2: StatusCode = 999;     // also valid
+ *
+ * // ✅ Mixed literal
+ * type Mixed = LooseLiteral<'one' | 2>;
+ * const m1: Mixed = 'one';        // ✅
+ * const m2: Mixed = 2;            // ✅
+ * const m3: Mixed = 'anything';   // ✅
+ * const m4: Mixed = 123;          // ✅
+ *
+ * @note Technically, this uses intersection with primitive base types (`string & {}` or `number & {}`) to retain IntelliSense while avoiding type narrowing.
+ */
+export type LooseLiteral<T extends string | number> =
+	| T
+	| (T extends string ? string & {} : number & {});
+/**
+ * * A readonly array of elements of type `T`.
+ *
+ * @remarks
+ * - Shorthand for `ReadonlyArray<T>`. Used to represent immutable lists.
+ *
+ * @example
+ * type Numbers = List<number>;	// readonly number[]
+ * const arr: Numbers = [1, 2, 3];	// ✅ OK
+ * arr.push(4);                   	// ❌ Error (readonly)
+ */
+export type List<T = any> = ReadonlyArray<T>;
 /** Union of Basic Primitive Types (i.e. `string | number | boolean`) */
 export type BasicPrimitive = string | number | boolean;
 /** Union of All Primitive Types (i.e. `string | number | boolean | symbol | bigint | null | undefined`) */
@@ -124,6 +181,8 @@ export type $InferRow<T extends ColumnDefinition> = Prettify<
 		$InferOptionalField<T>
 	> & {
 		[K in $InferOptionalField<T>]?: ExtractColumnType<T[K]>;
+	} & {
+		[K in $InferDefaultField<T>]: ExtractColumnType<T[K]>;
 	}
 >;
 
@@ -177,8 +236,10 @@ export type $InferTimestamp<T extends ColumnDefinition> = {
 	:	never;
 }[keyof T];
 
-export type Timestamp =
-	`${number}-${number}-${number}T${number}:${number}:${number}.${number}${'Z' | `${'+' | '-'}${number}:${number}`}`;
+export type Timestamp = Branded<
+	`${number}-${number}-${number}T${number}:${number}:${number}.${number}${'Z' | `${'+' | '-'}${number}:${number}`}`,
+	'timestamp'
+>;
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -207,7 +268,7 @@ export type InferUpdateType<T extends Table> = Prettify<
 	Partial<Omit<$InferRow<T['columns']>, $InferPkField<T['columns']>>>
 >;
 
-export type InferFromSchema<S extends Table> = Prettify<
+export type InferSelectType<S extends Table> = Prettify<
 	S extends infer T ?
 		T extends Table<infer C> ?
 			$InferRow<C>

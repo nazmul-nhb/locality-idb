@@ -53,11 +53,11 @@ export class Column<T extends any = any> {
 /**
  * Represents a table.
  */
-export class Table<T extends ColumnDefinition = ColumnDefinition> {
+export class Table<C extends ColumnDefinition = ColumnDefinition> {
 	readonly name: string;
-	readonly columns: T;
+	readonly columns: C;
 
-	constructor(name: string, columns: T) {
+	constructor(name: string, columns: C) {
 		this.name = name;
 		this.columns = columns;
 	}
