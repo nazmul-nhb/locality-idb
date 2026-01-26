@@ -2,6 +2,7 @@ import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
 	InferInsertType,
+	InferSelectType,
 	LocalityConfig,
 	SchemaDefinition,
 	StoreConfig,
@@ -81,10 +82,12 @@ export class Locality<
 	/**
 	 * Insert record into a table.
 	 */
-	insert<T extends keyof Schema, Data extends InferInsertType<Schema[T]>>(
-		table: T
-	): InsertQuery<Data> {
-		return new InsertQuery<Data>(
+	insert<
+		T extends keyof Schema,
+		Raw extends InferInsertType<Schema[T]>,
+		Data extends InferSelectType<Schema[T]>,
+	>(table: T): InsertQuery<Raw, Data> {
+		return new InsertQuery<Raw, Data>(
 			table as string,
 			() => this.#db,
 			this.#readyPromise,

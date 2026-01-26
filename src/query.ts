@@ -88,11 +88,11 @@ export class SelectQuery<T extends GenericObject> {
 /**
  * Insert query builder.
  */
-export class InsertQuery<T extends GenericObject> {
+export class InsertQuery<Raw extends GenericObject, Data extends GenericObject> {
 	#table: string;
 	#dbGetter: () => IDBDatabase;
 	#readyPromise: Promise<void>;
-	#dataToInsert: T[] = [];
+	#dataToInsert: Raw[] = [];
 	#columns?: ColumnDefinition;
 
 	constructor(
@@ -107,16 +107,17 @@ export class InsertQuery<T extends GenericObject> {
 		this.#columns = columns;
 	}
 
-	values(data: T | T[]) {
+	values(data: Raw | Raw[]) {
 		this.#dataToInsert = Array.isArray(data) ? data : [data];
 		return this;
 	}
 
-	async run() {
+	async run(): Promise<Data[]> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
 			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
+			const insertedDocs: Data[] = [];
 
 			const promises: Promise<void>[] = this.#dataToInsert.map((data) => {
 				return new Promise((res, rej) => {
@@ -129,32 +130,44 @@ export class InsertQuery<T extends GenericObject> {
 								!(fieldName in recordWithDefaults) &&
 								column.defaultValue !== undefined
 							) {
-								recordWithDefaults[fieldName as keyof T] = column.defaultValue;
+								recordWithDefaults[fieldName as keyof Raw] =
+									column.defaultValue;
 							}
 
 							if (column.type === 'uuid' && !(fieldName in recordWithDefaults)) {
-								recordWithDefaults[fieldName as keyof T] = uuid() as T[keyof T];
+								recordWithDefaults[fieldName as keyof Raw] =
+									uuid() as Raw[keyof Raw];
 							}
 
 							if (
 								column.type === 'timestamp' &&
 								!(fieldName in recordWithDefaults)
 							) {
-								recordWithDefaults[fieldName as keyof T] =
-									new Date().toISOString() as T[keyof T];
+								recordWithDefaults[fieldName as keyof Raw] =
+									new Date().toISOString() as Raw[keyof Raw];
 							}
 						});
 					}
 
 					const request = store.add(recordWithDefaults);
-					request.onsuccess = () => res();
+					request.onsuccess = () => {
+						const key = request.result;
+						const getRequest = store.get(key);
+
+						getRequest.onsuccess = () => {
+							insertedDocs.push(getRequest.result);
+							res();
+						};
+
+						getRequest.onerror = () => rej(getRequest.error);
+					};
 					request.onerror = () => rej(request.error);
 				});
 			});
 
 			transaction.oncomplete = () =>
 				Promise.all(promises)
-					.then(() => resolve({ success: true }))
+					.then(() => resolve(insertedDocs))
 					.catch(reject);
 			transaction.onerror = () => reject(transaction.error);
 		});
