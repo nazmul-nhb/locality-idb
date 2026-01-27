@@ -1,10 +1,11 @@
 import './style.css';
 
 import { Chronos } from 'nhb-toolbox/chronos';
+import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
-import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
-import { column, Locality, table } from 'locality';
+import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
+import { column, defineSchema, Locality } from 'locality';
 
 Chronos.register(timeZonePlugin);
 
@@ -17,33 +18,38 @@ const clearCompletedBtn = document.getElementById('clearCompleted') as HTMLButto
 const statsCompleted = document.getElementById('statsCompleted') as HTMLSpanElement;
 const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 
-const todoSchema = table('todos', {
-	serial: column.int().pk().auto(),
-	task: column.text(),
-	completed: column.bool().default(false),
-	uuid: column.uuid(),
-	timestamp: column
-		.timestamp()
-		.default(new Chronos().timeZone('America/New_York').toLocalISOString() as Timestamp),
-	createdAt: column.custom<Chronos>().default(new Chronos().timeZone('America/New_York')),
+const schema = defineSchema({
+	todos: {
+		serial: column.int().pk().auto(),
+		task: column.text(),
+		completed: column.bool().default(false),
+		uuid: column.uuid().default(uuid()),
+		timestamp: column.timestamp(),
+		createdAt: column.custom<Chronos>().default(new Chronos().timeZone('America/New_York')),
+	},
 });
 
-type Todo = InferSelectType<typeof todoSchema>;
-type UpdateTodo = InferUpdateType<typeof todoSchema>;
-type InsertTodo = InferInsertType<typeof todoSchema>;
+type Todo = InferSelectType<typeof schema.todos>;
+type InsertTodo = InferInsertType<typeof schema.todos>;
+type UpdateTodo = InferUpdateType<typeof schema.todos>;
 
 const db = new Locality({
 	dbName: 'todo-db',
 	version: 1,
-	schema: {
-		todos: todoSchema,
-	},
+	schema,
 });
 
 // Load todos from IndexedDB
 const loadTodos = async () => {
-	// todos = await getTodos();
-	todos = await db.select('todos').orderBy('serial', 'desc').all();
+	todos = await db
+		.from('todos')
+		// .select({ serial: true, timestamp: true })
+		.orderBy('serial', 'asc')
+		.all();
+	// as Todo[];
+
+	console.table(todos);
+
 	renderTodos();
 	updateStats();
 };
@@ -72,7 +78,7 @@ const renderTodos = () => {
 		);
 
 		const span = document.createElement('span');
-		span.textContent = `${todo.task} at ${new Chronos(todo.createdAt.native).timeZone('Asia/Tehran').toLocalISOString()}`;
+		span.textContent = `${todo.task} at ${new Chronos(todo.createdAt?.native).timeZone('Asia/Tehran').toLocalISOString()}`;
 		span.className = `flex-1 text-gray-800 ${
 			todo.completed ? 'line-through text-green-600' : ''
 		}`;
@@ -105,7 +111,8 @@ const handleAddTodo = async () => {
 
 	// await addTodo(newTodo);
 
-	await db.insert('todos').values(newTodo).run();
+	const inserted = await db.insert('todos').values([newTodo]).run();
+	console.dir(inserted);
 	todoInput.value = '';
 	await loadTodos();
 };
@@ -164,5 +171,4 @@ clearCompletedBtn.addEventListener('click', handleClearCompleted);
 // Initialize on page load
 window.addEventListener('load', async () => {
 	await loadTodos();
-	console.table(todos);
 });

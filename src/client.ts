@@ -1,3 +1,4 @@
+import { AutoIncrementKey, PrimaryKey } from './core';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
@@ -42,10 +43,10 @@ export class Locality<
 	#buildStoresConfig(): StoreConfig[] {
 		return Object.entries(this.#schema).map(([tableName, table]) => {
 			const columns = table.columns;
-			const pk = Object.values(columns).find((col) => col.primaryKey);
+			const pk = Object.values(columns).find((col) => col[PrimaryKey]);
 
-			const autoInc = pk?.autoIncrement || false;
-			const pkName = Object.entries(columns).find(([_, col]) => col.primaryKey)?.[0];
+			const autoInc = pk?.[AutoIncrementKey] || false;
+			const pkName = Object.entries(columns).find(([_, col]) => col[PrimaryKey])?.[0];
 
 			// if (!pkName) {
 			// 	throw new Error(`Table "${tableName}" must have a primary key column.`);
@@ -73,10 +74,10 @@ export class Locality<
 	/**
 	 * Select records from a table.
 	 */
-	select<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
+	from<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
 		table: T
-	): SelectQuery<Row> {
-		return new SelectQuery<Row>(table as string, () => this.#db, this.#readyPromise);
+	): SelectQuery<Row, null> {
+		return new SelectQuery<Row, null>(table as string, () => this.#db, this.#readyPromise);
 	}
 
 	/**
@@ -85,9 +86,11 @@ export class Locality<
 	insert<
 		T extends keyof Schema,
 		Raw extends InferInsertType<Schema[T]>,
+		Inserted extends any,
 		Data extends InferSelectType<Schema[T]>,
-	>(table: T): InsertQuery<Raw, Data> {
-		return new InsertQuery<Raw, Data>(
+		Return extends Inserted extends Array<infer _> ? Data[] : Data,
+	>(table: T): InsertQuery<Raw, Inserted, Data, Return> {
+		return new InsertQuery<Raw, Inserted, Data, Return>(
 			table as string,
 			() => this.#db,
 			this.#readyPromise,
@@ -113,11 +116,13 @@ export class Locality<
 	 */
 	delete<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
 		table: T
-	): DeleteQuery<Row> {
+	): DeleteQuery<Row, keyof Row> {
 		const columns = this.#schema[table].columns;
-		const keyField = Object.entries(columns).find(([_, col]) => col.primaryKey)?.[0];
+		const keyField = Object.entries(columns).find(
+			([_, col]) => (col as any)[PrimaryKey]
+		)?.[0];
 
-		return new DeleteQuery<Row>(
+		return new DeleteQuery<Row, keyof Row>(
 			table as string,
 			() => this.#db,
 			this.#readyPromise,

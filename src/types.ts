@@ -1,9 +1,18 @@
-import type { Column, Table } from './core';
+import type {
+	AutoIncrementKey,
+	Column,
+	ColumnType,
+	DefaultValueKey,
+	OptionalKey,
+	PrimaryKey,
+	Table,
+} from './core';
 
 declare const __brand: unique symbol;
 type $Brand<B> = {
 	[__brand]: B;
 };
+
 /**
  * * Creates a branded version of a base type by intersecting it with a unique compile-time marker.
  *
@@ -161,6 +170,55 @@ export type AdvancedTypes =
 	| bigint
 	| symbol;
 
+/**
+ * * Maps all values of object `T` to a fixed type `R`, keeping original keys.
+ *
+ * @template T - The source object type.
+ * @template R - The replacement value type.
+ *
+ * @example
+ * type T = { name: string; age: number };
+ * type BooleanMapped = MapObjectValues<T, boolean>; // { name: boolean; age: boolean }
+ */
+export type MapObjectValues<T, R> = {
+	[K in keyof T]: R;
+};
+
+/**
+ * Determines if a selection object has any true values
+ */
+type HasTrueValues<Selection extends Partial<Record<any, boolean>>> =
+	{
+		[K in keyof Selection]: Selection[K] extends true ? true : never;
+	}[keyof Selection] extends never ?
+		false
+	:	true;
+
+/**
+ * Extracts only the selected fields from an object.
+ * Used for SELECT clause to pick specific columns.
+ * - If any value is true: returns only fields marked as true
+ * - If all values are false: returns all fields EXCEPT those marked as false
+ */
+export type SelectFields<
+	T,
+	Selection extends Partial<Record<keyof T, boolean>> = Record<keyof T, true>,
+> = Prettify<
+	HasTrueValues<Selection> extends true ?
+		{
+			[K in keyof Selection as Selection[K] extends true ? K : never]: K extends keyof T ?
+				T[K]
+			:	never;
+		}
+	:	{
+			[K in keyof T as K extends keyof Selection ?
+				Selection[K] extends false ?
+					never
+				:	K
+			:	K]: T[K];
+		}
+>;
+
 /** - Extract only primitive keys from an object, including nested dot-notation keys. */
 export type NestedPrimitiveKey<T> =
 	T extends AdvancedTypes ? never
@@ -205,15 +263,12 @@ export type LocalityConfig<DB extends string, V extends number, S extends Schema
 	schema: S;
 };
 
-/** Symbol for type extraction (exists only in type system) */
-export declare const ColumnTypeSymbol: unique symbol;
-
 export type ColumnDefinition<T extends any = any> = Record<string, Column<T>>;
 
 /**
  * Helper to reliably extract the generic type parameter from a Column using a symbol property.
  */
-type ExtractColumnType<C> = C extends { [ColumnTypeSymbol]: infer U } ? U : never;
+type ExtractColumnType<C> = C extends { [ColumnType]: infer U } ? U : never;
 
 /**
  * Extracts inferred row type from columns.
@@ -235,28 +290,28 @@ export type $InferRow<T extends ColumnDefinition> = Prettify<
  * Finds the field name with autoIncrement set to true.
  */
 export type $InferAutoField<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends { autoIncrement: true } ? K : never;
+	[K in keyof T]: T[K] extends { [AutoIncrementKey]: true } ? K : never;
 }[keyof T];
 
 /**
  * Finds the field name with default value.
  */
 export type $InferDefaultField<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends { defaultValue: any } ? K : never;
+	[K in keyof T]: T[K] extends { [DefaultValueKey]: any } ? K : never;
 }[keyof T];
 
 /**
  * Finds the field name with primary key.
  */
 export type $InferPkField<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends { primaryKey: true } ? K : never;
+	[K in keyof T]: T[K] extends { [PrimaryKey]: true } ? K : never;
 }[keyof T];
 
 /**
  * Finds the field name with partial key.
  */
 export type $InferOptionalField<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends { optional: true } ? K : never;
+	[K in keyof T]: T[K] extends { [OptionalKey]: true } ? K : never;
 }[keyof T];
 
 /**

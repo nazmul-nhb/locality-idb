@@ -1,52 +1,85 @@
-import type { ColumnDefinition, ColumnTypeSymbol } from './types';
+import type { ColumnDefinition } from './types';
+
+/** Symbol for type extraction (exists only in type system) */
+export const ColumnType = Symbol('ColumnTypeSymbol');
+
+/** Symbols for internal Column properties (hidden from user IntelliSense) */
+export const TypeKey = Symbol('TypeKey');
+export const PrimaryKey = Symbol('PrimaryKey');
+export const AutoIncrementKey = Symbol('AutoIncrementKey');
+export const OptionalKey = Symbol('OptionalKey');
+export const IndexedKey = Symbol('IndexedKey');
+export const UniqueKey = Symbol('UniqueKey');
+export const DefaultValueKey = Symbol('DefaultValueKey');
 
 /**
  * Represents a column definition.
  */
 export class Column<T extends any = any> {
-	readonly type: string;
-	readonly primaryKey?: boolean;
-	readonly autoIncrement?: boolean;
-	readonly optional?: boolean;
-	readonly indexed?: boolean;
-	readonly defaultValue?: T;
-
-	declare readonly [ColumnTypeSymbol]: T;
+	declare [ColumnType]: T;
+	declare [TypeKey]: string;
+	declare [PrimaryKey]?: boolean;
+	declare [AutoIncrementKey]?: boolean;
+	declare [OptionalKey]?: boolean;
+	declare [IndexedKey]?: boolean;
+	declare [UniqueKey]?: boolean;
+	declare [DefaultValueKey]?: T;
 
 	constructor(type: string) {
-		this.type = type;
+		this[TypeKey] = type;
 	}
+
+	// get type(): string {
+	// 	return this[ColumnTypeKey];
+	// }
 
 	/** Marks column as primary key */
 	pk() {
-		return Object.assign(this, { primaryKey: true }) as this & { primaryKey: true };
+		this[PrimaryKey] = true;
+		return this as this & { [PrimaryKey]: true };
+	}
+
+	unique() {
+		this[IndexedKey] = true;
+		this[UniqueKey] = true;
+
+		return this as this & {
+			[IndexedKey]: true;
+			[UniqueKey]: true;
+		};
 	}
 
 	/** Enables auto increment - only available for numeric columns */
-	// auto(): this extends Column<number> & { primaryKey: true } ? this & { autoIncrement: true }
-	auto(): T extends number ? this & { autoIncrement: true }
-	:	Omit<this, 'auto' | 'autoIncrement'> {
+	auto(): T extends number ? this & { [AutoIncrementKey]: true } : Omit<this, 'auto'> {
+		const colType = this[TypeKey];
+
 		if (
-			typeof this.type !== 'string' ||
-			!['int', 'integer', 'float', 'number'].includes(this.type.toLowerCase())
+			typeof colType !== 'string' ||
+			!['int', 'integer', 'float', 'number'].includes(colType.toLowerCase())
 		) {
-			throw new Error(`auto() can only be used with integer columns, got: ${this.type}`);
+			throw new Error(`auto() can only be used with integer columns, got: ${colType}`);
 		}
 
-		return Object.assign(this, { autoIncrement: true }) as any;
+		this[AutoIncrementKey] = true;
+
+		return this as T extends number ? this & { [AutoIncrementKey]: true }
+		:	Omit<this, 'auto'>;
 	}
 
 	/** Adds an index */
 	index() {
-		return Object.assign(this, { indexed: true }) as this & { indexed: true };
+		this[IndexedKey] = true;
+		return this as this & { [IndexedKey]: true };
 	}
 
-	default<D extends T>(value: D) {
-		return Object.assign(this, { defaultValue: value }) as this & { defaultValue: D };
+	default<Default extends T>(value: Default) {
+		this[DefaultValueKey] = value;
+		return this as this & { [DefaultValueKey]: Default };
 	}
 
-	partial() {
-		return Object.assign(this, { optional: true }) as this & { optional: true };
+	optional() {
+		this[OptionalKey] = true;
+		return this as this & { [OptionalKey]: true };
 	}
 }
 

@@ -8,6 +8,7 @@ const __dirname = dirname(__filename);
 
 export default defineConfig({
 	plugins: [tailwindcss()],
+	server: { host: true },
 	resolve: {
 		alias: {
 			locality: resolve(__dirname, '../src'),
