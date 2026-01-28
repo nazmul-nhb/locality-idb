@@ -1,3 +1,4 @@
+import { isNonEmptyString } from 'nhb-toolbox';
 import { _formatUUID } from './helpers';
 import type { Timestamp, UUID } from './types';
 
@@ -23,9 +24,21 @@ export function uuidV4(uppercase = false): UUID<'v4'> {
 
 /**
  * * Get current timestamp in ISO 8601 format
- * @param date Optional Date object to format. Defaults to current {@link Date new Date()}
+ * @param value Optional date input (string, number, or Date object). Defaults to {@link Date new Date()}
+ * @remarks If the provided value is invalid, the current date and time will be used.
  * @return Timestamp string in ISO 8601 format
  */
-export function getTimestamp(date = new Date()): Timestamp {
+export function getTimestamp(value?: string | number | Date): Timestamp {
+	let date =
+		value instanceof Date ? value : (
+			new Date(
+				isNonEmptyString(value) ? value.replace(/['"]/g, '') : (value ?? new Date())
+			)
+		);
+
+	if (isNaN(date.getTime())) {
+		date = new Date();
+	}
+
 	return date.toISOString() as Timestamp;
 }

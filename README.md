@@ -16,11 +16,12 @@
 [Documentation](#-api-reference) • [Examples](#-usage) • [Contributing](#-contributing)
 
 </div>
+
 ---
 
 ## ⚠️ Beta Status
 
-This package is currently in **beta development**. The API is subject to change. Use in production at your own risk.
+>This package is currently in **beta development**. The API is subject to change. Use in production at your own risk.
 
 ---
 
@@ -740,28 +741,49 @@ const id = uuidV4(); // "550e8400-e29b-41d4-a716-446655440000"
 const upperId = uuidV4(true); // "550E8400-E29B-41D4-A716-446655440000"
 ```
 
-#### `getTimestamp(date?: Date): Timestamp`
+#### `getTimestamp(value?: string | number | Date): Timestamp`
 
-Gets the current timestamp in ISO 8601 format.
+Gets a timestamp in ISO 8601 format from various input types.
+
+> Can be used to generate current timestamp or convert existing date inputs to use as timestamp.
 
 **Parameters:**
 
-- `date`: Optional Date object (defaults to `new Date()`)
+- `value`: Optional date input:
+  - `string`: ISO date string or any valid date string
+  - `number`: Unix timestamp (milliseconds)
+  - `Date`: Date object
 
 **Returns:** ISO 8601 timestamp string
+
+> **Remarks:** If no value is provided or the provided value is invalid, the current date and time will be used.
 
 **Example:**
 
 ```typescript
 import { getTimestamp } from 'locality-idb';
 
+// Current timestamp
 const now = getTimestamp(); // "2026-01-29T12:34:56.789Z"
-const custom = getTimestamp(new Date('2025-01-01')); // "2025-01-01T00:00:00.000Z"
+
+// From Date object
+const fromDate = getTimestamp(new Date('2025-01-01')); // "2025-01-01T00:00:00.000Z"
+
+// From ISO string
+const fromString = getTimestamp('2025-06-15T10:30:00.000Z'); // "2025-06-15T10:30:00.000Z"
+
+// From Unix timestamp
+const fromUnix = getTimestamp(1704067200000); // "2024-01-01T00:00:00.000Z"
+
+// Invalid input falls back to current time
+const fallback = getTimestamp('invalid'); // Current timestamp
 ```
 
 #### `openDBWithStores(name: string, stores: StoreConfig[], version?: number): Promise<IDBDatabase>`
 
 Opens an IndexedDB database with specified stores (low-level API).
+
+> Internally used by `Locality` class. Can be used for custom setups.
 
 **Parameters:**
 
@@ -769,20 +791,24 @@ Opens an IndexedDB database with specified stores (low-level API).
 - `stores`: Array of store configurations
 - `version`: Database version (optional, default: 1)
 
-**Returns:** Promise resolving to IDBDatabase instance
+**Returns:** Promise resolving to `IDBDatabase` instance
 
 **Example:**
 
 ```typescript
 import { openDBWithStores } from 'locality-idb';
 
-const db = await openDBWithStores('my-db', [
-  {
-    name: 'users',
-    keyPath: 'id',
-    autoIncrement: true,
-  },
-], 1);
+const db = await openDBWithStores(
+    'my-db',
+    [
+        {
+            name: 'users',
+            keyPath: 'id',
+            autoIncrement: true,
+        },
+    ],
+    1
+);
 ```
 
 ---
