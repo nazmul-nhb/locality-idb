@@ -11,7 +11,7 @@ import type {
 } from './types';
 
 /**
- * @class `Locality` class for {@link IndexedDB} interactions.
+ * @class `Locality` class for `IndexedDB` interactions.
  *
  * @example
  * import { column, defineSchema, Locality } from 'locality-idb';
@@ -39,7 +39,7 @@ import type {
  * // Get all users
  * const allUsers = await db.from('users').all();
  *
- * // Select users
+ * // Select users with a specific condition
  * const allAlices = await db.from('users').where((user) => user.email.includes('alice')).all();
  *
  * // Update a user
