@@ -1,5 +1,7 @@
 # Locality IDB
 
+> **SQL**-like query builder for [**IndexedDB**](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB) with [**Drizzle**](https://github.com/drizzle-team/drizzle-orm)-style API
+
 <!-- markdownlint-disable-file MD024 -->
 
 <div align="center">
@@ -10,8 +12,6 @@
 ![beta](https://img.shields.io/badge/status-beta-orange)
 <!-- ![bundle](https://img.shields.io/bundlephobia/minzip/locality-idb) -->
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
-
-## SQL-like query builder for IndexedDB with Drizzle-style API
 
 [Documentation](#-api-reference) • [Examples](#-usage) • [Contributing](#-contributing)
 

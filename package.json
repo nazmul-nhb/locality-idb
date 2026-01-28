@@ -1,6 +1,6 @@
 {
   "name": "locality-idb",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "SQL-like query builder for IndexedDB with Drizzle-style API",
   "type": "module",
   "sideEffects": false,
