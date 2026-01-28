@@ -11,7 +11,42 @@ import type {
 } from './types';
 
 /**
- * Locality database instance.
+ * @class `Locality` class for {@link IndexedDB} interactions.
+ *
+ * @example
+ * import { column, defineSchema, Locality } from 'locality-idb';
+ *
+ * const schema = defineSchema({
+ *   users: {
+ *     id: column.int().pk().auto(),
+ *     name: column.text(),
+ *     email: column.text().unique(),
+ *   },
+ * });
+ *
+ * const db = new Locality({
+ *   dbName: 'my-database',
+ *   version: 1,
+ *   schema,
+ * });
+ *
+ * // Optional
+ * await db.ready();
+ *
+ * // Insert a new user
+ * const inserted = await db.insert('users').values({ name: 'Alice', email: 'alice@wonderland.mad' }).run();
+ *
+ * // Get all users
+ * const allUsers = await db.from('users').all();
+ *
+ * // Select users
+ * const allAlices = await db.from('users').where((user) => user.email.includes('alice')).all();
+ *
+ * // Update a user
+ * const updated = await db.update('users').set({ name: 'Alice Liddell' }).where((user) => user.id === 1).run();
+ *
+ * // Delete a user
+ * const deleted = await db.delete('users').where((user) => user.id === 1).run();
  */
 export class Locality<
 	DBName extends string = string,
@@ -37,24 +72,20 @@ export class Locality<
 		});
 	}
 
-	/**
-	 * Build store configurations from schema.
-	 */
+	/** Build store configurations from schema. */
 	#buildStoresConfig(): StoreConfig[] {
 		return Object.entries(this.#schema).map(([tableName, table]) => {
 			const columns = table.columns;
 			const pk = Object.values(columns).find((col) => col[IsPrimaryKey]);
 
 			const autoInc = pk?.[IsAutoInc] || false;
+
+			// TODO: Handle multiple primary keys later
 			const pkName = Object.entries(columns).find(([_, col]) => col[IsPrimaryKey])?.[0];
 
 			// if (!pkName) {
 			// 	throw new Error(`Table "${tableName}" must have a primary key column.`);
 			// }
-
-			// const defaultValue = Object.values(columns).filter(
-			// 	(col) => col.defaultValue !== undefined
-			// );
 
 			return {
 				name: tableName,
@@ -64,24 +95,23 @@ export class Locality<
 		});
 	}
 
-	/**
-	 * Waits for database initialization to complete.
-	 */
+	/** @instance Waits for database initialization to complete. */
 	async ready(): Promise<void> {
 		return this.#readyPromise;
 	}
 
 	/**
-	 * Select records from a table.
+	 * @instance Select records from a table.
+	 * @param table Table name.
+	 * @returns
 	 */
-	from<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
-		table: T
-	): SelectQuery<Row, null> {
+	from<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new SelectQuery<Row, null>(table as string, () => this.#db, this.#readyPromise);
 	}
 
 	/**
-	 * Insert record into a table.
+	 * @instance Insert records into a table.
+	 * @param table Table name.
 	 */
 	insert<
 		T extends keyof Schema,
@@ -89,7 +119,7 @@ export class Locality<
 		Inserted,
 		Data extends InferSelectType<Schema[T]>,
 		Return extends Inserted extends Array<infer _> ? Data[] : Data,
-	>(table: T): InsertQuery<Raw, Inserted, Data, Return> {
+	>(table: T) {
 		return new InsertQuery<Raw, Inserted, Data, Return>(
 			table as string,
 			() => this.#db,
@@ -99,11 +129,10 @@ export class Locality<
 	}
 
 	/**
-	 * Update records.
+	 * @instance Update records in a table.
+	 * @param table Table name.
 	 */
-	update<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
-		table: T
-	): UpdateQuery<Row, Schema[T]> {
+	update<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new UpdateQuery<Row, Schema[T]>(
 			table as string,
 			() => this.#db,
@@ -112,11 +141,10 @@ export class Locality<
 	}
 
 	/**
-	 * Delete records.
+	 * @instance Delete records from a table.
+	 * @param table Table name.
 	 */
-	delete<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(
-		table: T
-	): DeleteQuery<Row, keyof Row> {
+	delete<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		const columns = this.#schema[table].columns;
 		const keyField = Object.entries(columns).find(
 			([_, col]) => (col as any)[IsPrimaryKey]

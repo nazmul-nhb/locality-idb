@@ -1,12 +1,15 @@
 {
   "name": "locality-idb",
+  "version": "0.5.0",
+  "description": "Perform SQL-like query (Drizzle style) for IndexedDB",
   "type": "module",
   "sideEffects": false,
-  "version": "0.4.0",
-  "description": "SQL-like query (Drizzle style) for IndexedDB",
-  "types": "dist/index.d.mts",
+  "types": "./dist/index.d.cts",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "author": {
@@ -80,5 +83,7 @@
     "tsdown": "^0.20.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0"
-  }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs"
 }

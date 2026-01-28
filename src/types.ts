@@ -26,6 +26,7 @@ type $Brand<B> = {
  * const id = 'abc123' as UserId;
  */
 export type Branded<T, B> = T & $Brand<B>;
+
 /**
  * * Broadens a literal union (typically `string` or `number`) to also accept any other value of the base type, without losing IntelliSense autocomplete for the provided literals.
  *
@@ -66,15 +67,19 @@ export type LooseLiteral<T extends string | number> =
  * arr.push(4);                   	// ❌ Error (readonly)
  */
 export type List<T = any> = ReadonlyArray<T>;
+
 /** Turns a union into an intersection */
 export type $UnionToIntersection<U> =
 	(U extends any ? (arg: U) => void : never) extends (arg: infer I) => void ? I : never;
+
 /** Gets the "last" item of a union */
 type $LastOf<T> =
 	$UnionToIntersection<T extends any ? () => T : never> extends () => infer R ? R : never;
+
 /** Converts a union to a tuple */
 type $UnionToTuple<T, L = $LastOf<T>> =
 	[T] extends [never] ? [] : [...$UnionToTuple<Exclude<T, L>>, L];
+
 /**
  * * Converts a type into a tuple form.
  *
@@ -93,6 +98,7 @@ type $UnionToTuple<T, L = $LastOf<T>> =
  * type T3 = Tuple<never>; // []
  */
 export type Tuple<T> = [T] extends [never] ? [] : $UnionToTuple<T>;
+
 /**
  * * Converts an array type containing a union of literals into a tuple of those literals.
  *
@@ -111,20 +117,28 @@ export type Tuple<T> = [T] extends [never] ? [] : $UnionToTuple<T>;
  */
 export type ArrayToTuple<T extends readonly unknown[]> =
 	T[number] extends infer U ? $UnionToTuple<U> : never;
+
 /** Union of Basic Primitive Types (i.e. `string | number | boolean`) */
 export type BasicPrimitive = string | number | boolean;
+
 /** Union of All Primitive Types (i.e. `string | number | boolean | symbol | bigint | null | undefined`) */
 export type Primitive = string | number | boolean | symbol | bigint | null | undefined;
+
 /** Union of Normal Primitive Types (i.e. `string | number | boolean | null | undefined`) */
 export type NormalPrimitive = string | number | boolean | null | undefined;
+
 /** A generic class constructor */
 export type Constructor = new (...args: any[]) => any;
+
 /** Generic function type */
 export type GenericFn = (...args: any[]) => any;
+
 /** Generic function type that returns `void` */
 export type VoidFn = (...args: any[]) => void;
+
 /** Asynchronous function type */
 export type AsyncFunction<T> = (...args: any[]) => Promise<T>;
+
 /** Interface representing a date-like object. */
 export interface DateLike {
 	toJSON?(): string;
@@ -141,6 +155,7 @@ export interface DateLike {
 		name: string;
 	};
 }
+
 /** Advanced types to exclude from counting as object key */
 export type AdvancedTypes =
 	| Array<unknown>
@@ -261,72 +276,66 @@ export type UUIDVersion = `v${$UUIDVersion}`;
 /** General 5 parts UUID string as {@link Branded} type */
 export type UUID<V extends UUIDVersion> = Branded<$UUID, V>;
 
+/** Schema definition type */
 export type SchemaDefinition<T extends ColumnDefinition = ColumnDefinition> = Record<
 	string,
 	Table<T>
 >;
 
+/** Locality database configuration type */
 export type LocalityConfig<DB extends string, V extends number, S extends SchemaDefinition> = {
+	/** Database name */
 	dbName: DB;
+	/** Database version */
 	version?: V;
+	/** Database schema */
 	schema: S;
 };
 
+/** Column definition type */
 export type ColumnDefinition<T = any> = Record<string, Column<T>>;
 
-/**
- * Helper to reliably extract the generic type parameter from a Column using a symbol property.
- */
+/** Helper to reliably extract the generic type parameter from a Column using a symbol property. */
 type ExtractColumnType<C> = C extends { [$ColumnType]: infer U } ? U : never;
 
-/**
- * Extracts inferred row type from columns.
- */
+/** Extracts inferred row type from columns. */
 export type $InferRow<T extends ColumnDefinition> = Prettify<
 	Omit<
 		{
 			[K in keyof T]: ExtractColumnType<T[K]>;
 		},
-		$InferOptionalField<T>
+		$InferOptional<T>
 	> & {
-		[K in $InferOptionalField<T>]?: ExtractColumnType<T[K]>;
+		[K in $InferOptional<T>]?: ExtractColumnType<T[K]>;
 	} & {
-		[K in $InferDefaultField<T>]: ExtractColumnType<T[K]>;
+		[K in $InferDefault<T> | $InferUUID<T> | $InferTimestamp<T>]: ExtractColumnType<T[K]>;
 	}
 >;
 
-/**
- * Finds the field name with autoIncrement set to true.
- */
-export type $InferAutoField<T extends ColumnDefinition> = {
+/** Finds the field name with autoIncrement set to true. */
+export type $InferAutoInc<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsAutoInc]: true } ? K : never;
 }[keyof T];
 
-/**
- * Finds the field name with default value.
- */
-export type $InferDefaultField<T extends ColumnDefinition> = {
+/** Finds the field name with default value. */
+export type $InferDefault<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [DefaultValue]: any } ? K : never;
 }[keyof T];
 
-/**
- * Finds the field name with primary key.
- */
+/** Finds the field name with primary key. */
 export type $InferPkField<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsPrimaryKey]: true } ? K : never;
 }[keyof T];
 
-/**
- * Finds the field name with partial key.
- */
-export type $InferOptionalField<T extends ColumnDefinition> = {
+/** Finds the field name with partial key. */
+export type $InferOptional<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsOptional]: true } ? K : never;
 }[keyof T];
 
 /**
- * Finds the field name with UUID type.
+ * Finds the field name with {@link UUID} type.
  */
-export type $InferUUIDField<T extends ColumnDefinition> = {
+export type $InferUUID<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends Column<infer C> ?
 		C extends $UUID ?
 			K
@@ -334,9 +343,7 @@ export type $InferUUIDField<T extends ColumnDefinition> = {
 	:	never;
 }[keyof T];
 
-/**
- * Finds the field name with UUID type.
- */
+/** Finds the field name with {@link Timestamp} type. */
 export type $InferTimestamp<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends Column<infer C> ?
 		C extends Timestamp ?
@@ -345,38 +352,37 @@ export type $InferTimestamp<T extends ColumnDefinition> = {
 	:	never;
 }[keyof T];
 
-export type Timestamp = Branded<
-	`${number}-${number}-${number}T${number}:${number}:${number}.${number}${'Z' | `${'+' | '-'}${number}:${number}`}`,
-	'timestamp'
->;
+/** Timestamp string type in ISO 8601 format */
+export type Timestamp = Branded<string, 'Timestamp'>;
 
+/** Sort direction type for ordering queries */
 export type SortDirection = 'asc' | 'desc';
 
-/**
- * Creates a type for insert operations with auto-increment field optional.
- */
+/** Creates a type for insert operations with auto-generated fields optional. */
 export type InferInsertType<T extends Table> = Prettify<
 	Omit<
 		$InferRow<T['columns']>,
-		| $InferAutoField<T['columns']>
-		| $InferDefaultField<T['columns']>
+		| $InferAutoInc<T['columns']>
+		| $InferDefault<T['columns']>
 		| $InferTimestamp<T['columns']>
-		| $InferUUIDField<T['columns']>
+		| $InferUUID<T['columns']>
 	> & {
 		[K in
-			| $InferAutoField<T['columns']>
-			| $InferDefaultField<T['columns']>
+			| $InferAutoInc<T['columns']>
+			| $InferDefault<T['columns']>
 			| $InferTimestamp<T['columns']>
-			| $InferUUIDField<T['columns']>]?: K extends keyof $InferRow<T['columns']> ?
+			| $InferUUID<T['columns']>]?: K extends keyof $InferRow<T['columns']> ?
 			$InferRow<T['columns']>[K]
 		:	never;
 	}
 >;
 
+/** Creates a type for update operations with all fields optional except primary key. */
 export type InferUpdateType<T extends Table> = Prettify<
 	Partial<Omit<$InferRow<T['columns']>, $InferPkField<T['columns']>>>
 >;
 
+/** Creates a type for select operations. */
 export type InferSelectType<S extends Table> = Prettify<
 	S extends infer T ?
 		T extends Table<infer C> ?
@@ -384,8 +390,13 @@ export type InferSelectType<S extends Table> = Prettify<
 		:	never
 	:	never
 >;
+
+/** Store configuration type for {@link IndexedDB} */
 export type StoreConfig = {
+	/** Store name */
 	name: string;
+	/** Primary key path(s) */
 	keyPath?: string | string[];
+	/** Whether the primary key is auto-incrementing */
 	autoIncrement?: boolean;
 };

@@ -10,11 +10,13 @@ import type {
 } from './types';
 import { getTimestamp, uuidV4 } from './utils';
 
-const Selection = Symbol('Selection');
+/** Symbol for type extraction (exists only in type system) */
+const Selected = Symbol('Selected');
+/** Symbol to indicate if insert data is array */
 const IsArray = Symbol('IsArray');
 
 /**
- * Select query builder.
+ * @class Select query builder.
  */
 export class SelectQuery<T extends GenericObject, S = null> {
 	#table: string;
@@ -24,7 +26,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
 	#orderByKey?: NestedPrimitiveKey<T>;
 	#orderByDir: SortDirection = 'asc';
 	#limitCount?: number;
-	declare [Selection]?: S;
+	declare [Selected]?: S;
 
 	constructor(table: string, dbGetter: () => IDBDatabase, readyPromise: Promise<void>) {
 		this.#table = table;
@@ -32,35 +34,55 @@ export class SelectQuery<T extends GenericObject, S = null> {
 		this.#readyPromise = readyPromise;
 	}
 
+	/**
+	 * @instance Select or exclude specific columns
+	 * @param cols Columns to select or exclude
+	 */
 	select<Selection extends Partial<Record<keyof T, boolean>>>(cols: Selection) {
-		this[Selection] = cols as unknown as S;
+		this[Selected] = cols as unknown as S;
+
 		return this as unknown as SelectQuery<T, Selection>;
 	}
 
+	/**
+	 * @instance  Filter rows based on predicate function
+	 * @param predicate Filtering function
+	 */
 	where(predicate: (row: T) => boolean) {
 		this.#whereCondition = predicate;
 		return this;
 	}
 
+	/**
+	 * @instance  Order results by specified key and direction
+	 * @param key Key to order by
+	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
+	 */
 	orderBy<Key extends NestedPrimitiveKey<T>>(key: Key, dir: SortDirection = 'asc') {
 		this.#orderByKey = key;
 		this.#orderByDir = dir;
+
 		return this;
 	}
 
+	/**
+	 * @instance Limit number of results
+	 * @param count Maximum number of results to return
+	 */
 	limit(count: number) {
 		this.#limitCount = count;
 		return this;
 	}
 
+	/** Projects a row based on selected fields */
 	#projectRow(row: T): Partial<T> {
-		if (!isNotEmptyObject(this[Selection])) {
+		if (!isNotEmptyObject(this[Selected])) {
 			return row;
 		}
 
 		const projected = {} as Partial<T>;
-		const selectionEntries = Object.entries(this[Selection]);
-		const selectionKeys = new Set(Object.keys(this[Selection]));
+		const selectionEntries = Object.entries(this[Selected]);
+		const selectionKeys = new Set(Object.keys(this[Selected]));
 
 		// Check if any value is true
 		const hasTrueValues = selectionEntries.some(([, value]) => value === true);
@@ -75,7 +97,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
 		} else {
 			// All are false: include all fields EXCEPT those marked as false
 			for (const key of Object.keys(row)) {
-				if (!selectionKeys.has(key) || this[Selection][key] !== false) {
+				if (!selectionKeys.has(key) || this[Selected][key] !== false) {
 					projected[key as keyof T] = row[key as keyof T];
 				}
 			}
@@ -84,7 +106,10 @@ export class SelectQuery<T extends GenericObject, S = null> {
 		return projected;
 	}
 
+	/** Fetch all matching records */
 	async all(this: SelectQuery<T, null>): Promise<T[]>;
+
+	/** Fetch all matching records with selected fields */
 	async all<Selection extends Partial<Record<keyof T, boolean>>>(
 		this: SelectQuery<T, Selection>
 	): Promise<SelectFields<T, Selection>[]>;
@@ -127,7 +152,10 @@ export class SelectQuery<T extends GenericObject, S = null> {
 		});
 	}
 
+	/** Fetch first matching record */
 	async first(this: SelectQuery<T, null>): Promise<T | null>;
+
+	/** Fetch first matching record with selected fields */
 	async first<Selection extends Partial<Record<keyof T, boolean>>>(
 		this: SelectQuery<T, Selection>
 	): Promise<SelectFields<T, Selection> | null>;
@@ -160,9 +188,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
 	}
 }
 
-/**
- * Insert query builder.
- */
+/** @class Insert query builder. */
 export class InsertQuery<
 	Raw extends GenericObject,
 	Inserted,
@@ -189,13 +215,22 @@ export class InsertQuery<
 		this.#columns = columns;
 	}
 
+	/**
+	 * @instance Sets the data to be inserted
+	 * @param data Data object or array of data objects to insert
+	 */
 	values<T extends Inserted>(data: T) {
-		this.#dataToInsert = (Array.isArray(data) ? data : [data]) as Raw[];
 		this[IsArray] = Array.isArray(data);
+
+		this.#dataToInsert = (this[IsArray] ? data : [data]) as Raw[];
 
 		return this as InsertQuery<Raw, T, Data, T extends Array<infer _> ? Data[] : Data>;
 	}
 
+	/**
+	 * @instance Executes the insert query
+	 * @returns Inserted record(s)
+	 */
 	async run(): Promise<Return> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
@@ -260,9 +295,7 @@ export class InsertQuery<
 	}
 }
 
-/**
- * Update query builder.
- */
+/** @class Update query builder. */
 export class UpdateQuery<T extends GenericObject, S extends Table> {
 	#table: string;
 	#dbGetter: () => IDBDatabase;
@@ -276,16 +309,28 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 		this.#readyPromise = readyPromise;
 	}
 
+	/**
+	 * @instance Sets the data to be updated
+	 * @param values Values to update
+	 */
 	set(values: InferUpdateType<S>) {
 		this.#dataToUpdate = values;
 		return this;
 	}
 
+	/**
+	 * @instance Filter rows to update
+	 * @param predicate Filtering function
+	 */
 	where(predicate: (row: T) => boolean) {
 		this.#whereCondition = predicate;
 		return this;
 	}
 
+	/**
+	 * @instance Executes the update query
+	 * @returns Number of records updated
+	 */
 	async run(): Promise<number> {
 		await this.#readyPromise;
 
@@ -331,9 +376,7 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	}
 }
 
-/**
- * Delete query builder.
- */
+/** @class Delete query builder. */
 export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 	#table: string;
 	#dbGetter: () => IDBDatabase;
@@ -353,11 +396,19 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 		this.#keyField = keyField;
 	}
 
+	/**
+	 * @instance Filter rows to delete
+	 * @param predicate Filtering function
+	 */
 	where(predicate: (row: T) => boolean) {
 		this.#whereCondition = predicate;
 		return this;
 	}
 
+	/**
+	 * @instance Executes the delete query
+	 * @returns Number of records deleted
+	 */
 	async run(): Promise<number> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {

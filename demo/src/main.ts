@@ -23,7 +23,8 @@ const schema = defineSchema({
 		task: column.text(),
 		completed: column.bool().default(false),
 		uuid: column.uuid(),
-		timestamp: column.timestamp(),
+		timestamp: column.timestamp().optional(),
+		// m: column.list().optional(),
 		createdAt: column.custom<Chronos>().default(new Chronos().timeZone('America/New_York')),
 	},
 });
