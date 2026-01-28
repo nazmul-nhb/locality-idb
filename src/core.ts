@@ -1,3 +1,4 @@
+import { isNonEmptyString } from 'nhb-toolbox';
 import type { ColumnDefinition } from './types';
 
 /** Symbol for type extraction (exists only in type system) */
@@ -53,10 +54,9 @@ export class Column<T = any> {
 	auto(): T extends number ? this & { [IsAutoInc]: true } : Omit<this, 'auto'> {
 		const colType = this[ColumnType];
 
-		if (
-			typeof colType !== 'string' ||
-			!['int', 'integer', 'float', 'number'].includes(colType.toLowerCase())
-		) {
+		const allowedTypes = ['int', 'integer', 'float', 'number'];
+
+		if (!isNonEmptyString(colType) || !allowedTypes.includes(colType.toLowerCase())) {
 			throw new Error(`auto() can only be used with integer columns, got: ${colType}`);
 		}
 

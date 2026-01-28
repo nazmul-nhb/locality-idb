@@ -1,5 +1,4 @@
 import { isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
-import { uuid } from 'nhb-toolbox/hash';
 import { ColumnType, DefaultValue, type Table } from './core';
 import type {
 	ColumnDefinition,
@@ -9,6 +8,7 @@ import type {
 	SelectFields,
 	SortDirection,
 } from './types';
+import { getTimestamp, uuidV4 } from './utils';
 
 const Selection = Symbol('Selection');
 const IsArray = Symbol('IsArray');
@@ -202,8 +202,6 @@ export class InsertQuery<
 			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
 
-			const timestamp = new Date().toISOString() as Raw[RawKey];
-
 			const insertedDocs: Data[] = [];
 
 			type RawKey = keyof Raw;
@@ -223,11 +221,11 @@ export class InsertQuery<
 
 							const columnType = column[ColumnType];
 							if (columnType === 'uuid' && !(fieldName in updated)) {
-								updated[fieldName as RawKey] = uuid() as Raw[RawKey];
+								updated[fieldName as RawKey] = uuidV4() as Raw[RawKey];
 							}
 
 							if (columnType === 'timestamp' && !(fieldName in updated)) {
-								updated[fieldName as RawKey] = timestamp;
+								updated[fieldName as RawKey] = getTimestamp() as Raw[RawKey];
 							}
 						});
 					}

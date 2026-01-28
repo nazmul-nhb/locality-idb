@@ -34,7 +34,7 @@ type UpdateTodo = InferUpdateType<typeof schema.todos>;
 
 const db = new Locality({
 	dbName: 'todo-db',
-	version: 2,
+	version: 20,
 	schema,
 });
 

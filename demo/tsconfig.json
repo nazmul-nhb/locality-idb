@@ -8,8 +8,8 @@
 		"skipLibCheck": true,
 
 		"paths": {
-			"locality": ["../src"],
-			"locality/*": ["../src/*"]
+			"locality": ["../src"]
+			// "locality/*": ["../src/*"]
 		},
 
 		/* Bundler mode */

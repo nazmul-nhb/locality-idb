@@ -1,27 +1,22 @@
-import type { StoreConfig } from './types';
+import { _formatUUID } from './helpers';
+import type { Timestamp, UUID } from './types';
 
-export function openDBWithStores(
-	name: string,
-	version: number,
-	stores: StoreConfig[]
-): Promise<IDBDatabase> {
-	return new Promise((resolve, reject) => {
-		const request = indexedDB.open(name, version);
+export function uuidV4(uppercase = false): UUID<'v4'> {
+	const bytes = new Uint8Array(16);
 
-		request.onupgradeneeded = (event) => {
-			const db = (event.target as IDBOpenDBRequest).result;
+	for (let i = 0; i < 16; i++) {
+		bytes[i] = Math.floor(Math.random() * 256);
+	}
 
-			for (const store of stores) {
-				if (!db.objectStoreNames.contains(store.name)) {
-					db.createObjectStore(store.name, {
-						keyPath: store.keyPath,
-						autoIncrement: store.autoIncrement,
-					});
-				}
-			}
-		};
+	// Convert to hex
+	let hex = '';
+	for (let i = 0; i < 16; i++) {
+		hex += bytes[i].toString(16).padStart(2, '0');
+	}
 
-		request.onsuccess = () => resolve(request.result);
-		request.onerror = () => reject(request.error);
-	});
+	return _formatUUID(hex, 4, uppercase);
+}
+
+export function getTimestamp(date = new Date()): Timestamp {
+	return date.toISOString() as Timestamp;
 }

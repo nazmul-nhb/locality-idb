@@ -24,13 +24,6 @@ export function table<T extends ColumnDefinition>(name: string, columns: T) {
 	return new Table(name, columns);
 }
 
-// export const col = {
-// 	int: () => new Column<number>('int'),
-// 	text: () => new Column<string>('text'),
-// 	bool: () => new Column<boolean>('bool'),
-// 	date: () => new Column<Date>('date'),
-// };
-
 /**
  * Column builders
  */
@@ -41,8 +34,8 @@ export const column = {
 	bigint: () => new Column<bigint>('bigint'),
 	text: () => new Column<string>('text'),
 	string: () => new Column<string>('string'),
-	char: (l?: number) => new Column<string>(`char(${isPositive(l) ? l : ''})`),
-	varchar: (l?: number) => new Column<number>(`varchar(${isPositive(l) ? l : ''})`),
+	char: (l?: number) => new Column<string>(`char(${isPositive(l) ? l : '0'})`),
+	varchar: (l?: number) => new Column<number>(`varchar(${isPositive(l) ? l : '0'})`),
 	uuid: () => new Column<$UUID>('uuid'),
 	bool: () => new Column<boolean>('bool'),
 	date: () => new Column<Date>('date'),

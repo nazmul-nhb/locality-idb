@@ -252,6 +252,15 @@ export type Prettify<T> = {
 /** General 5 parts UUID string type */
 export type $UUID = `${string}-${string}-${string}-${string}-${string}`;
 
+/** UUID versions as number from `1-8` */
+export type $UUIDVersion = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+/** UUID versions as string from `v1-v8` */
+export type UUIDVersion = `v${$UUIDVersion}`;
+
+/** General 5 parts UUID string as {@link Branded} type */
+export type UUID<V extends UUIDVersion> = Branded<$UUID, V>;
+
 export type SchemaDefinition<T extends ColumnDefinition = ColumnDefinition> = Record<
 	string,
 	Table<T>
@@ -259,7 +268,7 @@ export type SchemaDefinition<T extends ColumnDefinition = ColumnDefinition> = Re
 
 export type LocalityConfig<DB extends string, V extends number, S extends SchemaDefinition> = {
 	dbName: DB;
-	version: V;
+	version?: V;
 	schema: S;
 };
 

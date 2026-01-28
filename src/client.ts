@@ -1,4 +1,5 @@
 import { IsAutoInc, IsPrimaryKey } from './core';
+import { openDBWithStores } from './factory';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
@@ -8,31 +9,30 @@ import type {
 	SchemaDefinition,
 	StoreConfig,
 } from './types';
-import { openDBWithStores } from './utils';
 
 /**
  * Locality database instance.
  */
 export class Locality<
 	DBName extends string = string,
-	Version extends number = number,
+	Version extends number = 1,
 	Schema extends SchemaDefinition = SchemaDefinition,
 > {
 	readonly #name: DBName;
-	readonly #version: Version;
 	readonly #schema: Schema;
+	readonly #version?: Version;
 
 	#db!: IDBDatabase;
 	#readyPromise: Promise<void>;
 
 	constructor(config: LocalityConfig<DBName, Version, Schema>) {
 		this.#name = config.dbName;
-		this.#version = config.version;
 		this.#schema = config.schema;
+		this.#version = config.version;
 
 		const store = this.#buildStoresConfig();
 
-		this.#readyPromise = openDBWithStores(this.#name, this.#version, store).then((db) => {
+		this.#readyPromise = openDBWithStores(this.#name, store, this.#version).then((db) => {
 			this.#db = db;
 		});
 	}

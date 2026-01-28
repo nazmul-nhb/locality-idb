@@ -1,6 +1,8 @@
 export type * from './types';
 
+export type { Column, Table } from './core';
+
 export { Locality } from './client';
-// export { Column, Table } from './core';
+export { openDBWithStores } from './factory';
 export { column, defineSchema, table } from './schema';
-export { openDBWithStores } from './utils';
+export { getTimestamp, uuidV4 } from './utils';
