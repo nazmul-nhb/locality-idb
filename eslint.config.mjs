@@ -51,7 +51,7 @@ export default [
 			// 'no-console': ['warn', { allow: ['info', 'warn', 'error', 'table'] }],
 			'no-undef': 'off',
 			'@typescript-eslint/no-empty-object-type': 'off',
-			'@typescript-eslint/no-unnecessary-type-constraint': 'off',
+			'@typescript-eslint/no-unnecessary-type-constraint': 'warn',
 			'@typescript-eslint/no-explicit-any': 'off',
 			'@typescript-eslint/no-unused-expressions': 'error',
 			'@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],

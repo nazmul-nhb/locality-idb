@@ -1,6 +1,6 @@
 import { isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
 import { uuid } from 'nhb-toolbox/hash';
-import { DefaultValueKey, TypeKey, type Table } from './core';
+import { ColumnType, DefaultValue, type Table } from './core';
 import type {
 	ColumnDefinition,
 	GenericObject,
@@ -165,7 +165,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
  */
 export class InsertQuery<
 	Raw extends GenericObject,
-	Inserted extends any,
+	Inserted,
 	Data extends GenericObject,
 	Return extends Inserted extends Array<infer _> ? Data[] : Data,
 > {
@@ -215,13 +215,13 @@ export class InsertQuery<
 
 					if (this.#columns) {
 						Object.entries(this.#columns).forEach(([fieldName, column]) => {
-							const defaultValue = column[DefaultValueKey];
+							const defaultValue = column[DefaultValue];
 
 							if (!(fieldName in updated) && defaultValue !== undefined) {
 								updated[fieldName as RawKey] = defaultValue;
 							}
 
-							const columnType = column[TypeKey];
+							const columnType = column[ColumnType];
 							if (columnType === 'uuid' && !(fieldName in updated)) {
 								updated[fieldName as RawKey] = uuid() as Raw[RawKey];
 							}

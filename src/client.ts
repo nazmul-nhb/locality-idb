@@ -1,4 +1,4 @@
-import { AutoIncrementKey, PrimaryKey } from './core';
+import { IsAutoInc, IsPrimaryKey } from './core';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
@@ -43,10 +43,10 @@ export class Locality<
 	#buildStoresConfig(): StoreConfig[] {
 		return Object.entries(this.#schema).map(([tableName, table]) => {
 			const columns = table.columns;
-			const pk = Object.values(columns).find((col) => col[PrimaryKey]);
+			const pk = Object.values(columns).find((col) => col[IsPrimaryKey]);
 
-			const autoInc = pk?.[AutoIncrementKey] || false;
-			const pkName = Object.entries(columns).find(([_, col]) => col[PrimaryKey])?.[0];
+			const autoInc = pk?.[IsAutoInc] || false;
+			const pkName = Object.entries(columns).find(([_, col]) => col[IsPrimaryKey])?.[0];
 
 			// if (!pkName) {
 			// 	throw new Error(`Table "${tableName}" must have a primary key column.`);
@@ -86,7 +86,7 @@ export class Locality<
 	insert<
 		T extends keyof Schema,
 		Raw extends InferInsertType<Schema[T]>,
-		Inserted extends any,
+		Inserted,
 		Data extends InferSelectType<Schema[T]>,
 		Return extends Inserted extends Array<infer _> ? Data[] : Data,
 	>(table: T): InsertQuery<Raw, Inserted, Data, Return> {
@@ -119,7 +119,7 @@ export class Locality<
 	): DeleteQuery<Row, keyof Row> {
 		const columns = this.#schema[table].columns;
 		const keyField = Object.entries(columns).find(
-			([_, col]) => (col as any)[PrimaryKey]
+			([_, col]) => (col as any)[IsPrimaryKey]
 		)?.[0];
 
 		return new DeleteQuery<Row, keyof Row>(

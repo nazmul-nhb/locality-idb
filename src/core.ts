@@ -1,32 +1,32 @@
 import type { ColumnDefinition } from './types';
 
 /** Symbol for type extraction (exists only in type system) */
-export const ColumnType = Symbol('ColumnTypeSymbol');
+export const $ColumnType = Symbol('$ColumnType');
 
 /** Symbols for internal Column properties (hidden from user IntelliSense) */
-export const TypeKey = Symbol('TypeKey');
-export const PrimaryKey = Symbol('PrimaryKey');
-export const AutoIncrementKey = Symbol('AutoIncrementKey');
-export const OptionalKey = Symbol('OptionalKey');
-export const IndexedKey = Symbol('IndexedKey');
-export const UniqueKey = Symbol('UniqueKey');
-export const DefaultValueKey = Symbol('DefaultValueKey');
+export const ColumnType = Symbol('ColumnType');
+export const IsPrimaryKey = Symbol('IsPrimaryKey');
+export const IsAutoInc = Symbol('IsAutoInc');
+export const IsOptional = Symbol('IsOptional');
+export const IsIndexed = Symbol('IsIndexed');
+export const IsUnique = Symbol('IsUnique');
+export const DefaultValue = Symbol('DefaultValue');
 
 /**
  * Represents a column definition.
  */
-export class Column<T extends any = any> {
-	declare [ColumnType]: T;
-	declare [TypeKey]: string;
-	declare [PrimaryKey]?: boolean;
-	declare [AutoIncrementKey]?: boolean;
-	declare [OptionalKey]?: boolean;
-	declare [IndexedKey]?: boolean;
-	declare [UniqueKey]?: boolean;
-	declare [DefaultValueKey]?: T;
+export class Column<T = any> {
+	declare [$ColumnType]: T;
+	declare [ColumnType]: string;
+	declare [IsPrimaryKey]?: boolean;
+	declare [IsAutoInc]?: boolean;
+	declare [IsOptional]?: boolean;
+	declare [IsIndexed]?: boolean;
+	declare [IsUnique]?: boolean;
+	declare [DefaultValue]?: T;
 
 	constructor(type: string) {
-		this[TypeKey] = type;
+		this[ColumnType] = type;
 	}
 
 	// get type(): string {
@@ -35,23 +35,23 @@ export class Column<T extends any = any> {
 
 	/** Marks column as primary key */
 	pk() {
-		this[PrimaryKey] = true;
-		return this as this & { [PrimaryKey]: true };
+		this[IsPrimaryKey] = true;
+		return this as this & { [IsPrimaryKey]: true };
 	}
 
 	unique() {
-		this[IndexedKey] = true;
-		this[UniqueKey] = true;
+		this[IsIndexed] = true;
+		this[IsUnique] = true;
 
 		return this as this & {
-			[IndexedKey]: true;
-			[UniqueKey]: true;
+			[IsIndexed]: true;
+			[IsUnique]: true;
 		};
 	}
 
 	/** Enables auto increment - only available for numeric columns */
-	auto(): T extends number ? this & { [AutoIncrementKey]: true } : Omit<this, 'auto'> {
-		const colType = this[TypeKey];
+	auto(): T extends number ? this & { [IsAutoInc]: true } : Omit<this, 'auto'> {
+		const colType = this[ColumnType];
 
 		if (
 			typeof colType !== 'string' ||
@@ -60,26 +60,25 @@ export class Column<T extends any = any> {
 			throw new Error(`auto() can only be used with integer columns, got: ${colType}`);
 		}
 
-		this[AutoIncrementKey] = true;
+		this[IsAutoInc] = true;
 
-		return this as T extends number ? this & { [AutoIncrementKey]: true }
-		:	Omit<this, 'auto'>;
+		return this as T extends number ? this & { [IsAutoInc]: true } : Omit<this, 'auto'>;
 	}
 
 	/** Adds an index */
 	index() {
-		this[IndexedKey] = true;
-		return this as this & { [IndexedKey]: true };
+		this[IsIndexed] = true;
+		return this as this & { [IsIndexed]: true };
 	}
 
 	default<Default extends T>(value: Default) {
-		this[DefaultValueKey] = value;
-		return this as this & { [DefaultValueKey]: Default };
+		this[DefaultValue] = value;
+		return this as this & { [DefaultValue]: Default };
 	}
 
 	optional() {
-		this[OptionalKey] = true;
-		return this as this & { [OptionalKey]: true };
+		this[IsOptional] = true;
+		return this as this & { [IsOptional]: true };
 	}
 }
 

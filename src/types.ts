@@ -1,10 +1,10 @@
 import type {
-	AutoIncrementKey,
+	$ColumnType,
 	Column,
-	ColumnType,
-	DefaultValueKey,
-	OptionalKey,
-	PrimaryKey,
+	DefaultValue,
+	IsAutoInc,
+	IsOptional,
+	IsPrimaryKey,
 	Table,
 } from './core';
 
@@ -263,12 +263,12 @@ export type LocalityConfig<DB extends string, V extends number, S extends Schema
 	schema: S;
 };
 
-export type ColumnDefinition<T extends any = any> = Record<string, Column<T>>;
+export type ColumnDefinition<T = any> = Record<string, Column<T>>;
 
 /**
  * Helper to reliably extract the generic type parameter from a Column using a symbol property.
  */
-type ExtractColumnType<C> = C extends { [ColumnType]: infer U } ? U : never;
+type ExtractColumnType<C> = C extends { [$ColumnType]: infer U } ? U : never;
 
 /**
  * Extracts inferred row type from columns.
@@ -290,28 +290,28 @@ export type $InferRow<T extends ColumnDefinition> = Prettify<
  * Finds the field name with autoIncrement set to true.
  */
 export type $InferAutoField<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends { [AutoIncrementKey]: true } ? K : never;
+	[K in keyof T]: T[K] extends { [IsAutoInc]: true } ? K : never;
 }[keyof T];
 
 /**
  * Finds the field name with default value.
  */
 export type $InferDefaultField<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends { [DefaultValueKey]: any } ? K : never;
+	[K in keyof T]: T[K] extends { [DefaultValue]: any } ? K : never;
 }[keyof T];
 
 /**
  * Finds the field name with primary key.
  */
 export type $InferPkField<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends { [PrimaryKey]: true } ? K : never;
+	[K in keyof T]: T[K] extends { [IsPrimaryKey]: true } ? K : never;
 }[keyof T];
 
 /**
  * Finds the field name with partial key.
  */
 export type $InferOptionalField<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends { [OptionalKey]: true } ? K : never;
+	[K in keyof T]: T[K] extends { [IsOptional]: true } ? K : never;
 }[keyof T];
 
 /**

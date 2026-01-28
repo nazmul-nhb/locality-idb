@@ -1,7 +1,6 @@
 import './style.css';
 
 import { Chronos } from 'nhb-toolbox/chronos';
-import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
 import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
@@ -23,7 +22,7 @@ const schema = defineSchema({
 		serial: column.int().pk().auto(),
 		task: column.text(),
 		completed: column.bool().default(false),
-		uuid: column.uuid().default(uuid()),
+		uuid: column.uuid(),
 		timestamp: column.timestamp(),
 		createdAt: column.custom<Chronos>().default(new Chronos().timeZone('America/New_York')),
 	},
@@ -35,7 +34,7 @@ type UpdateTodo = InferUpdateType<typeof schema.todos>;
 
 const db = new Locality({
 	dbName: 'todo-db',
-	version: 1,
+	version: 2,
 	schema,
 });
 
