@@ -21,7 +21,7 @@
 
 ## ⚠️ Beta Status
 
->This package is currently in **beta development**. The API is subject to change. Use in production at your own risk.
+>This development of the package is currently in **beta stage**. The API is subject to change. Use in production at your own risk.
 
 ---
 
