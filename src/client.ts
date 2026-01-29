@@ -146,9 +146,7 @@ export class Locality<
 	 */
 	delete<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		const columns = this.#schema[table].columns;
-		const keyField = Object.entries(columns).find(
-			([_, col]) => (col as any)[IsPrimaryKey]
-		)?.[0];
+		const keyField = Object.entries(columns).find(([_, col]) => col[IsPrimaryKey])?.[0];
 
 		return new DeleteQuery<Row, keyof Row>(
 			table as string,

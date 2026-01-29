@@ -496,7 +496,7 @@ const query = db.delete('users');
 
 ### Schema Functions
 
-#### `defineSchema<T>(schema: T): Schema<T>`
+#### `defineSchema<Schema extends ColumnRecord, Keys extends keyof Schema>(schema: Schema): SchemaRecord<Schema, Keys>`
 
 Defines a database schema from an object mapping table names to column definitions.
 

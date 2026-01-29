@@ -276,12 +276,6 @@ export type UUIDVersion = `v${$UUIDVersion}`;
 /** General 5 parts UUID string as {@link Branded} type */
 export type UUID<V extends UUIDVersion> = Branded<$UUID, V>;
 
-/** Schema definition type */
-export type SchemaDefinition<T extends ColumnDefinition = ColumnDefinition> = Record<
-	string,
-	Table<T>
->;
-
 /** Locality database configuration type */
 export type LocalityConfig<DB extends string, V extends number, S extends SchemaDefinition> = {
 	/** Database name */
@@ -294,6 +288,20 @@ export type LocalityConfig<DB extends string, V extends number, S extends Schema
 
 /** Column definition type */
 export type ColumnDefinition<T = any> = Record<string, Column<T>>;
+
+/** Record of column definitions */
+export type ColumnRecord = Record<string, ColumnDefinition>;
+
+/** Schema record type mapping table names to {@link Table} instances */
+export type SchemaRecord<T extends ColumnRecord, Keys extends keyof T> = {
+	[K in Keys]: Table<T[K]>;
+};
+
+/** Schema definition type */
+export type SchemaDefinition<T extends ColumnDefinition = ColumnDefinition> = Record<
+	string,
+	Table<T>
+>;
 
 /** Helper to reliably extract the generic type parameter from a Column using a symbol property. */
 type ExtractColumnType<C> = C extends { [$ColumnType]: infer U } ? U : never;

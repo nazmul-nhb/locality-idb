@@ -1,7 +1,7 @@
 import type { StoreConfig } from './types';
 
 /**
- * * Opens an `IndexedDB` database with the specified stores.
+ * * Opens an `IndexedDB` database instance with the specified stores.
  * @param name Database name
  * @param stores Array of store configurations
  * @param version Database version (default is `1`)

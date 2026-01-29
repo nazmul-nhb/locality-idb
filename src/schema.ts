@@ -1,6 +1,15 @@
 import { isPositiveInteger as isPositive } from 'nhb-toolbox';
 import { Column, Table } from './core';
-import type { $UUID, ColumnDefinition, GenericObject, List, Timestamp, Tuple } from './types';
+import type {
+	$UUID,
+	ColumnDefinition,
+	ColumnRecord,
+	GenericObject,
+	List,
+	SchemaRecord,
+	Timestamp,
+	Tuple,
+} from './types';
 
 /**
  * * Defines a database schema from a given schema definition.
@@ -34,13 +43,13 @@ import type { $UUID, ColumnDefinition, GenericObject, List, Timestamp, Tuple } f
  * type InsertPost = InferInsertType<typeof schema.posts>;
  * type UpdatePost = InferUpdateType<typeof schema.posts>;
  */
-export function defineSchema<T extends Record<string, ColumnDefinition>, Keys extends keyof T>(
-	schema: T
-): { [K in Keys]: Table<T[K]> } {
-	const result = {} as { [K in Keys]: Table<T[K]> };
+export function defineSchema<Schema extends ColumnRecord, Keys extends keyof Schema>(
+	schema: Schema
+): SchemaRecord<Schema, Keys> {
+	const result = {} as SchemaRecord<Schema, Keys>;
 
 	for (const [tableName, columns] of Object.entries(schema)) {
-		result[tableName as Keys] = new Table(tableName, columns) as Table<T[Keys]>;
+		result[tableName as Keys] = new Table(tableName, columns) as Table<Schema[Keys]>;
 	}
 
 	return result;

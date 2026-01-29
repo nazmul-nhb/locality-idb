@@ -29,9 +29,11 @@ const schema = defineSchema({
 	},
 });
 
-type Todo = InferSelectType<typeof schema.todos>;
-type InsertTodo = InferInsertType<typeof schema.todos>;
-type UpdateTodo = InferUpdateType<typeof schema.todos>;
+type SchemaType = typeof schema;
+
+type Todo = InferSelectType<SchemaType['todos']>;
+type InsertTodo = InferInsertType<SchemaType['todos']>;
+type UpdateTodo = InferUpdateType<SchemaType['todos']>;
 
 const db = new Locality({
 	dbName: 'todo-db',
