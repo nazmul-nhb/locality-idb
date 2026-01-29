@@ -1,5 +1,7 @@
 import './style.css';
 
+import './test';
+
 import { Chronos } from 'nhb-toolbox/chronos';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 

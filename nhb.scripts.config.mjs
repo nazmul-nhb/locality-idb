@@ -12,7 +12,7 @@ export default defineScriptConfig({
 		],
 		ignorePath: '.prettierignore',
 	},
-	lint: { folders: ['src', 'demo'] },
+	lint: { folders: ['src', 'demo/src'] },
 	commit: {
 		runFormatter: true,
 		emojiBeforePrefix: true,

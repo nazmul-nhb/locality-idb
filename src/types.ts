@@ -55,6 +55,10 @@ export type Branded<T, B> = T & $Brand<B>;
 export type LooseLiteral<T extends string | number> =
 	| T
 	| (T extends string ? string & {} : number & {});
+
+/** Union of `number` and numeric string */
+export type Numeric = number | `${number}`;
+
 /**
  * * A readonly array of elements of type `T`.
  *
@@ -184,6 +188,39 @@ export type AdvancedTypes =
 	| URIError
 	| bigint
 	| symbol;
+
+/**
+ * * Extracts the parameters of the first overload of a function type `T`.
+ *
+ * @template T - The function type to extract parameters from.
+ *
+ * @returns A tuple type representing the parameters of the first overload of `T`.
+ *
+ * @example
+ * type Fn = {
+ *   (a: number, b: string): void;
+ *   (x: boolean): void;
+ * };
+ *
+ * type Params = FirstOverloadParameters<Fn>; // [a: number, b: string]
+ */
+export type FirstOverloadParameters<T> =
+	T extends (
+		{
+			(a1: infer P1, ...args: infer P2): any;
+			(...args: any[]): any;
+		}
+	) ?
+		[P1, ...P2]
+	: T extends (
+		{
+			(...args: infer P): any;
+			(...args: any[]): any;
+		}
+	) ?
+		P
+	: T extends (...args: infer P) => any ? P
+	: never;
 
 /**
  * * Maps all values of object `T` to a fixed type `R`, keeping original keys.

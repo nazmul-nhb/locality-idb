@@ -2,6 +2,7 @@ import { isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
 import { ColumnType, DefaultValue, type Table } from './core';
 import type {
 	ColumnDefinition,
+	FirstOverloadParameters,
 	GenericObject,
 	InferUpdateType,
 	NestedPrimitiveKey,
@@ -114,7 +115,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
 		this: SelectQuery<T, Selection>
 	): Promise<SelectFields<T, Selection>[]>;
 
-	async all(): Promise<any[]> {
+	async all() {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
 			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
@@ -133,7 +134,9 @@ export class SelectQuery<T extends GenericObject, S = null> {
 				if (this.#orderByKey) {
 					results = sortAnArray(results, {
 						sortOrder: this.#orderByDir,
-						sortByField: this.#orderByKey as any,
+						sortByField: this.#orderByKey as FirstOverloadParameters<
+							typeof sortAnArray
+						>[1]['sortByField'],
 					});
 				}
 
@@ -160,7 +163,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
 		this: SelectQuery<T, Selection>
 	): Promise<SelectFields<T, Selection> | null>;
 
-	async first(): Promise<any | null> {
+	async first() {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
 			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');

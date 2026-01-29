@@ -6,6 +6,7 @@ import type {
 	ColumnRecord,
 	GenericObject,
 	List,
+	Numeric,
 	SchemaRecord,
 	Timestamp,
 	Tuple,
@@ -126,6 +127,12 @@ export const column = {
 	 * @remarks This column type is used for both whole & floating-point numbers.
 	 */
 	number: () => new Column<number>('number'),
+	/**
+	 * Creates a numeric (number or numeric string) column.
+	 * @returns A new {@link Column} instance for numeric.
+	 * @remarks This column type is used for both whole & floating-point numbers or numeric strings.
+	 */
+	numeric: () => new Column<Numeric>('numeric'),
 	/**
 	 * Creates a bigint column.
 	 * @returns A new {@link Column} instance for bigints.
