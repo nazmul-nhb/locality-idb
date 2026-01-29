@@ -184,11 +184,17 @@ export const column = {
 	 */
 	timestamp: () => new Column<Timestamp, 'timestamp'>('timestamp'),
 	/**
-	 * Creates a boolean column.
+	 * Creates a boolean column. Same as {@link column.boolean boolean}.
 	 * @returns A new {@link Column} instance for booleans.
 	 * @remarks This column type is used for true/false values.
 	 */
 	bool: () => new Column<boolean, 'bool'>('bool'),
+	/**
+	 * Creates a boolean column. Same as {@link column.bool bool}.
+	 * @returns A new {@link Column} instance for booleans.
+	 * @remarks This column type is used for true/false values.
+	 */
+	boolean: () => new Column<boolean, 'boolean'>('boolean'),
 	/**
 	 * Creates a date column.
 	 * @returns A new {@link Column} instance for dates.

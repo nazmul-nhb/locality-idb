@@ -437,7 +437,7 @@ export type InferSelectType<S extends Table> = Prettify<
 >;
 
 /** Column type strings used in {@link Column} definitions */
-export type TypeName = LooseLiteral<
+export type TypeName<L extends number = number> = LooseLiteral<
 	| 'int'
 	| 'float'
 	| 'number'
@@ -445,11 +445,12 @@ export type TypeName = LooseLiteral<
 	| 'bigint'
 	| 'text'
 	| 'string'
-	// | `char(${number})`
-	// | `varchar(${number})`
+	| `char(${L})`
+	| `varchar(${L})`
 	| 'uuid'
 	| 'timestamp'
 	| 'bool'
+	| 'boolean'
 	| 'date'
 	| 'object'
 	| 'array'

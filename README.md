@@ -11,9 +11,9 @@
 ![license](https://img.shields.io/npm/l/locality-idb)
 ![beta](https://img.shields.io/badge/status-beta-orange)
 <!-- ![bundle](https://img.shields.io/bundlephobia/minzip/locality-idb) -->
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
+<!-- ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) -->
 
-[Documentation](#-api-reference) • [Examples](#-usage) • [Contributing](#-contributing)
+[API Reference](#-api-reference) • [Examples](#-usage) • [Contributing](#-contributing)
 
 </div>
 
@@ -46,6 +46,7 @@
   - [Column Modifiers](#column-modifiers)
   - [Query Methods](#query-methods)
   - [Utility Functions](#utility-functions)
+  - [Validation](#validation)
 - [Type System](#-type-system)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -62,6 +63,7 @@
 - 🎨 **Schema-First**: Define your database schema with a simple, declarative API
 - ⚡ **Promise-Based**: Fully async/await compatible
 - 🛠️ **Rich Column Types**: Support for various data types including custom types
+- ✅ **Built-in Validation**: Automatic data type validation for built-in column types during insert and update operations
 
 ---
 
@@ -166,24 +168,26 @@ const schema = defineSchema({
 
 Locality IDB supports a wide range of column types:
 
-| Type                             | Description                          | Example                            |
-| -------------------------------- | ------------------------------------ | ---------------------------------- |
-| `int()` / `number()` / `float()` | Numeric values                       | `column.int()`                     |
-| `bigint()`                       | Large integers                       | `column.bigint()`                  |
-| `text()` / `string()`            | Text strings                         | `column.text()`                    |
-| `char(length?)`                  | Fixed-length string                  | `column.char(10)`                  |
-| `varchar(length?)`               | Variable-length string               | `column.varchar(255)`              |
-| `bool()`                         | Boolean values                       | `column.bool()`                    |
-| `date()`                         | Date objects                         | `column.date()`                    |
-| `timestamp()`                    | ISO 8601 timestamps (auto-generated) | `column.timestamp()`               |
-| `uuid()`                         | UUID strings (auto-generated v4)     | `column.uuid()`                    |
-| `object<T>()`                    | Generic objects                      | `column.object<UserData>()`        |
-| `array<T>()`                     | Arrays                               | `column.array<number>()`           |
-| `list<T>()`                      | Read-only arrays                     | `column.list<string>()`            |
-| `tuple<T>()`                     | Fixed-size tuples                    | `column.tuple<[string, number]>()` |
-| `set<T>()`                       | Sets                                 | `column.set<string>()`             |
-| `map<K,V>()`                     | Maps                                 | `column.map<string, number>()`     |
-| `custom<T>()`                    | Custom types                         | `column.custom<MyType>()`          |
+| Type                   | Description                                                | Example                            |
+| ---------------------- | ---------------------------------------------------------- | ---------------------------------- |
+| `number()` / `float()` | Numeric values (integer or float)                          | `column.int()`                     |
+| `int()`                | Numeric values (only integer is allowed)                   | `column.int()`                     |
+| `numeric()`            | Number or numeric string                                   | `column.numeric()`                 |
+| `bigint()`             | Large integers                                             | `column.bigint()`                  |
+| `text()` / `string()`  | Text strings                                               | `column.text()`                    |
+| `char(length?)`        | Fixed-length string                                        | `column.char(10)`                  |
+| `varchar(length?)`     | Variable-length string                                     | `column.varchar(255)`              |
+| `bool()` / `boolean()` | Boolean values                                             | `column.bool()`                    |
+| `date()`               | Date objects                                               | `column.date()`                    |
+| `timestamp()`          | ISO 8601 timestamps ([auto-generated](#utility-functions)) | `column.timestamp()`               |
+| `uuid()`               | UUID strings ([auto-generated](#utility-functions) v4)     | `column.uuid()`                    |
+| `object<T>()`          | Generic objects                                            | `column.object<UserData>()`        |
+| `array<T>()`           | Arrays                                                     | `column.array<number>()`           |
+| `list<T>()`            | Read-only arrays                                           | `column.list<string>()`            |
+| `tuple<T>()`           | Fixed-size tuples                                          | `column.tuple<[string, number]>()` |
+| `set<T>()`             | Sets                                                       | `column.set<string>()`             |
+| `map<K,V>()`           | Maps                                                       | `column.map<string, number>()`     |
+| `custom<T>()`          | Custom types                                               | `column.custom<MyType>()`          |
 
 ### Type Inference
 
@@ -779,6 +783,27 @@ const fromUnix = getTimestamp(1704067200000); // "2024-01-01T00:00:00.000Z"
 const fallback = getTimestamp('invalid'); // Current timestamp
 ```
 
+#### `isTimestamp(value: unknown): value is Timestamp`
+
+Checks if a value is a valid Timestamp string in ISO 8601 format.
+
+**Parameters:**
+
+- `value`: The value to check
+
+**Returns:** `true` if the value is a valid Timestamp, otherwise `false`
+
+**Example:**
+
+```typescript
+import { isTimestamp } from 'locality-idb';
+
+isTimestamp('2026-01-29T12:34:56.789Z'); // true
+isTimestamp('2026-01-29'); // false (not full ISO 8601)
+isTimestamp('invalid'); // false
+isTimestamp(123); // false
+```
+
 #### `openDBWithStores(name: string, stores: StoreConfig[], version?: number): Promise<IDBDatabase>`
 
 Opens an IndexedDB database with specified stores (low-level API).
@@ -810,6 +835,88 @@ const db = await openDBWithStores(
     1
 );
 ```
+
+---
+
+### Validation
+
+Locality IDB includes built-in validation that automatically validates data types for built-in column types during insert and update operations based on your schema definitions.
+
+#### Automatic Validation
+
+When you insert or update records, Locality IDB automatically validates that the values match their expected column types:
+
+```typescript
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+    age: column.int(),
+    email: column.varchar(255),
+  },
+});
+
+const db = new Locality({ dbName: 'app', schema });
+
+// ✅ Valid - all types match
+await db.insert('users').values({ name: 'Alice', age: 25, email: 'alice@example.com' }).run();
+
+// ❌ Throws TypeError - age must be an integer
+await db.insert('users').values({ name: 'Bob', age: 'twenty', email: 'bob@example.com' }).run();
+
+// ❌ Throws TypeError - email exceeds varchar(255) length
+await db.insert('users').values({ name: 'Charlie', age: 30, email: 'a'.repeat(300) }).run();
+```
+
+#### `validateColumnType<T>(type: T, value: unknown): string | null`
+
+Manually validate if a value matches the specified column data type.
+
+**Parameters:**
+
+- `type`: The column data type (e.g., `'int'`, `'text'`, `'uuid'`, `'varchar(255)'`)
+- `value`: The value to validate
+
+**Returns:** `null` if valid, otherwise an error message string
+
+**Example:**
+
+```typescript
+import { validateColumnType } from 'locality-idb';
+
+validateColumnType('int', 42);          // null (valid)
+validateColumnType('int', 'hello');     // "'\"hello\"' is not an integer"
+validateColumnType('text', 'hello');    // null (valid)
+validateColumnType('uuid', '550e8400-e29b-41d4-a716-446655440000'); // null (valid)
+validateColumnType('varchar(5)', 'hi'); // null (valid)
+validateColumnType('varchar(5)', 'hello world'); // error message
+validateColumnType('numeric', 42);      // null (valid)
+validateColumnType('numeric', '3.14');  // null (valid)
+validateColumnType('numeric', 'abc');   // error message
+```
+
+#### Validated Column Types
+
+The following column types are validated:
+
+| Type                       | Validation Rule                                                             |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `int`                      | Must be an integer                                                          |
+| `float` / `number`         | Must be a number                                                            |
+| `numeric`                  | Must be a number or numeric string                                          |
+| `bigint`                   | Must be a BigInt                                                            |
+| `text` / `string`          | Must be a string                                                            |
+| `char(n)`                  | Must be a string with exactly `n` characters                                |
+| `varchar(n)`               | Must be a string with at most `n` characters                                |
+| `bool` / `boolean`         | Must be a boolean                                                           |
+| `uuid`                     | Must be a valid UUID string                                                 |
+| `timestamp`                | Must be a valid ISO 8601 timestamp string                                   |
+| `date`                     | Must be a Date object                                                       |
+| `array` / `list` / `tuple` | Must be an array                                                            |
+| `set`                      | Must be a Set                                                               |
+| `map`                      | Must be a Map                                                               |
+| `object`                   | Must be an object                                                           |
+| `custom`                   | No validation (always passes, custom validation integration coming soon...) |
 
 ---
 
