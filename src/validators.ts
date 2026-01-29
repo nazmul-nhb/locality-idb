@@ -108,11 +108,11 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 		case 'custom':
 			return null;
 
-		default:
-			if (type.includes('varchar(')) {
-				if (isString(value)) {
-					const length = extractNumbers(type)[0];
+		default: {
+			const length = extractNumbers(type)[0];
 
+			if (type.startsWith('varchar(')) {
+				if (isString(value)) {
 					if (isNumber(length) && value.length <= length) return null;
 
 					return `'${strVal}' does not satisfy the constraint: varchar length ${length}`;
@@ -121,10 +121,8 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 				return `'${strVal}' is not a varchar string`;
 			}
 
-			if (type.includes('char(')) {
+			if (type.startsWith('char(')) {
 				if (isString(value)) {
-					const length = extractNumbers(type)[0];
-
 					if (isNumber(length) && value.length === length) return null;
 
 					return `'${strVal}' does not satisfy the constraint: char length ${length}`;
@@ -134,6 +132,7 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 			}
 
 			return null;
+		}
 	}
 }
 
