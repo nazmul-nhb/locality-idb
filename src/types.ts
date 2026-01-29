@@ -202,9 +202,9 @@ export type AdvancedTypes =
  *   (x: boolean): void;
  * };
  *
- * type Params = FirstOverloadParameters<Fn>; // [a: number, b: string]
+ * type Params = FirstOverloadParams<Fn>; // [a: number, b: string]
  */
-export type FirstOverloadParameters<T> =
+export type FirstOverloadParams<T> =
 	T extends (
 		{
 			(a1: infer P1, ...args: infer P2): any;
@@ -436,12 +436,37 @@ export type InferSelectType<S extends Table> = Prettify<
 	:	never
 >;
 
+/** Column type strings used in {@link Column} definitions */
+export type TypeName = LooseLiteral<
+	| 'int'
+	| 'float'
+	| 'number'
+	| 'numeric'
+	| 'bigint'
+	| 'text'
+	| 'string'
+	// | `char(${number})`
+	// | `varchar(${number})`
+	| 'uuid'
+	| 'timestamp'
+	| 'bool'
+	| 'date'
+	| 'object'
+	| 'array'
+	| 'list'
+	| 'tuple'
+	| 'set'
+	| 'map'
+	| 'custom'
+>;
+
 /** Store configuration type for {@link IndexedDB} */
 export type StoreConfig = {
 	/** Store name */
 	name: string;
+	// TODO: Handle multiple primary keys later
 	/** Primary key path(s) */
-	keyPath?: string | string[];
+	keyPath?: string;
 	/** Whether the primary key is auto-incrementing */
 	autoIncrement?: boolean;
 };

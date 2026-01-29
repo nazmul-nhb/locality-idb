@@ -6,7 +6,7 @@ import { Chronos } from 'nhb-toolbox/chronos';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
 import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
-import { column, defineSchema, Locality } from 'locality';
+import { column, defineSchema, getTimestamp, Locality } from 'locality';
 
 Chronos.register(timeZonePlugin);
 
@@ -26,8 +26,10 @@ const schema = defineSchema({
 		completed: column.bool().default(false),
 		uuid: column.uuid(),
 		timestamp: column.timestamp().optional(),
-		// m: column.list().optional(),
+		test: column.char(3).optional().default('N/A'),
 		createdAt: column.custom<Chronos>().default(new Chronos().timeZone('America/New_York')),
+		// TODO: Add some method that will trigger only when updating
+		updatedAt: column.timestamp().default(getTimestamp()),
 	},
 });
 
@@ -78,7 +80,7 @@ const renderTodos = () => {
 		checkbox.checked = todo.completed;
 		checkbox.className = 'w-5 h-5 cursor-pointer accent-blue-600';
 		checkbox.addEventListener('change', () =>
-			toggleTodo(todo.serial, { completed: !todo.completed })
+			toggleTodo(todo.serial, { completed: !todo.completed, test: 'OKz' })
 		);
 
 		const span = document.createElement('span');

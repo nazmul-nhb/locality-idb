@@ -42,3 +42,15 @@ export function getTimestamp(value?: string | number | Date): Timestamp {
 
 	return date.toISOString() as Timestamp;
 }
+
+/**
+ * * Check if a value is a valid Timestamp string in ISO 8601 format
+ * @param value The value to check
+ * @returns `true` if the value is a valid Timestamp, otherwise `false`
+ */
+export function isTimestamp(value: unknown): value is Timestamp {
+	return (
+		isNonEmptyString(value) &&
+		value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/) !== null
+	);
+}

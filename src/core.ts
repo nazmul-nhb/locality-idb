@@ -1,5 +1,5 @@
 import { isNonEmptyString } from 'nhb-toolbox';
-import type { ColumnDefinition } from './types';
+import type { ColumnDefinition, TypeName } from './types';
 
 /** Symbol for type extraction (exists only in type system) */
 export const $ColumnType = Symbol('$ColumnType');
@@ -20,9 +20,9 @@ export const IsUnique = Symbol('IsUnique');
 export const DefaultValue = Symbol('DefaultValue');
 
 /** @class Represents a column definition. */
-export class Column<T = any> {
+export class Column<T = any, TName extends TypeName = TypeName> {
 	declare [$ColumnType]: T;
-	declare [ColumnType]: string;
+	declare [ColumnType]: TName;
 	declare [IsPrimaryKey]?: boolean;
 	declare [IsAutoInc]?: boolean;
 	declare [IsOptional]?: boolean;
@@ -30,7 +30,7 @@ export class Column<T = any> {
 	declare [IsUnique]?: boolean;
 	declare [DefaultValue]?: T;
 
-	constructor(type: string) {
+	constructor(type: TName) {
 		this[ColumnType] = type;
 	}
 
@@ -55,9 +55,9 @@ export class Column<T = any> {
 	auto(): T extends number ? this & { [IsAutoInc]: true } : Omit<this, 'auto'> {
 		const colType = this[ColumnType];
 
-		const allowedTypes = ['int', 'integer', 'float', 'number'];
+		const allowedTypes = ['int', 'integer', 'float', 'number'] as TypeName[];
 
-		if (!isNonEmptyString(colType) || !allowedTypes.includes(colType.toLowerCase())) {
+		if (!isNonEmptyString(colType) || !allowedTypes.includes(colType)) {
 			throw new Error(`auto() can only be used with integer columns, got: ${colType}`);
 		}
 

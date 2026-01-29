@@ -55,21 +55,34 @@ export class Locality<
 > {
 	readonly #name: DBName;
 	readonly #schema: Schema;
-	readonly #version?: Version;
+	// TODO: Handle multiple primary keys later
+	readonly #keyPath?: string;
+
+	readonly version: Version;
 
 	#db!: IDBDatabase;
+	#version!: Version;
 	#readyPromise: Promise<void>;
 
 	constructor(config: LocalityConfig<DBName, Version, Schema>) {
 		this.#name = config.dbName;
 		this.#schema = config.schema;
-		this.#version = config.version;
+		// this.version = config.version || 1 as Version;
 
 		const store = this.#buildStoresConfig();
 
-		this.#readyPromise = openDBWithStores(this.#name, store, this.#version).then((db) => {
-			this.#db = db;
-		});
+		// TODO: Handle multiple primary keys later
+		this.#keyPath = store.find((s) => s.autoIncrement)?.keyPath;
+
+		this.#readyPromise = openDBWithStores(this.#name, store, config.version)
+			.then((db) => {
+				this.#db = db;
+			})
+			.finally(() => {
+				this.#version = this.#db?.version as Version;
+			});
+
+		this.version = this.#version ?? config.version;
 	}
 
 	/** Build store configurations from schema. */
@@ -124,7 +137,8 @@ export class Locality<
 			table as string,
 			() => this.#db,
 			this.#readyPromise,
-			this.#schema[table].columns
+			this.#schema[table].columns,
+			this.#keyPath
 		);
 	}
 
@@ -136,7 +150,9 @@ export class Locality<
 		return new UpdateQuery<Row, Schema[T]>(
 			table as string,
 			() => this.#db,
-			this.#readyPromise
+			this.#readyPromise,
+			this.#schema[table].columns,
+			this.#keyPath
 		);
 	}
 

@@ -1,15 +1,15 @@
 import { isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
-import { ColumnType, DefaultValue, type Table } from './core';
+import { type Table } from './core';
 import type {
 	ColumnDefinition,
-	FirstOverloadParameters,
+	FirstOverloadParams,
 	GenericObject,
 	InferUpdateType,
 	NestedPrimitiveKey,
 	SelectFields,
 	SortDirection,
 } from './types';
-import { getTimestamp, uuidV4 } from './utils';
+import { validateAndPrepareData } from './validators';
 
 /** Symbol for type extraction (exists only in type system) */
 const Selected = Symbol('Selected');
@@ -134,7 +134,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
 				if (this.#orderByKey) {
 					results = sortAnArray(results, {
 						sortOrder: this.#orderByDir,
-						sortByField: this.#orderByKey as FirstOverloadParameters<
+						sortByField: this.#orderByKey as FirstOverloadParams<
 							typeof sortAnArray
 						>[1]['sortByField'],
 					});
@@ -203,6 +203,8 @@ export class InsertQuery<
 	#readyPromise: Promise<void>;
 	#dataToInsert: Raw[] = [];
 	#columns?: ColumnDefinition;
+	// TODO: Handle multiple primary keys later
+	#keyPath?: string;
 
 	declare [IsArray]: boolean;
 
@@ -210,12 +212,14 @@ export class InsertQuery<
 		table: string,
 		dbGetter: () => IDBDatabase,
 		readyPromise: Promise<void>,
-		columns?: ColumnDefinition
+		columns?: ColumnDefinition,
+		keyPath?: string
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 		this.#columns = columns;
+		this.#keyPath = keyPath;
 	}
 
 	/**
@@ -242,33 +246,13 @@ export class InsertQuery<
 
 			const insertedDocs: Data[] = [];
 
-			type RawKey = keyof Raw;
+			// type RawKey = keyof Raw;
 
 			const promises: Promise<void>[] = this.#dataToInsert.map((data) => {
 				return new Promise((res, rej) => {
-					// Apply default values for missing fields
-					const updated = { ...data };
-
-					if (this.#columns) {
-						Object.entries(this.#columns).forEach(([fieldName, column]) => {
-							const defaultValue = column[DefaultValue];
-
-							if (!(fieldName in updated) && defaultValue !== undefined) {
-								updated[fieldName as RawKey] = defaultValue;
-							}
-
-							const columnType = column[ColumnType];
-							if (columnType === 'uuid' && !(fieldName in updated)) {
-								updated[fieldName as RawKey] = uuidV4() as Raw[RawKey];
-							}
-
-							if (columnType === 'timestamp' && !(fieldName in updated)) {
-								updated[fieldName as RawKey] = getTimestamp() as Raw[RawKey];
-							}
-						});
-					}
-
-					const request = store.add(updated);
+					const request = store.add(
+						validateAndPrepareData(data, this.#columns, this.#keyPath)
+					);
 
 					request.onsuccess = () => {
 						const key = request.result;
@@ -305,11 +289,22 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	#readyPromise: Promise<void>;
 	#dataToUpdate?: InferUpdateType<S>;
 	#whereCondition?: (row: T) => boolean;
+	#columns?: ColumnDefinition;
+	// TODO: Handle multiple primary keys later
+	#keyPath?: string;
 
-	constructor(table: string, dbGetter: () => IDBDatabase, readyPromise: Promise<void>) {
+	constructor(
+		table: string,
+		dbGetter: () => IDBDatabase,
+		readyPromise: Promise<void>,
+		columns?: ColumnDefinition,
+		keyPath?: string
+	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
+		this.#columns = columns;
+		this.#keyPath = keyPath;
 	}
 
 	/**
@@ -357,7 +352,16 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 
 				const updatePromises = rows.map((row) => {
 					return new Promise<void>((res, rej) => {
-						const updatedRow = { ...row, ...this.#dataToUpdate };
+						const updatedRow = validateAndPrepareData(
+							{
+								...row,
+								...this.#dataToUpdate,
+							},
+							this.#columns,
+							this.#keyPath,
+							true
+						);
+
 						const putRequest = store.put(updatedRow);
 
 						putRequest.onsuccess = () => {
