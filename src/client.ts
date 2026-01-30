@@ -171,4 +171,26 @@ export class Locality<
 			keyField as keyof Row
 		);
 	}
+
+	/** @instance Deletes the entire database. */
+	async deleteDB() {
+		this.#db.close();
+		const deleteRequest = window.indexedDB.deleteDatabase(this.#name);
+
+		return new Promise<void>((resolve, reject) => {
+			deleteRequest.onsuccess = () => resolve();
+			deleteRequest.onerror = () => reject(deleteRequest.error);
+		});
+	}
+
+	async clearStore<T extends keyof Schema>(table: T) {
+		return new Promise<void>((resolve, reject) => {
+			const transaction = this.#db.transaction(table as string, 'readwrite');
+			const store = transaction.objectStore(table as string);
+			const clearRequest = store.clear();
+
+			clearRequest.onsuccess = () => resolve();
+			clearRequest.onerror = () => reject(clearRequest.error);
+		});
+	}
 }

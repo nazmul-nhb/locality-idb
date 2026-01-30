@@ -246,8 +246,6 @@ export class InsertQuery<
 
 			const insertedDocs: Data[] = [];
 
-			// type RawKey = keyof Raw;
-
 			const promises: Promise<void>[] = this.#dataToInsert.map((data) => {
 				return new Promise((res, rej) => {
 					const request = store.add(
@@ -339,12 +337,12 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 		return new Promise((resolve, reject) => {
 			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
-			const request = store.getAll();
+			const request = store.getAll() as IDBRequest<T[]>;
 
 			let updateCount = 0;
 
 			request.onsuccess = () => {
-				let rows: T[] = request.result;
+				let rows = request.result;
 
 				if (this.#whereCondition) {
 					rows = rows.filter(this.#whereCondition);
@@ -352,11 +350,8 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 
 				const updatePromises = rows.map((row) => {
 					return new Promise<void>((res, rej) => {
-						const updatedRow = validateAndPrepareData(
-							{
-								...row,
-								...this.#dataToUpdate,
-							},
+						const updatedRow = validateAndPrepareData<T>(
+							{ ...row, ...this.#dataToUpdate },
 							this.#columns,
 							this.#keyPath,
 							true

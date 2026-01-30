@@ -28,7 +28,7 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 
 	switch (type) {
 		case 'int':
-			if (isInteger(type)) return null;
+			if (isInteger(value)) return null;
 
 			return `'${strVal}' is not an integer`;
 
@@ -145,7 +145,7 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
  * @param forUpdate Whether the operation is an update (default: `false`)
  *
  * @returns The validated and prepared data object
- * @throws {TypeError} If any value does not match the expected column type
+ * @throws A {@link TypeError} if any value does not match the expected column type
  */
 export function validateAndPrepareData<Data extends GenericObject>(
 	data: Data,

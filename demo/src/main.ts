@@ -6,7 +6,7 @@ import { Chronos } from 'nhb-toolbox/chronos';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
 import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
-import { column, defineSchema, getTimestamp, Locality } from 'locality';
+import { column, defineSchema, deleteDB, getTimestamp, Locality } from 'locality';
 
 Chronos.register(timeZonePlugin);
 
@@ -29,7 +29,7 @@ const schema = defineSchema({
 		test: column.char(3).optional().default('N/A'),
 		createdAt: column.custom<Chronos>().default(new Chronos().timeZone('America/New_York')),
 		// TODO: Add some method that will trigger only when updating
-		updatedAt: column.timestamp().default(getTimestamp()),
+		updatedAt: column.timestamp().default(getTimestamp('1992-01-18')),
 	},
 });
 
@@ -80,7 +80,7 @@ const renderTodos = () => {
 		checkbox.checked = todo.completed;
 		checkbox.className = 'w-5 h-5 cursor-pointer accent-blue-600';
 		checkbox.addEventListener('change', () =>
-			toggleTodo(todo.serial, { completed: !todo.completed, test: 'OKz' })
+			toggleTodo(todo.serial, { completed: !todo.completed, updatedAt: getTimestamp() })
 		);
 
 		const span = document.createElement('span');
@@ -174,7 +174,41 @@ todoInput.addEventListener('keypress', (e) => {
 
 clearCompletedBtn.addEventListener('click', handleClearCompleted);
 
+const clearStoreBtn = document.getElementById('clearStoreBtn') as HTMLButtonElement;
+const clearDBBtn = document.getElementById('clearDBBtn') as HTMLButtonElement;
+const clearThisDBBtn = document.getElementById('clearThisDBBtn') as HTMLButtonElement;
+
 // Initialize on page load
 window.addEventListener('load', async () => {
+	clearDBBtn.addEventListener('click', async () => {
+		const storeNameInput = document.getElementById('dbNameInput') as HTMLInputElement;
+
+		const storeName = storeNameInput.value.trim();
+
+		if (!storeName) {
+			alert('Please enter a database name!');
+			return;
+		}
+
+		await deleteDB(storeName);
+	});
+
+	clearThisDBBtn.addEventListener('click', async () => {
+		await db.deleteDB();
+	});
+
+	clearStoreBtn.addEventListener('click', async () => {
+		const storeNameInput = document.getElementById('storeNameInput') as HTMLInputElement;
+
+		const storeName = storeNameInput.value.trim();
+
+		if (!storeName) {
+			alert('Please enter a store name!');
+			return;
+		}
+
+		await db.clearStore(storeName as keyof SchemaType);
+	});
+
 	await loadTodos();
 });

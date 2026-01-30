@@ -15,6 +15,49 @@
 				<p class="text-gray-600">Stay organized with IndexedDB</p>
 			</div>
 
+			<!-- Button to Clear a specific database -->
+			<div class="flex justify-center items-center mb-6">
+				<input
+					type="text"
+					id="dbNameInput"
+					placeholder="Enter a DB name to clear"
+					class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mr-2"
+				/>
+
+				<button
+					id="clearDBBtn"
+					class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+				>
+					Clear Databse
+				</button>
+			</div>
+
+			<div class="flex justify-center items-center mb-6">
+				<button
+					id="clearThisDBBtn"
+					class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+				>
+					Or Delete This Database
+				</button>
+			</div>
+
+			<!-- Button to Clear a specific store (column) -->
+			<div class="flex justify-center items-center mb-6">
+				<input
+					type="text"
+					id="storeNameInput"
+					placeholder="Enter store name to clear"
+					class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mr-2"
+				/>
+
+				<button
+					id="clearStoreBtn"
+					class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+				>
+					Clear Store
+				</button>
+			</div>
+
 			<!-- Stats Card -->
 			<div class="grid grid-cols-2 gap-4 mb-8">
 				<div class="bg-white rounded-xl shadow-md p-6 text-center">
