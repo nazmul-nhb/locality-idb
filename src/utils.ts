@@ -56,6 +56,12 @@ export function isTimestamp(value: unknown): value is Timestamp {
 	);
 }
 
+/**
+ * * Delete an IndexedDB database by name
+ * @param name The name of the database to delete
+ * @returns A promise that resolves when the database is deleted
+ * @throws Error if `IndexedDB` is not supported or if the database does not exist
+ */
 export function deleteDB(name: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		if (!window.indexedDB) {

@@ -9,6 +9,7 @@ import type {
 	SchemaDefinition,
 	StoreConfig,
 } from './types';
+import { deleteDB } from './utils';
 
 /**
  * @class `Locality` class for `IndexedDB` interactions.
@@ -172,18 +173,11 @@ export class Locality<
 		);
 	}
 
-	/** @instance Deletes the entire database. */
-	async deleteDB() {
-		this.#db.close();
-		const deleteRequest = window.indexedDB.deleteDatabase(this.#name);
-
-		return new Promise<void>((resolve, reject) => {
-			deleteRequest.onsuccess = () => resolve();
-			deleteRequest.onerror = () => reject(deleteRequest.error);
-		});
-	}
-
-	async clearStore<T extends keyof Schema>(table: T) {
+	/**
+	 * @instance Clears all records from a specific store (table).
+	 * @param table Name of the table (store) to clear.
+	 */
+	async clearTable<T extends keyof Schema>(table: T) {
 		return new Promise<void>((resolve, reject) => {
 			const transaction = this.#db.transaction(table as string, 'readwrite');
 			const store = transaction.objectStore(table as string);
@@ -192,5 +186,12 @@ export class Locality<
 			clearRequest.onsuccess = () => resolve();
 			clearRequest.onerror = () => reject(clearRequest.error);
 		});
+	}
+
+	/** @instance Closes and deletes the entire database. */
+	async deleteDB() {
+		this.#db.close();
+
+		return deleteDB(this.#name);
 	}
 }

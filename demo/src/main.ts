@@ -195,13 +195,13 @@ window.addEventListener('load', async () => {
 
 		await deleteDB(storeName);
 
-		await loadTodos();
+		location.reload();
 	});
 
 	clearThisDBBtn.addEventListener('click', async () => {
 		await db.deleteDB();
 
-		await loadTodos();
+		location.reload();
 	});
 
 	clearStoreBtn.addEventListener('click', async () => {
@@ -214,7 +214,7 @@ window.addEventListener('load', async () => {
 			return;
 		}
 
-		await db.clearStore(storeName as keyof SchemaType);
+		await db.clearTable(storeName as keyof SchemaType);
 
 		await loadTodos();
 	});

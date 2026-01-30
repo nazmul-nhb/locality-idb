@@ -496,6 +496,28 @@ Creates a DELETE query for the specified table.
 const query = db.delete('users');
 ```
 
+#### `clearTable<T>(table: T): Promise<void>`
+
+Clears all records from the specified table.
+
+```typescript
+await db.clearTable('users');
+```
+
+> **Warning:** This will remove all data and cannot be undone.
+
+#### `deleteDB(): Promise<void>`
+
+Deletes the entire database (current database).
+
+> **Note:** This method uses the `deleteDB` utility function internally.
+
+```typescript
+await db.deleteDB();
+```
+
+> **Warning:** This will remove all data and cannot be undone.
+
 ---
 
 ### Schema Functions
@@ -835,6 +857,25 @@ const db = await openDBWithStores(
     1
 );
 ```
+
+#### `deleteDB(name: string): Promise<void>`
+
+Deletes an IndexedDB database by name.
+
+**Parameters:**
+
+- `name`: The name of the database to delete
+
+**Returns:** A promise that resolves when the database is deleted
+
+**Example:**
+
+```typescript
+import { deleteDB } from 'locality-idb';
+await deleteDB('my-database');
+```
+
+> **Warning:** This will remove all data and cannot be undone.
 
 ---
 
