@@ -145,7 +145,9 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
  * @param forUpdate Whether the operation is an update (default: `false`)
  *
  * @returns The validated and prepared data object
- * @throws A {@link TypeError} if any value does not match the expected column type
+ * @throws
+ * - A {@link TypeError} if any value does not match the expected column type
+ * - A {@link RangeError} if any field is not defined in the table schema
  */
 export function validateAndPrepareData<Data extends GenericObject>(
 	data: Data,
@@ -158,6 +160,14 @@ export function validateAndPrepareData<Data extends GenericObject>(
 	const prepared = { ...data };
 
 	if (columns) {
+		for (const fieldName of Object.keys(prepared)) {
+			if (!Object.keys(columns).includes(fieldName)) {
+				throw new RangeError(
+					`"${fieldName}" in ${JSON.stringify(data)} is not defined in the table schema!`
+				);
+			}
+		}
+
 		Object.entries(columns).forEach((entry) => {
 			const [fieldName, column] = entry as [Key, Column];
 

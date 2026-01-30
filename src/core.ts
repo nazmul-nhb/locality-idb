@@ -40,7 +40,11 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		return this as this & { [IsPrimaryKey]: true };
 	}
 
-	/** @instance Marks column as unique */
+	/**
+	 * @instance Marks column as unique
+	 *
+	 * @remarks Also marks the column as indexed
+	 */
 	unique() {
 		this[IsIndexed] = true;
 		this[IsUnique] = true;

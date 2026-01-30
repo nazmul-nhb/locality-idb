@@ -518,6 +518,52 @@ await db.deleteDB();
 
 > **Warning:** This will remove all data and cannot be undone.
 
+#### `close(): void`
+
+Closes the database connection.
+
+```typescript
+db.close();
+```
+
+#### `getDBInstance(): Promise<IDBDatabase>`
+
+Gets the underlying `IDBDatabase` instance.
+
+```typescript
+const idb = await db.getDBInstance();
+```
+
+#### `seed<T>(table: T, data: InferInsertType<Schema[T]> | InferInsertType<Schema[T]>[]): Promise<InferSelectType<Schema[T]> | InferSelectType<Schema[T]>[]>`
+
+Inserts seed data into the specified table.
+
+> **Note:**
+>
+> - This is a convenience method for inserting initial data.
+> - It uses the `insert` method internally.
+> - It does not clear existing data before inserting.
+
+**Parameters:**
+
+- `table`: Table name
+- `data`: Single record or array of records to insert
+
+**Returns:** Inserted record(s)
+
+**Example:**
+
+```typescript
+await db.seed('users', [
+  { name: 'Alice', email: 'alice@wonderland.mad', },
+  { name: 'Bob', email: 'bob@top.com', },
+]);
+
+const allUsers = await db.from('users').all();
+
+console.log(allUsers);
+```
+
 ---
 
 ### Schema Functions

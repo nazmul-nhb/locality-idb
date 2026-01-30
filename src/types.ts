@@ -461,7 +461,17 @@ export type TypeName<L extends number = number> = LooseLiteral<
 	| 'custom'
 >;
 
-/** Store configuration type for {@link IndexedDB} */
+/** Index configuration type for `IndexedDB` */
+export type IndexConfig = {
+	/** Index name (typically the field name) */
+	name: string;
+	/** Key path for the index */
+	keyPath: string;
+	/** Whether the index enforces unique values */
+	unique?: boolean;
+};
+
+/** Store configuration type for `IndexedDB` */
 export type StoreConfig = {
 	/** Store name */
 	name: string;
@@ -470,4 +480,6 @@ export type StoreConfig = {
 	keyPath?: string;
 	/** Whether the primary key is auto-incrementing */
 	autoIncrement?: boolean;
+	/** Array of index configurations for this store */
+	indexes?: IndexConfig[];
 };

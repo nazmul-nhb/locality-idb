@@ -23,7 +23,7 @@ const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 const schema = defineSchema({
 	todos: {
 		serial: column.int().pk().auto(),
-		task: column.text(),
+		task: column.text().unique(),
 		completed: column.bool().default(false),
 		uuid: column.uuid(),
 		timestamp: column.timestamp().optional(),
@@ -47,7 +47,7 @@ type UpdateTodo = InferUpdateType<SchemaType['todos']>;
 
 const db = new Locality({
 	dbName: 'todo-db',
-	version: 33,
+	version: 36,
 	schema,
 });
 
@@ -232,8 +232,14 @@ window.addEventListener('load', async () => {
 	const experiments = await db.from('experiments').all();
 
 	if (!isValidArray(experiments)) {
-		await db.seed('experiments', [{ name: 'Ato' }, { name: 'Beto' }, { name: 'Ceto' }]);
+		await db.seed('experiments', [
+			{ name: 'Ato', active: false },
+			{ name: 'Beto' },
+			{ name: 'Ceto' },
+		]);
 	}
 
 	console.table(experiments);
+
+	// await db.deleteTable('experiments');
 });

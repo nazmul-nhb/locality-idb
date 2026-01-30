@@ -1,8 +1,9 @@
-import { IsAutoInc, IsPrimaryKey } from './core';
+import { IsAutoInc, IsIndexed, IsPrimaryKey, IsUnique } from './core';
 import { openDBWithStores } from './factory';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
+	IndexConfig,
 	InferInsertType,
 	InferSelectType,
 	LocalityConfig,
@@ -92,7 +93,7 @@ export class Locality<
 				this.#version = this.#db?.version as Version;
 			});
 
-		this.version = this.#version ?? config.version;
+		this.version = this.#version ?? config.version ?? 1;
 	}
 
 	/** Build store configurations from schema. */
@@ -106,14 +107,28 @@ export class Locality<
 			// TODO: Handle multiple primary keys later
 			const pkName = Object.entries(columns).find(([_, col]) => col[IsPrimaryKey])?.[0];
 
-			// if (!pkName) {
-			// 	throw new Error(`Table "${tableName}" must have a primary key column.`);
-			// }
+			// Build indexes from columns marked with index() or unique()
+			const indexes: IndexConfig[] = [];
+
+			for (const [colName, col] of Object.entries(columns)) {
+				// Skip primary key columns - they are indexed by default in IndexedDB
+				if (col[IsPrimaryKey]) continue;
+
+				// Check if column is indexed (includes unique columns)
+				if (col[IsIndexed]) {
+					indexes.push({
+						name: colName,
+						keyPath: colName,
+						unique: col[IsUnique] ?? false,
+					});
+				}
+			}
 
 			return {
 				name: tableName,
 				keyPath: pkName,
 				autoIncrement: autoInc,
+				indexes: indexes.length > 0 ? indexes : undefined,
 			};
 		});
 	}
@@ -197,6 +212,41 @@ export class Locality<
 		});
 	}
 
+	// /**
+	//  *  @instance Deletes a specific table (object store) from the database.
+	//  *  @param table Name of the table (store) to delete.
+	//  *
+	//  * @remarks
+	//  * - Unlike {@link clearTable clearing a table}, deleting a table removes the entire object store from the database.
+	//  * - This method closes the current database connection before deleting the specified table.
+	//  * - After deletion, it reopens the database to reflect the changes.
+	//  */
+	// async deleteTable<T extends TName>(table: T) {
+	// 	const request = window.indexedDB.open(this.#name, this.#db.version + 1);
+
+	// 	request.onupgradeneeded = (event) => {
+	// 		const db = (event.target as IDBOpenDBRequest).result;
+
+	// 		if (db.objectStoreNames.contains(table as string)) {
+	// 			db.deleteObjectStore(table as string);
+	// 		}
+	// 	};
+
+	// 	request.onsuccess = () => {
+	// 		this.#db = request.result;
+	// 	};
+
+	// 	this.#readyPromise = new Promise<void>((resolve, reject) => {
+	// 		request.onsuccess = () => {
+	// 			this.#db = request.result;
+	// 			resolve();
+	// 		};
+	// 		request.onerror = () => reject(request.error);
+	// 	});
+
+	// 	return this.#readyPromise;
+	// }
+
 	/** @instance Closes and deletes the entire database. */
 	async deleteDB() {
 		this.#db.close();
@@ -220,7 +270,7 @@ export class Locality<
 	 *
 	 * @remarks
 	 * - This is a convenience method that inserts multiple records into the specified table.
-	 * - It returns the inserted records as an array.
+	 * - It does not clear existing data; it only adds new records.
 	 *
 	 * @param table Name of the table to seed data into.
 	 * @param data Array of data objects to be inserted.

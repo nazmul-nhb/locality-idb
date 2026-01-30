@@ -65,7 +65,7 @@ export function isTimestamp(value: unknown): value is Timestamp {
 export function deleteDB(name: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		if (!window.indexedDB) {
-			throw new Error('IndexedDb is not supported in this environment or browser!');
+			throw new Error('IndexedDB is not supported in this environment or browser!');
 		}
 
 		const databses = window.indexedDB.databases();
