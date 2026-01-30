@@ -51,7 +51,8 @@ export function getTimestamp(value?: string | number | Date): Timestamp {
 export function isTimestamp(value: unknown): value is Timestamp {
 	return (
 		isNonEmptyString(value) &&
-		value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/) !== null
+		value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/) !==
+			null
 	);
 }
 
@@ -60,6 +61,23 @@ export function deleteDB(name: string): Promise<void> {
 		if (!window.indexedDB) {
 			throw new Error('IndexedDb is not supported in this environment or browser!');
 		}
+
+		const databses = window.indexedDB.databases();
+
+		databses
+			.then((dbs) => {
+				const dbExists = dbs.some((db) => db.name === name);
+
+				if (!dbExists) {
+					reject(new Error(`Database '${name}' does not exist in this system!`));
+					return;
+				}
+
+				// proceedToDelete();
+			})
+			.catch((err) => {
+				reject(err);
+			});
 
 		const request = window.indexedDB.deleteDatabase(name);
 

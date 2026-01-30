@@ -5,8 +5,8 @@ import './test';
 import { Chronos } from 'nhb-toolbox/chronos';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
-import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
-import { column, defineSchema, deleteDB, getTimestamp, Locality } from 'locality';
+import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
+import { column, defineSchema, deleteDB, Locality } from 'locality';
 
 Chronos.register(timeZonePlugin);
 
@@ -27,9 +27,9 @@ const schema = defineSchema({
 		uuid: column.uuid(),
 		timestamp: column.timestamp().optional(),
 		test: column.char(3).optional().default('N/A'),
-		createdAt: column.custom<Chronos>().default(new Chronos().timeZone('America/New_York')),
+		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
 		// TODO: Add some method that will trigger only when updating
-		updatedAt: column.timestamp().default(getTimestamp('1992-01-18')),
+		updatedAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
 	},
 });
 
@@ -80,11 +80,14 @@ const renderTodos = () => {
 		checkbox.checked = todo.completed;
 		checkbox.className = 'w-5 h-5 cursor-pointer accent-blue-600';
 		checkbox.addEventListener('change', () =>
-			toggleTodo(todo.serial, { completed: !todo.completed, updatedAt: getTimestamp() })
+			toggleTodo(todo.serial, {
+				completed: !todo.completed,
+				updatedAt: new Chronos().toLocalISOString() as Timestamp,
+			})
 		);
 
 		const span = document.createElement('span');
-		span.textContent = `${todo.task} at ${new Chronos(todo.createdAt?.native).timeZone('Asia/Tehran').toLocalISOString()}`;
+		span.textContent = `${todo.task} at ${todo.createdAt}`;
 		span.className = `flex-1 text-gray-800 ${
 			todo.completed ? 'line-through text-green-600' : ''
 		}`;
@@ -191,10 +194,14 @@ window.addEventListener('load', async () => {
 		}
 
 		await deleteDB(storeName);
+
+		await loadTodos();
 	});
 
 	clearThisDBBtn.addEventListener('click', async () => {
 		await db.deleteDB();
+
+		await loadTodos();
 	});
 
 	clearStoreBtn.addEventListener('click', async () => {
@@ -208,6 +215,8 @@ window.addEventListener('load', async () => {
 		}
 
 		await db.clearStore(storeName as keyof SchemaType);
+
+		await loadTodos();
 	});
 
 	await loadTodos();

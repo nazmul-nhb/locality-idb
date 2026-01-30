@@ -30,80 +30,80 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 		case 'int':
 			if (isInteger(value)) return null;
 
-			return `'${strVal}' is not an integer`;
+			return `${strVal} is not an integer`;
 
 		case 'float':
 		case 'number':
 			if (isNumber(value)) return null;
 
-			return `'${strVal}' is not a ${type === 'float' ? 'float ' : ''}number`;
+			return `${strVal} is not a ${type === 'float' ? 'float ' : ''}number`;
 
 		case 'numeric':
 			if (isNumericString(value) || isNumber(value)) return null;
 
-			return `'${strVal}' is not a numeric value`;
+			return `${strVal} is not a numeric value`;
 
 		case 'bigint':
 			if (isBigInt(value)) return null;
 
-			return `'${strVal}' is not a bigint`;
+			return `${strVal} is not a bigint`;
 
 		case 'text':
 		case 'string':
 			if (isString(value)) return null;
 
-			return `'${strVal}' is not a ${type === 'text' ? 'text ' : ''}string`;
+			return `${strVal} is not a ${type === 'text' ? 'text ' : ''}string`;
 
 		case 'timestamp':
 			if (isTimestamp(value)) return null;
 
-			return `'${strVal}' is not a timestamp string`;
+			return `${strVal} is not a timestamp string`;
 
 		case 'uuid':
 			if (isUUID(value)) return null;
 
-			return `'${strVal}' is not a UUID string`;
+			return `${strVal} is not a UUID string`;
 
 		case 'bool':
 		case 'boolean':
 			if (isBoolean(value)) return null;
 
-			return `'${strVal}' is not a boolean`;
+			return `${strVal} is not a boolean`;
 
 		case 'array':
 			if (isArray(value)) return null;
 
-			return `'${strVal}' is not an array`;
+			return `${strVal} is not an array`;
 
 		case 'list':
 			if (isArray(value)) return null;
 
-			return `'${strVal}' is not a list`;
+			return `${strVal} is not a list`;
 
 		case 'tuple':
 			if (isArray(value)) return null;
 
-			return `'${strVal}' is not a tuple`;
+			return `${strVal} is not a tuple`;
 
 		case 'set':
 			if (isSet(value)) return null;
 
-			return `'${strVal}' is not a set`;
+			return `${strVal} is not a set`;
 
 		case 'object':
 			if (isObject(value)) return null;
 
-			return `'${strVal}' is not an object`;
+			return `${strVal} is not an object`;
 
 		case 'date':
 			if (isDate(value)) return null;
 
-			return `'${strVal}' is not a Date object`;
+			return `${strVal} is not a Date object`;
 
 		case 'map':
 			if (isMap(value)) return null;
 
-			return `'${strVal}' is not a Map object`;
+			return `${strVal} is not a Map object`;
 
 		case 'custom':
 			return null;
@@ -115,20 +115,20 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 				if (isString(value)) {
 					if (isNumber(length) && value.length <= length) return null;
 
-					return `'${strVal}' does not satisfy the constraint: varchar length ${length}`;
+					return `${strVal} does not satisfy the constraint: varchar length ${length}`;
 				}
 
-				return `'${strVal}' is not a varchar string`;
+				return `${strVal} is not a varchar string`;
 			}
 
 			if (type.startsWith('char(')) {
 				if (isString(value)) {
 					if (isNumber(length) && value.length === length) return null;
 
-					return `'${strVal}' does not satisfy the constraint: char length ${length}`;
+					return `${strVal} does not satisfy the constraint: char length ${length}`;
 				}
 
-				return `'${strVal}' is not a char string`;
+				return `${strVal} is not a char string`;
 			}
 
 			return null;
