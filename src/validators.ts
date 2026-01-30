@@ -24,7 +24,7 @@ import { getTimestamp, isTimestamp, uuidV4 } from './utils';
  * @returns `null` if valid, otherwise an error message string
  */
 export function validateColumnType<T extends TypeName>(type: T, value: unknown): string | null {
-	const strVal = JSON.stringify(value);
+	const strVal = isString(value) ? JSON.stringify(value) : `'${JSON.stringify(value)}'`;
 
 	switch (type) {
 		case 'int':

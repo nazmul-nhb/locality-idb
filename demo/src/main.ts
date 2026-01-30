@@ -126,9 +126,16 @@ const handleAddTodo = async () => {
 
 	// await addTodo(newTodo);
 
-	const inserted = await db.insert('todos').values(newTodo).run();
+	try {
+		const inserted = await db.insert('todos').values(newTodo).run();
 
-	console.dir(inserted);
+		console.dir(inserted);
+	} catch (error) {
+		console.error(error);
+		if (error instanceof DOMException) {
+			alert(error.message);
+		}
+	}
 
 	todoInput.value = '';
 	await loadTodos();

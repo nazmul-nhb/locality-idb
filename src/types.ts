@@ -140,6 +140,9 @@ export type GenericFn = (...args: any[]) => any;
 /** Generic function type that returns `void` */
 export type VoidFn = (...args: any[]) => void;
 
+/** Type for reject function of a promise */
+export type RejectFn = (reason: unknown) => void;
+
 /** Asynchronous function type */
 export type AsyncFunction<T> = (...args: any[]) => Promise<T>;
 

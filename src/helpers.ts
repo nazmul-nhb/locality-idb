@@ -1,4 +1,4 @@
-import type { UUID, UUIDVersion } from './types';
+import type { RejectFn, UUID, UUIDVersion } from './types';
 
 /** Ensure UUID variant is RFC4122 compliant */
 function _hexVariant(hex: string): string {
@@ -16,4 +16,8 @@ export function _formatUUID<V extends UUIDVersion>(h: string, v: number, up: boo
 	const formatted = [h.slice(0, 8), h.slice(8, 12), part3, part4, h.slice(20, 32)].join('-');
 
 	return (up ? formatted.toUpperCase() : formatted) as UUID<V>;
+}
+
+export function _abortTransaction(error: DOMException | null, reject: RejectFn) {
+	reject(error || new Error('IndexedDB transaction was aborted!'));
 }

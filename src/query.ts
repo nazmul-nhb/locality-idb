@@ -1,5 +1,6 @@
 import { isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
 import { type Table } from './core';
+import { _abortTransaction } from './helpers';
 import type {
 	ColumnDefinition,
 	FirstOverloadParams,
@@ -267,14 +268,21 @@ export class InsertQuery<
 				});
 			});
 
-			transaction.oncomplete = () =>
-				Promise.all(promises)
-					.then(() =>
-						this[IsArray] === true ?
-							resolve(insertedDocs as Return)
-						:	resolve(insertedDocs[0] as unknown as Return)
-					)
-					.catch(reject);
+			// Start handling promises immediately (don't wait for transaction events)
+			Promise.all(promises).catch(reject);
+
+			// Handle transaction completion (only fires if all succeeded)
+			transaction.oncomplete = () => {
+				resolve(
+					this[IsArray] === true ?
+						(insertedDocs as Return)
+					:	(insertedDocs[0] as unknown as Return)
+				);
+			};
+
+			// Handle transaction abort (happens on errors like unique constraint violations)
+			transaction.onabort = () => _abortTransaction(transaction.error, reject);
+
 			transaction.onerror = () => reject(transaction.error);
 		});
 	}
@@ -374,6 +382,9 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 			};
 
 			request.onerror = () => reject(request.error);
+
+			// Handle transaction abort (happens on errors)
+			transaction.onabort = () => _abortTransaction(transaction.error, reject);
 		});
 	}
 }
@@ -447,6 +458,9 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 			};
 
 			request.onerror = () => reject(request.error);
+
+			// Handle transaction abort (happens on errors)
+			transaction.onabort = () => _abortTransaction(transaction.error, reject);
 		});
 	}
 }
