@@ -194,7 +194,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
 /** @class Insert query builder. */
 export class InsertQuery<
 	Raw extends GenericObject,
-	Inserted,
+	Inserted extends Raw | Raw[],
 	Data extends GenericObject,
 	Return extends Inserted extends Array<infer _> ? Data[] : Data,
 > {

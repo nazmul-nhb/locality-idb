@@ -58,7 +58,7 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		const allowedTypes = ['int', 'integer', 'float', 'number'] as TypeName[];
 
 		if (!isNonEmptyString(colType) || !allowedTypes.includes(colType)) {
-			throw new Error(`auto() can only be used with integer columns, got: ${colType}`);
+			throw new Error(`auto() can only be used with number columns, got: ${colType}`);
 		}
 
 		this[IsAutoInc] = true;

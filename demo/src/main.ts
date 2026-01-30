@@ -2,6 +2,7 @@ import './style.css';
 
 import './test';
 
+import { isValidArray } from 'nhb-toolbox';
 import { Chronos } from 'nhb-toolbox/chronos';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
@@ -31,6 +32,11 @@ const schema = defineSchema({
 		// TODO: Add some method that will trigger only when updating
 		updatedAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
 	},
+	experiments: {
+		id: column.uuid().pk(),
+		name: column.text(),
+		active: column.bool().default(true),
+	},
 });
 
 type SchemaType = typeof schema;
@@ -41,7 +47,7 @@ type UpdateTodo = InferUpdateType<SchemaType['todos']>;
 
 const db = new Locality({
 	dbName: 'todo-db',
-	version: 20,
+	version: 33,
 	schema,
 });
 
@@ -120,8 +126,10 @@ const handleAddTodo = async () => {
 
 	// await addTodo(newTodo);
 
-	const inserted = await db.insert('todos').values([newTodo]).run();
+	const inserted = await db.insert('todos').values(newTodo).run();
+
 	console.dir(inserted);
+
 	todoInput.value = '';
 	await loadTodos();
 };
@@ -220,4 +228,12 @@ window.addEventListener('load', async () => {
 	});
 
 	await loadTodos();
+
+	const experiments = await db.from('experiments').all();
+
+	if (!isValidArray(experiments)) {
+		await db.seed('experiments', [{ name: 'Ato' }, { name: 'Beto' }, { name: 'Ceto' }]);
+	}
+
+	console.table(experiments);
 });

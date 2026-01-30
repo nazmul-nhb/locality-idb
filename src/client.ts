@@ -53,11 +53,14 @@ export class Locality<
 	DBName extends string = string,
 	Version extends number = 1,
 	Schema extends SchemaDefinition = SchemaDefinition,
+	TName extends keyof Schema = keyof Schema,
 > {
 	readonly #name: DBName;
 	readonly #schema: Schema;
 	// TODO: Handle multiple primary keys later
-	readonly #keyPath?: string;
+	// readonly #keyPath?: string;
+
+	readonly #keyPaths: Record<TName, string | undefined>;
 
 	readonly version: Version;
 
@@ -73,7 +76,13 @@ export class Locality<
 		const store = this.#buildStoresConfig();
 
 		// TODO: Handle multiple primary keys later
-		this.#keyPath = store.find((s) => s.autoIncrement)?.keyPath;
+		this.#keyPaths = store.reduce(
+			(acc, { name, keyPath }) => {
+				acc[name as TName] = keyPath;
+				return acc;
+			},
+			{} as Record<TName, string | undefined>
+		);
 
 		this.#readyPromise = openDBWithStores(this.#name, store, config.version)
 			.then((db) => {
@@ -119,7 +128,7 @@ export class Locality<
 	 * @param table Table name.
 	 * @returns
 	 */
-	from<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
+	from<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new SelectQuery<Row, null>(table as string, () => this.#db, this.#readyPromise);
 	}
 
@@ -128,9 +137,9 @@ export class Locality<
 	 * @param table Table name.
 	 */
 	insert<
-		T extends keyof Schema,
+		T extends TName,
 		Raw extends InferInsertType<Schema[T]>,
-		Inserted,
+		Inserted extends Raw | Raw[],
 		Data extends InferSelectType<Schema[T]>,
 		Return extends Inserted extends Array<infer _> ? Data[] : Data,
 	>(table: T) {
@@ -139,7 +148,7 @@ export class Locality<
 			() => this.#db,
 			this.#readyPromise,
 			this.#schema[table].columns,
-			this.#keyPath
+			this.#keyPaths[table]
 		);
 	}
 
@@ -147,13 +156,13 @@ export class Locality<
 	 * @instance Update records in a table.
 	 * @param table Table name.
 	 */
-	update<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
+	update<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new UpdateQuery<Row, Schema[T]>(
 			table as string,
 			() => this.#db,
 			this.#readyPromise,
 			this.#schema[table].columns,
-			this.#keyPath
+			this.#keyPaths[table]
 		);
 	}
 
@@ -161,7 +170,7 @@ export class Locality<
 	 * @instance Delete records from a table.
 	 * @param table Table name.
 	 */
-	delete<T extends keyof Schema, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
+	delete<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		const columns = this.#schema[table].columns;
 		const keyField = Object.entries(columns).find(([_, col]) => col[IsPrimaryKey])?.[0];
 
@@ -177,7 +186,7 @@ export class Locality<
 	 * @instance Clears all records from a specific store (table).
 	 * @param table Name of the table (store) to clear.
 	 */
-	async clearTable<T extends keyof Schema>(table: T) {
+	async clearTable<T extends TName>(table: T) {
 		return new Promise<void>((resolve, reject) => {
 			const transaction = this.#db.transaction(table as string, 'readwrite');
 			const store = transaction.objectStore(table as string);
@@ -192,6 +201,66 @@ export class Locality<
 	async deleteDB() {
 		this.#db.close();
 
-		return deleteDB(this.#name);
+		return await deleteDB(this.#name);
+	}
+
+	/** @instance Closes the current database connection. */
+	close() {
+		this.#db.close();
+	}
+
+	/** @instance Gets the underlying `IDBDatabase` instance. */
+	async getDBInstance(): Promise<IDBDatabase> {
+		await this.#readyPromise;
+		return this.#db;
+	}
+
+	/**
+	 * @instance Seed data into a specific table.
+	 *
+	 * @remarks
+	 * - This is a convenience method that inserts multiple records into the specified table.
+	 * - It returns the inserted records as an array.
+	 *
+	 * @param table Name of the table to seed data into.
+	 * @param data Array of data objects to be inserted.
+	 * @returns A promise that resolves to an array of inserted data.
+	 *
+	 * @example
+	 * const db = new Locality({
+	 * 	dbName: 'my-database',
+	 * 	version: 1,
+	 * 	schema: defineSchema({
+	 * 		users: {
+	 * 			id: column.int().pk().auto(),
+	 * 			name: column.text(),
+	 * 			email: column.varchar(255).unique(),
+	 * 		},
+	 * 	}),
+	 * });
+	 *
+	 * await db.seed('users', [
+	 *   { name: 'Alice', email: 'alice@wonderland.mad', },
+	 *   { name: 'Bob', email: 'bob@top.com', },
+	 * ]);
+	 *
+	 * const allUsers = await db.from('users').all();
+	 *
+	 * console.log(allUsers);
+	 */
+	async seed<
+		T extends TName,
+		Raw extends InferInsertType<Schema[T]>,
+		Data extends InferSelectType<Schema[T]>,
+	>(table: T, data: Raw[]): Promise<Data[]> {
+		const insertQuery = new InsertQuery<Raw, Raw[], Data, Data[]>(
+			table as string,
+			() => this.#db,
+			this.#readyPromise,
+			this.#schema[table].columns,
+			this.#keyPaths[table]
+		);
+
+		return await insertQuery.values(data).run();
 	}
 }
