@@ -1,3 +1,4 @@
+import { _abortTransaction } from './helpers';
 import type { StoreConfig } from './types';
 
 /**
@@ -62,6 +63,8 @@ export function openDBWithStores(
 						}
 					}
 				}
+
+				transaction.onabort = () => _abortTransaction(transaction.error, reject);
 			}
 		};
 

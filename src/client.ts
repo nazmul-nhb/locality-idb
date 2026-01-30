@@ -1,5 +1,6 @@
 import { IsAutoInc, IsIndexed, IsPrimaryKey, IsUnique } from './core';
 import { openDBWithStores } from './factory';
+import { _abortTransaction } from './helpers';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
@@ -207,45 +208,12 @@ export class Locality<
 			const store = transaction.objectStore(table as string);
 			const clearRequest = store.clear();
 
+			transaction.onabort = () => _abortTransaction(transaction.error, reject);
+
 			clearRequest.onsuccess = () => resolve();
 			clearRequest.onerror = () => reject(clearRequest.error);
 		});
 	}
-
-	// /**
-	//  *  @instance Deletes a specific table (object store) from the database.
-	//  *  @param table Name of the table (store) to delete.
-	//  *
-	//  * @remarks
-	//  * - Unlike {@link clearTable clearing a table}, deleting a table removes the entire object store from the database.
-	//  * - This method closes the current database connection before deleting the specified table.
-	//  * - After deletion, it reopens the database to reflect the changes.
-	//  */
-	// async deleteTable<T extends TName>(table: T) {
-	// 	const request = window.indexedDB.open(this.#name, this.#db.version + 1);
-
-	// 	request.onupgradeneeded = (event) => {
-	// 		const db = (event.target as IDBOpenDBRequest).result;
-
-	// 		if (db.objectStoreNames.contains(table as string)) {
-	// 			db.deleteObjectStore(table as string);
-	// 		}
-	// 	};
-
-	// 	request.onsuccess = () => {
-	// 		this.#db = request.result;
-	// 	};
-
-	// 	this.#readyPromise = new Promise<void>((resolve, reject) => {
-	// 		request.onsuccess = () => {
-	// 			this.#db = request.result;
-	// 			resolve();
-	// 		};
-	// 		request.onerror = () => reject(request.error);
-	// 	});
-
-	// 	return this.#readyPromise;
-	// }
 
 	/** @instance Closes and deletes the entire database. */
 	async deleteDB() {

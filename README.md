@@ -510,7 +510,7 @@ await db.clearTable('users');
 
 Deletes the entire database (current database).
 
-> **Note:** This method uses the `deleteDB` utility function internally.
+> **Note:** This method uses the `deleteDB` utility function internally and closes the database connection before deletion.
 
 ```typescript
 await db.deleteDB();

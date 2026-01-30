@@ -18,6 +18,7 @@ export function _formatUUID<V extends UUIDVersion>(h: string, v: number, up: boo
 	return (up ? formatted.toUpperCase() : formatted) as UUID<V>;
 }
 
+/** Handle transaction abort by rejecting the promise */
 export function _abortTransaction(error: DOMException | null, reject: RejectFn) {
 	reject(error || new Error('IndexedDB transaction was aborted!'));
 }

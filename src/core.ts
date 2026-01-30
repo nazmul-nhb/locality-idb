@@ -56,7 +56,7 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	}
 
 	/** @instance Enables auto increment - only available for numeric columns */
-	auto(): T extends number ? this & { [IsAutoInc]: true } : Omit<this, 'auto'> {
+	auto() {
 		const colType = this[ColumnType];
 
 		const allowedTypes = ['int', 'integer', 'float', 'number'] as TypeName[];

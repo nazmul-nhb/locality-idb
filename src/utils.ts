@@ -78,22 +78,14 @@ export function deleteDB(name: string): Promise<void> {
 					reject(new Error(`Database '${name}' does not exist in this system!`));
 					return;
 				}
-
-				// proceedToDelete();
 			})
-			.catch((err) => {
-				reject(err);
-			});
+			.catch(reject);
 
 		const request = window.indexedDB.deleteDatabase(name);
 
-		request.onsuccess = () => {
-			resolve();
-		};
+		request.onsuccess = () => resolve();
 
-		request.onerror = () => {
-			reject(request.error);
-		};
+		request.onerror = () => reject(request.error);
 
 		request.onblocked = () => {
 			reject(new Error(`Delete blocked for database '${name}'`));
