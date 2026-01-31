@@ -334,6 +334,10 @@ export type LocalityConfig<DB extends string, V extends number, S extends Schema
 /** Column definition type */
 export type ColumnDefinition<T = any> = Record<string, Column<T>>;
 
+/** Validated column definition with single PK constraint */
+export type ValidatedColumnDefinition<T extends ColumnDefinition = ColumnDefinition> =
+	$ValidateSinglePK<T> extends T ? T : never;
+
 /** Record of column definitions */
 export type ColumnRecord = Record<string, ColumnDefinition>;
 
@@ -379,6 +383,25 @@ export type $InferDefault<T extends ColumnDefinition> = {
 export type $InferPrimaryKey<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsPrimaryKey]: true } ? K : never;
 }[keyof T];
+
+/** Counts the number of primary keys in a column definition. */
+type $CountPrimaryKeys<T extends ColumnDefinition> =
+	{
+		[K in keyof T]: T[K] extends { [IsPrimaryKey]: true } ? K : never;
+	}[keyof T] extends infer U ?
+		U extends never ? 0
+		: [U] extends [infer Single] ?
+			Single extends keyof T ?
+				1
+			:	never
+		:	2
+	:	never;
+
+/** Validates that a column definition has exactly one primary key. */
+export type $ValidateSinglePK<T extends ColumnDefinition> =
+	$CountPrimaryKeys<T> extends 1 ? T
+	: $CountPrimaryKeys<T> extends 0 ? 'Error: Schema must have exactly one primary key'
+	: 'Error: Schema can only have one primary key';
 
 /** Finds the field name with partial key. */
 export type $InferOptional<T extends ColumnDefinition> = {

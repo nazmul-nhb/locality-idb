@@ -6,15 +6,7 @@ import { isValidArray } from 'nhb-toolbox';
 import { Chronos } from 'nhb-toolbox/chronos';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
-import type {
-	IndexKeyType,
-	InferInsertType,
-	InferSelectType,
-	InferUpdateType,
-	PrimaryKeyType,
-	Timestamp,
-	UniqueKeyType,
-} from 'locality';
+import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
 import { column, defineSchema, deleteDB, Locality } from 'locality';
 
 Chronos.register(timeZonePlugin);
@@ -30,7 +22,7 @@ const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 
 const schema = defineSchema({
 	todos: {
-		serial: column.int().pk().auto(),
+		serial: column.int().auto().pk(),
 		task: column.text().unique(),
 		completed: column.bool().default(false),
 		uuid: column.uuid(),
@@ -53,9 +45,9 @@ type Todo = InferSelectType<SchemaType['todos']>;
 type InsertTodo = InferInsertType<SchemaType['todos']>;
 type UpdateTodo = InferUpdateType<SchemaType['todos']>;
 
-type _I = IndexKeyType<SchemaType['todos']>;
-type _P = PrimaryKeyType<SchemaType['todos']>;
-type _U = UniqueKeyType<SchemaType['todos']>;
+// type _I = IndexKeyType<SchemaType['todos']>;
+// type _P = PrimaryKeyType<SchemaType['todos']>;
+// type _U = UniqueKeyType<SchemaType['todos']>;
 
 const db = new Locality({
 	dbName: 'todo-db',
@@ -271,6 +263,11 @@ window.addEventListener('load', async () => {
 		.sortByIndex('id', 'desc')
 		.all();
 
-	console.log({ ex1, ex2 });
+	const ex3 = await db
+		.from('experiments')
+		.select({ name: true })
+		.findByIndex('name', IDBKeyRange.bound('A', 'B'));
+
+	console.info({ ex1, ex2, ex3 });
 	// await db.deleteTable('experiments');
 });

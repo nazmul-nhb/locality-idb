@@ -288,11 +288,11 @@ export class SelectQuery<
 	/**
 	 * @instance Find records by index (optimized IndexedDB index query)
 	 * @param indexName Name of the index to query
-	 * @param key Key value to search for
+	 * @param query Key value to search for
 	 */
 	async findByIndex<IndexKey extends $InferIndex<Tbl['columns']> & keyof T & string>(
 		indexName: IndexKey,
-		key: T[IndexKey] | IDBKeyRange
+		query: T[IndexKey] | IDBKeyRange
 	): Promise<
 		S extends null ? T[]
 		: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S>[]
@@ -312,7 +312,7 @@ export class SelectQuery<
 			}
 
 			const index = store.index(indexName);
-			const request = index.getAll(key);
+			const request = index.getAll(query);
 
 			request.onsuccess = () => {
 				let results: T[] = request.result;

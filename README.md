@@ -164,6 +164,34 @@ const schema = defineSchema({
 });
 ```
 
+> **Important:** Each table must have **exactly one** primary key defined using `.pk()`. Having zero or multiple primary keys will result in a runtime error.
+
+```typescript
+// ✅ Valid - single primary key
+const validSchema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+  },
+});
+
+// ❌ Invalid - no primary key (runtime error)
+const noPkSchema = defineSchema({
+  users: {
+    name: column.text(),
+  },
+});
+
+// ❌ Invalid - multiple primary keys (runtime error)
+const multiPkSchema = defineSchema({
+  users: {
+    id: column.int().pk(),
+    uuid: column.uuid().pk(), // Error!
+    name: column.text(),
+  },
+});
+```
+
 ### Column Types
 
 Locality IDB supports a wide range of column types:
@@ -375,6 +403,71 @@ const user = await db
   .first();
 // Returns: User | null
 ```
+
+#### Find by Primary Key
+
+```typescript
+// Optimized O(1) lookup using IndexedDB's get()
+const user = await db.from('users').findByPk(1);
+// Returns: User | null
+
+// Works with select projection
+const userName = await db
+  .from('users')
+  .select({ name: true, email: true })
+  .findByPk(1);
+// Returns: { name: string; email: string } | null
+```
+
+#### Find by Index
+
+```typescript
+// Find records using an indexed field (optimized index query)
+const usersByEmail = await db
+  .from('users')
+  .findByIndex('email', 'alice@example.com');
+// Returns: User[]
+
+// Find by numeric index
+const youngUsers = await db
+  .from('users')
+  .findByIndex('age', 25);
+// Returns: User[]
+
+// Works with all query modifiers
+const result = await db
+  .from('users')
+  .select({ name: true, age: true })
+  .findByIndex('age', 30)
+  .where((user) => user.isActive)
+  .limit(5);
+```
+
+#### Sort by Index
+
+```typescript
+// Optimized cursor-based sorting (no in-memory sort needed!)
+const sortedUsers = await db
+  .from('users')
+  .sortByIndex('age', 'desc')
+  .all();
+
+// Combine with limit for efficient pagination
+const topTenOldest = await db
+  .from('users')
+  .sortByIndex('age', 'desc')
+  .limit(10)
+  .all();
+
+// Works with select projection
+const names = await db
+  .from('users')
+  .select({ name: true, age: true })
+  .sortByIndex('age', 'asc')
+  .all();
+```
+
+> **Note:** `sortByIndex()` uses IndexedDB cursor iteration for optimal performance when no `where()` filter is applied.
 
 #### Chain Multiple Methods
 
@@ -729,24 +822,51 @@ const user = await db.from('users').first()
 
 ##### `findByPk<Key>(key: Key): Promise<T | null>`
 
-Finds a record by its primary key.
+Finds a single record by its primary key value using IndexedDB's optimized `get()` method.
+
+**Performance:** `O(1)` lookup
 
 ```typescript
 const user = await db.from('users').findByPk(1);
+const post = await db.from('posts').findByPk('uuid-string');
 ```
 
-##### `findByIndex<IndexKey>(indexName: IndexKey, value: unknown): Promise<T | null>`
+##### `findByIndex<IndexKey>(indexName: IndexKey, query: T[IndexKey] | IDBKeyRange): Promise<T[]>`
 
-Finds records by an indexed column.
+Finds records using an indexed field. Only accepts field names that are marked with `.index()` or `.unique()`.
+
+**Type Safety:** `indexName` must be a field with an index.
+
+**Performance:** Uses IndexedDB's index query for optimized lookups.
 
 ```typescript
-const users = await db.from('users').findByIndex('email', 'alica@wonderland.mad')
+// Type-safe: 'email' must be indexed
+const users = await db.from('users').findByIndex('email', 'alice@example.com');
+
+// Works with IDBKeyRange for range queries
+const adults = await db.from('users').findByIndex('age', IDBKeyRange.bound(18, 65));
 ```
 
 > **Note:**
 >
 > - Unique columns are automatically indexed.
 > - Unique indexes are recommended for this method to ensure a single result.
+
+##### `sortByIndex<IndexKey>(indexName: IndexKey, dir?: 'asc' | 'desc'): SelectQuery`
+
+Sorts results by an indexed field using IndexedDB cursor iteration (avoiding in-memory sorting).
+
+**Type Safety:** `indexName` must be a field with an index.
+
+**Performance:** When no `where()` filter is applied, uses optimized cursor iteration. Otherwise falls back to in-memory sorting.
+
+```typescript
+// Optimized cursor-based sort
+const sorted = await db.from('users').sortByIndex('age', 'desc').all();
+
+// Efficient pagination
+const page = await db.from('users').sortByIndex('createdAt', 'desc').limit(20).all();
+```
 
 #### InsertQuery Methods
 

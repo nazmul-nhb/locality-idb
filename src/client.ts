@@ -101,18 +101,31 @@ export class Locality<
 	/** Build store configurations from schema. */
 	#buildStoresConfig(): StoreConfig[] {
 		return Object.entries(this.#schema).map(([tableName, table]) => {
-			const columns = table.columns;
-			const pk = Object.values(columns).find((col) => col[IsPrimaryKey]);
+			const columnEntries = Object.entries(table.columns);
 
-			const autoInc = pk?.[IsAutoInc] || false;
+			const pkEntries = columnEntries.filter(([_, col]) => col[IsPrimaryKey]);
 
-			// TODO: Handle multiple primary keys later
-			const pkName = Object.entries(columns).find(([_, col]) => col[IsPrimaryKey])?.[0];
+			// Validate single primary key
+			if (pkEntries.length === 0) {
+				throw new RangeError(
+					`Table "${tableName}" must have exactly one primary key. Found 0 primary keys.`
+				);
+			}
+
+			if (pkEntries.length > 1) {
+				const pkNames = pkEntries.map(([name]) => `'${name}'`).join(', ');
+				throw new RangeError(
+					`Table "${tableName}" can only have one primary key. Found ${pkEntries.length} primary keys: ${pkNames}.`
+				);
+			}
+
+			const [pkName, pk] = pkEntries[0];
+			const autoInc = pk?.[IsAutoInc] ?? false;
 
 			// Build indexes from columns marked with index() or unique()
 			const indexes: IndexConfig[] = [];
 
-			for (const [colName, col] of Object.entries(columns)) {
+			for (const [colName, col] of columnEntries) {
 				// Skip primary key columns - they are indexed by default in IndexedDB
 				if (col[IsPrimaryKey]) continue;
 
