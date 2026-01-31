@@ -145,7 +145,12 @@ export class Locality<
 	 * @returns
 	 */
 	from<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
-		return new SelectQuery<Row, null>(table as string, () => this.#db, this.#readyPromise);
+		return new SelectQuery<Row, null, Schema[T]>(
+			table as string,
+			() => this.#db,
+			this.#readyPromise
+			// this.#keyPaths[table]
+		);
 	}
 
 	/**

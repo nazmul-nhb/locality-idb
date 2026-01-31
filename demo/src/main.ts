@@ -6,7 +6,15 @@ import { isValidArray } from 'nhb-toolbox';
 import { Chronos } from 'nhb-toolbox/chronos';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
-import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
+import type {
+	IndexKeyType,
+	InferInsertType,
+	InferSelectType,
+	InferUpdateType,
+	PrimaryKeyType,
+	Timestamp,
+	UniqueKeyType,
+} from 'locality';
 import { column, defineSchema, deleteDB, Locality } from 'locality';
 
 Chronos.register(timeZonePlugin);
@@ -34,7 +42,7 @@ const schema = defineSchema({
 	},
 	experiments: {
 		id: column.uuid().pk(),
-		name: column.text(),
+		name: column.text().index(),
 		active: column.bool().default(true),
 	},
 });
@@ -45,9 +53,13 @@ type Todo = InferSelectType<SchemaType['todos']>;
 type InsertTodo = InferInsertType<SchemaType['todos']>;
 type UpdateTodo = InferUpdateType<SchemaType['todos']>;
 
+type _I = IndexKeyType<SchemaType['todos']>;
+type _P = PrimaryKeyType<SchemaType['todos']>;
+type _U = UniqueKeyType<SchemaType['todos']>;
+
 const db = new Locality({
 	dbName: 'todo-db',
-	version: 36,
+	version: 37,
 	schema,
 });
 
@@ -248,5 +260,7 @@ window.addEventListener('load', async () => {
 
 	console.table(experiments);
 
+	const ex = await db.from('todos').select({ test: true }).findByIndex('task', 'tello');
+	console.log(ex);
 	// await db.deleteTable('experiments');
 });

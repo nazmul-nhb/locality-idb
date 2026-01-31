@@ -1,7 +1,9 @@
-import { isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
+import { isNonEmptyString, isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
 import { type Table } from './core';
 import { _abortTransaction } from './helpers';
 import type {
+	$InferIndex,
+	$InferPrimaryKey,
 	ColumnDefinition,
 	FirstOverloadParams,
 	GenericObject,
@@ -20,14 +22,22 @@ const IsArray = Symbol('IsArray');
 /**
  * @class Select query builder.
  */
-export class SelectQuery<T extends GenericObject, S = null> {
+export class SelectQuery<
+	T extends GenericObject,
+	S extends Partial<Record<string, boolean>> | null = null,
+	Tbl extends Table = Table,
+> {
 	#table: string;
 	#readyPromise: Promise<void>;
+
 	#dbGetter: () => IDBDatabase;
 	#whereCondition?: (row: T) => boolean;
+
 	#orderByKey?: NestedPrimitiveKey<T>;
 	#orderByDir: SortDirection = 'asc';
 	#limitCount?: number;
+	#useIndexCursor?: boolean;
+
 	declare [Selected]?: S;
 
 	constructor(table: string, dbGetter: () => IDBDatabase, readyPromise: Promise<void>) {
@@ -43,14 +53,14 @@ export class SelectQuery<T extends GenericObject, S = null> {
 	select<Selection extends Partial<Record<keyof T, boolean>>>(cols: Selection) {
 		this[Selected] = cols as unknown as S;
 
-		return this as unknown as SelectQuery<T, Selection>;
+		return this as unknown as SelectQuery<T, Selection, Tbl>;
 	}
 
 	/**
 	 * @instance  Filter rows based on predicate function
 	 * @param predicate Filtering function
 	 */
-	where(predicate: (row: T) => boolean) {
+	where(predicate: (row: T) => boolean): this {
 		this.#whereCondition = predicate;
 		return this;
 	}
@@ -60,7 +70,7 @@ export class SelectQuery<T extends GenericObject, S = null> {
 	 * @param key Key to order by
 	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
 	 */
-	orderBy<Key extends NestedPrimitiveKey<T>>(key: Key, dir: SortDirection = 'asc') {
+	orderBy<Key extends NestedPrimitiveKey<T>>(key: Key, dir: SortDirection = 'asc'): this {
 		this.#orderByKey = key;
 		this.#orderByDir = dir;
 
@@ -71,18 +81,19 @@ export class SelectQuery<T extends GenericObject, S = null> {
 	 * @instance Limit number of results
 	 * @param count Maximum number of results to return
 	 */
-	limit(count: number) {
+	limit(count: number): this {
 		this.#limitCount = count;
 		return this;
 	}
 
 	/** Projects a row based on selected fields */
 	#projectRow(row: T): Partial<T> {
-		if (!isNotEmptyObject(this[Selected])) {
-			return row;
-		}
+		if (!isNotEmptyObject(this[Selected])) return row;
+
+		type Key = keyof T;
 
 		const projected = {} as Partial<T>;
+
 		const selectionEntries = Object.entries(this[Selected]);
 		const selectionKeys = new Set(Object.keys(this[Selected]));
 
@@ -93,14 +104,14 @@ export class SelectQuery<T extends GenericObject, S = null> {
 			// Include only fields marked as true
 			for (const [key, value] of selectionEntries) {
 				if (value === true) {
-					projected[key as keyof T] = row[key as keyof T];
+					projected[key as Key] = row[key];
 				}
 			}
 		} else {
 			// All are false: include all fields EXCEPT those marked as false
 			for (const key of Object.keys(row)) {
 				if (!selectionKeys.has(key) || this[Selected][key] !== false) {
-					projected[key as keyof T] = row[key as keyof T];
+					projected[key as Key] = row[key];
 				}
 			}
 		}
@@ -121,38 +132,72 @@ export class SelectQuery<T extends GenericObject, S = null> {
 		return new Promise((resolve, reject) => {
 			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
 			const store = transaction.objectStore(this.#table);
-			const request = store.getAll();
 
-			request.onsuccess = () => {
-				let results: T[] = request.result;
+			// Check if we can use an optimized index cursor
+			const useIdxCursor =
+				this.#useIndexCursor &&
+				this.#orderByKey &&
+				isNonEmptyString(this.#orderByKey) &&
+				store.indexNames.contains(this.#orderByKey) &&
+				!this.#whereCondition; // Only use cursor if no where condition
 
-				// Apply where filter
-				if (this.#whereCondition) {
-					results = results.filter(this.#whereCondition);
-				}
+			if (useIdxCursor) {
+				// Use optimized index cursor
+				const index = store.index(this.#orderByKey as string);
+				const direction = this.#orderByDir === 'desc' ? 'prev' : 'next';
+				const request = index.openCursor(null, direction);
+				const results: T[] = [];
+				let count = 0;
 
-				// Apply orderBy
-				if (this.#orderByKey) {
-					results = sortAnArray(results, {
-						sortOrder: this.#orderByDir,
-						sortByField: this.#orderByKey as FirstOverloadParams<
-							typeof sortAnArray
-						>[1]['sortByField'],
-					});
-				}
+				request.onsuccess = () => {
+					const cursor = request.result;
 
-				// Apply limit
-				if (this.#limitCount) {
-					results = results.slice(0, this.#limitCount);
-				}
+					if (cursor) {
+						results.push(cursor.value);
+						count++;
 
-				// Apply projection (select)
-				const projectedResults = results.map((row) => this.#projectRow(row));
+						// Stop if we've reached the limit
+						if (this.#limitCount && count >= this.#limitCount) {
+							resolve(results.map(this.#projectRow));
+							return;
+						}
 
-				resolve(projectedResults);
-			};
+						cursor.continue();
+					} else {
+						// No more results
+						resolve(results.map(this.#projectRow));
+					}
+				};
 
-			request.onerror = () => reject(request.error);
+				request.onerror = () => reject(request.error);
+			} else {
+				// Use standard getAll with in-memory sorting
+				const request = store.getAll();
+
+				request.onsuccess = () => {
+					let results: T[] = request.result;
+
+					// Apply where filter
+					if (this.#whereCondition) {
+						results = results.filter(this.#whereCondition);
+					}
+
+					// Apply orderBy
+					results = this.#sort(results);
+
+					// Apply limit
+					if (this.#limitCount) {
+						results = results.slice(0, this.#limitCount);
+					}
+
+					// Apply projection (select)
+					const projectedResults = results.map((row) => this.#projectRow(row));
+
+					resolve(projectedResults);
+				};
+
+				request.onerror = () => reject(request.error);
+			}
 		});
 	}
 
@@ -189,6 +234,138 @@ export class SelectQuery<T extends GenericObject, S = null> {
 
 			request.onerror = () => reject(request.error);
 		});
+	}
+
+	/**
+	 * @instance Find record by primary key (optimized `IndexedDB` get)
+	 * @param key Primary key value
+	 */
+	async findByPk(
+		key: $InferPrimaryKey<Tbl['columns']> extends keyof T ?
+			T[$InferPrimaryKey<Tbl['columns']>]
+		:	T[keyof T]
+	): Promise<
+		S extends null ? T | null
+		: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S> | null
+		: never
+	> {
+		await this.#readyPromise;
+		return new Promise((resolve, reject) => {
+			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
+			const store = transaction.objectStore(this.#table);
+			const request = store.get(key);
+
+			type ResolvedData =
+				S extends null ? T | null
+				: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S> | null
+				: never;
+
+			request.onsuccess = () => {
+				const result = request.result as T | undefined;
+				if (!result) {
+					resolve(null as ResolvedData);
+					return;
+				}
+
+				// Apply where filter if specified
+				if (this.#whereCondition && !this.#whereCondition(result)) {
+					resolve(null as ResolvedData);
+					return;
+				}
+
+				// Apply projection
+				resolve(this.#projectRow(result) as ResolvedData);
+			};
+
+			request.onerror = () => reject(request.error);
+		});
+	}
+
+	/**
+	 * @instance Find records by index (optimized IndexedDB index query)
+	 * @param indexName Name of the index to query
+	 * @param key Key value to search for
+	 */
+	async findByIndex<IndexKey extends $InferIndex<Tbl['columns']> & keyof T & string>(
+		indexName: IndexKey,
+		key: T[IndexKey] | IDBKeyRange
+	): Promise<
+		S extends null ? T[]
+		: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S>[]
+		: never
+	> {
+		await this.#readyPromise;
+		return new Promise((resolve, reject) => {
+			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
+			const store = transaction.objectStore(this.#table);
+
+			// Check if index exists
+			if (!store.indexNames.contains(indexName)) {
+				reject(
+					new Error(`Index "${indexName}" does not exist on table "${this.#table}"`)
+				);
+				return;
+			}
+
+			const index = store.index(indexName);
+			const request = index.getAll(key);
+
+			request.onsuccess = () => {
+				let results: T[] = request.result;
+
+				// Apply where filter
+				if (this.#whereCondition) {
+					results = results.filter(this.#whereCondition);
+				}
+
+				// Apply orderBy
+				results = this.#sort(results);
+
+				// Apply limit
+				if (this.#limitCount) {
+					results = results.slice(0, this.#limitCount);
+				}
+
+				// Apply projection
+				const projectedResults = results.map((row) => this.#projectRow(row));
+				resolve(
+					projectedResults as S extends null ? T[]
+					: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S>[]
+					: never
+				);
+			};
+
+			request.onerror = () => reject(request.error);
+		});
+	}
+
+	/** @internal Sort data in memory if needed */
+	#sort(data: T[]): T[] {
+		if (this.#orderByKey) {
+			return sortAnArray(data, {
+				sortOrder: this.#orderByDir,
+				sortByField: this.#orderByKey as FirstOverloadParams<
+					typeof sortAnArray
+				>[1]['sortByField'],
+			});
+		}
+
+		return data;
+	}
+
+	/**
+	 * @instance Order results by index using optimized IndexedDB cursor
+	 * @param indexName Name of the index to sort by
+	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
+	 */
+	sortByIndex<IndexKey extends $InferIndex<Tbl['columns']> & keyof T & string>(
+		indexName: IndexKey,
+		dir: SortDirection = 'asc'
+	): this {
+		this.#orderByKey = indexName as unknown as NestedPrimitiveKey<T>;
+		this.#orderByDir = dir;
+		this.#useIndexCursor = true;
+		return this;
 	}
 }
 

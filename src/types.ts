@@ -3,8 +3,10 @@ import type {
 	Column,
 	DefaultValue,
 	IsAutoInc,
+	IsIndexed,
 	IsOptional,
 	IsPrimaryKey,
+	IsUnique,
 	Table,
 } from './core';
 
@@ -371,13 +373,23 @@ export type $InferDefault<T extends ColumnDefinition> = {
 }[keyof T];
 
 /** Finds the field name with primary key. */
-export type $InferPkField<T extends ColumnDefinition> = {
+export type $InferPrimaryKey<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsPrimaryKey]: true } ? K : never;
 }[keyof T];
 
 /** Finds the field name with partial key. */
 export type $InferOptional<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsOptional]: true } ? K : never;
+}[keyof T];
+
+/** Finds the field name with unique key. */
+export type $InferUnique<T extends ColumnDefinition> = {
+	[K in keyof T]: T[K] extends { [IsUnique]: true } ? K : never;
+}[keyof T];
+
+/** Finds the field name with index key. */
+export type $InferIndex<T extends ColumnDefinition> = {
+	[K in keyof T]: T[K] extends { [IsIndexed]: true } ? K : never;
 }[keyof T];
 
 /**
@@ -427,7 +439,7 @@ export type InferInsertType<T extends Table> = Prettify<
 
 /** Creates a type for update operations with all fields optional except primary key. */
 export type InferUpdateType<T extends Table> = Prettify<
-	Partial<Omit<$InferRow<T['columns']>, $InferPkField<T['columns']>>>
+	Partial<Omit<$InferRow<T['columns']>, $InferPrimaryKey<T['columns']>>>
 >;
 
 /** Creates a type for select operations. */
@@ -438,6 +450,14 @@ export type InferSelectType<S extends Table> = Prettify<
 		:	never
 	:	never
 >;
+
+export type PrimaryKeyType<S extends Table> = InferSelectType<S>[$InferPrimaryKey<
+	S['columns']
+>];
+
+export type IndexKeyType<S extends Table> = InferSelectType<S>[$InferUnique<S['columns']>];
+
+export type UniqueKeyType<S extends Table> = InferSelectType<S>[$InferIndex<S['columns']>];
 
 /** Column type strings used in {@link Column} definitions */
 export type TypeName<L extends number = number> = LooseLiteral<
