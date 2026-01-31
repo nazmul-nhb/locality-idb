@@ -260,7 +260,17 @@ window.addEventListener('load', async () => {
 
 	console.table(experiments);
 
-	const ex = await db.from('todos').select({ test: true }).findByIndex('task', 'tello');
-	console.log(ex);
+	const ex1 = await db
+		.from('experiments')
+		.select({ name: true })
+		.findByPk('84864f8a-31e7-42b0-950d-de1d9de6d0a5');
+
+	const ex2 = await db
+		.from('experiments')
+		.select({ name: true })
+		.sortByIndex('id', 'desc')
+		.all();
+
+	console.log({ ex1, ex2 });
 	// await db.deleteTable('experiments');
 });

@@ -727,6 +727,27 @@ Fetches the first matching record.
 const user = await db.from('users').first()
 ```
 
+##### `findByPk<Key>(key: Key): Promise<T | null>`
+
+Finds a record by its primary key.
+
+```typescript
+const user = await db.from('users').findByPk(1);
+```
+
+##### `findByIndex<IndexKey>(indexName: IndexKey, value: unknown): Promise<T | null>`
+
+Finds records by an indexed column.
+
+```typescript
+const users = await db.from('users').findByIndex('email', 'alica@wonderland.mad')
+```
+
+> **Note:**
+>
+> - Unique columns are automatically indexed.
+> - Unique indexes are recommended for this method to ensure a single result.
+
 #### InsertQuery Methods
 
 ##### `values<T>(data: T | T[]): InsertQuery`
@@ -1089,17 +1110,20 @@ cd locality-idb
 # Install dependencies
 pnpm install
 
-# Run development build
-pnpm run dev:pkg
-
-# Run demo
-pnpm run dev
-
 # Build package
 pnpm run build
 
 # Type check
 pnpm run typecheck
+
+# Run package in development mode (watch for changes)
+pnpm run dev:pkg
+
+# Run demo implementation
+pnpm run dev
+
+# Build demo implementation project
+pnpm run build:demo
 ```
 
 ### Reporting Issues
@@ -1110,7 +1134,7 @@ Please report issues on the [GitHub issue tracker](https://github.com/nazmul-nhb
 
 ## 📄 License
 
-MIT © [Nazmul Hassan](https://github.com/nazmul-nhb)
+[MIT](LICENSE) © [Nazmul Hassan](https://github.com/nazmul-nhb)
 
 ---
 

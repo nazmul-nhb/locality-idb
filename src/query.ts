@@ -8,6 +8,7 @@ import type {
 	FirstOverloadParams,
 	GenericObject,
 	InferUpdateType,
+	Maybe,
 	NestedPrimitiveKey,
 	SelectFields,
 	SortDirection,
@@ -18,6 +19,8 @@ import { validateAndPrepareData } from './validators';
 const Selected = Symbol('Selected');
 /** Symbol to indicate if insert data is array */
 const IsArray = Symbol('IsArray');
+
+type IDBGetter = () => IDBDatabase;
 
 /**
  * @class Select query builder.
@@ -30,7 +33,7 @@ export class SelectQuery<
 	#table: string;
 	#readyPromise: Promise<void>;
 
-	#dbGetter: () => IDBDatabase;
+	#dbGetter: IDBGetter;
 	#whereCondition?: (row: T) => boolean;
 
 	#orderByKey?: NestedPrimitiveKey<T>;
@@ -40,7 +43,7 @@ export class SelectQuery<
 
 	declare [Selected]?: S;
 
-	constructor(table: string, dbGetter: () => IDBDatabase, readyPromise: Promise<void>) {
+	constructor(table: string, dbGetter: IDBGetter, readyPromise: Promise<void>) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
@@ -88,7 +91,7 @@ export class SelectQuery<
 
 	/** Projects a row based on selected fields */
 	#projectRow(row: T): Partial<T> {
-		if (!isNotEmptyObject(this[Selected])) return row;
+		if (!isNotEmptyObject(this?.[Selected])) return row;
 
 		type Key = keyof T;
 
@@ -158,14 +161,14 @@ export class SelectQuery<
 
 						// Stop if we've reached the limit
 						if (this.#limitCount && count >= this.#limitCount) {
-							resolve(results.map(this.#projectRow));
+							resolve(results.map((row) => this.#projectRow(row)));
 							return;
 						}
 
 						cursor.continue();
 					} else {
 						// No more results
-						resolve(results.map(this.#projectRow));
+						resolve(results.map((row) => this.#projectRow(row)));
 					}
 				};
 
@@ -261,7 +264,8 @@ export class SelectQuery<
 				: never;
 
 			request.onsuccess = () => {
-				const result = request.result as T | undefined;
+				const result = request.result as Maybe<T>;
+
 				if (!result) {
 					resolve(null as ResolvedData);
 					return;
@@ -339,6 +343,22 @@ export class SelectQuery<
 		});
 	}
 
+	/**
+	 * @instance Order results by index using optimized IndexedDB cursor
+	 * @param indexName Name of the index to sort by
+	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
+	 */
+	sortByIndex<
+		IndexKey extends ($InferIndex<Tbl['columns']> | $InferPrimaryKey<Tbl['columns']>) &
+			keyof T &
+			string,
+	>(indexName: IndexKey, dir: SortDirection = 'asc'): this {
+		this.#orderByKey = indexName as unknown as NestedPrimitiveKey<T>;
+		this.#orderByDir = dir;
+		this.#useIndexCursor = true;
+		return this;
+	}
+
 	/** @internal Sort data in memory if needed */
 	#sort(data: T[]): T[] {
 		if (this.#orderByKey) {
@@ -351,21 +371,6 @@ export class SelectQuery<
 		}
 
 		return data;
-	}
-
-	/**
-	 * @instance Order results by index using optimized IndexedDB cursor
-	 * @param indexName Name of the index to sort by
-	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
-	 */
-	sortByIndex<IndexKey extends $InferIndex<Tbl['columns']> & keyof T & string>(
-		indexName: IndexKey,
-		dir: SortDirection = 'asc'
-	): this {
-		this.#orderByKey = indexName as unknown as NestedPrimitiveKey<T>;
-		this.#orderByDir = dir;
-		this.#useIndexCursor = true;
-		return this;
 	}
 }
 

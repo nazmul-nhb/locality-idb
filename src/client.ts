@@ -8,6 +8,7 @@ import type {
 	InferInsertType,
 	InferSelectType,
 	LocalityConfig,
+	Maybe,
 	SchemaDefinition,
 	StoreConfig,
 } from './types';
@@ -62,7 +63,7 @@ export class Locality<
 	// TODO: Handle multiple primary keys later
 	// readonly #keyPath?: string;
 
-	readonly #keyPaths: Record<TName, string | undefined>;
+	readonly #keyPaths: Record<TName, Maybe<string>>;
 
 	readonly version: Version;
 
@@ -83,7 +84,7 @@ export class Locality<
 				acc[name as TName] = keyPath;
 				return acc;
 			},
-			{} as Record<TName, string | undefined>
+			{} as Record<TName, Maybe<string>>
 		);
 
 		this.#readyPromise = openDBWithStores(this.#name, store, config.version)

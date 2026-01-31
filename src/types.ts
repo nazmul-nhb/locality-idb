@@ -124,6 +124,9 @@ export type Tuple<T> = [T] extends [never] ? [] : $UnionToTuple<T>;
 export type ArrayToTuple<T extends readonly unknown[]> =
 	T[number] extends infer U ? $UnionToTuple<U> : never;
 
+/** Represents a value that may or may not be present. */
+export type Maybe<T> = T | undefined;
+
 /** Union of Basic Primitive Types (i.e. `string | number | boolean`) */
 export type BasicPrimitive = string | number | boolean;
 

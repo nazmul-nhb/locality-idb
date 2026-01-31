@@ -14,7 +14,7 @@ import {
 	isUUID,
 } from 'nhb-toolbox';
 import { type Column, ColumnType, DefaultValue } from './core';
-import type { ColumnDefinition, GenericObject, TypeName } from './types';
+import type { ColumnDefinition, GenericObject, Maybe, TypeName } from './types';
 import { getTimestamp, isTimestamp, uuidV4 } from './utils';
 
 /**
@@ -151,8 +151,8 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
  */
 export function validateAndPrepareData<Data extends GenericObject>(
 	data: Data,
-	columns: ColumnDefinition | undefined,
-	keyPath: string | undefined,
+	columns: Maybe<ColumnDefinition>,
+	keyPath: Maybe<string>,
 	forUpdate = false
 ): Data {
 	type Key = keyof Data;
