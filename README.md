@@ -787,6 +787,14 @@ Filters rows based on a predicate function.
 db.from('users').where((user) => user.age >= 18)
 ```
 
+##### `where<IdxKey>(indexName: IdxKey, query: T[IdxKey] | IDBKeyRange): SelectQuery`
+
+Filters rows using an indexed field.
+
+```typescript
+db.from('users').where('age', IDBKeyRange.bound(18, 30))
+```
+
 ##### `orderBy<Key>(key: Key, direction?: 'asc' | 'desc'): SelectQuery`
 
 Orders results by a specified key. Supports nested keys using dot notation.

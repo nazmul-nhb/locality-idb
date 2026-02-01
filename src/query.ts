@@ -80,6 +80,7 @@ export class SelectQuery<
 		return isNonEmptyString(this.#whereIndexName) && store.keyPath === this.#whereIndexName;
 	}
 
+	/** @internal Build indexed store (primary key or index) for where queries */
 	#buildIndexedStore(store: IDBObjectStore, reject: RejectFn) {
 		const isPK = this.#isPrimaryKey(store);
 		const isIndex = this.#isIndexKey(store);
@@ -114,9 +115,9 @@ export class SelectQuery<
 
 	/** Projects a row based on selected fields */
 	#projectRow(row: T): Partial<T> {
-		if (!isNotEmptyObject(this?.[Selected])) return row;
-
 		type Key = keyof T;
+
+		if (!isNotEmptyObject(this?.[Selected])) return row;
 
 		const projected = {} as Partial<T>;
 
@@ -168,19 +169,19 @@ export class SelectQuery<
 	 */
 	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
 		indexName: IdxKey,
-		query: IDBKeyRange | T[keyof T]
+		query: IDBKeyRange | T[IdxKey]
 	): this;
 
 	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
-		predicate: WherePredicate<T> | IdxKey,
-		query?: IDBKeyRange | T[keyof T]
+		condition: WherePredicate<T> | IdxKey,
+		query?: IDBKeyRange | T[IdxKey]
 	): this {
-		if (isFunction(predicate)) {
-			this.#whereCondition = predicate;
+		if (isFunction(condition)) {
+			this.#whereCondition = condition;
 			this.#whereIndexName = undefined;
 			this.#whereIndexQuery = undefined;
-		} else if (isNonEmptyString(predicate) && !isUndefined(query)) {
-			this.#whereIndexName = predicate;
+		} else if (isNonEmptyString(condition) && !isUndefined(query)) {
+			this.#whereIndexName = condition;
 			this.#whereIndexQuery = query;
 			this.#whereCondition = undefined;
 		}
@@ -556,6 +557,12 @@ export class SelectQuery<
 			request.onsuccess = () => resolve(request.result);
 			request.onerror = () => reject(request.error);
 		});
+	}
+
+	async exists(): Promise<boolean> {
+		const count = await this.count();
+
+		return count > 0;
 	}
 }
 

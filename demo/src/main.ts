@@ -264,6 +264,7 @@ window.addEventListener('load', async () => {
 	const ex1 = await db
 		.from('experiments')
 		.select({ name: true })
+		// .select({ id: true })
 		.findByPk('84864f8a-31e7-42b0-950d-de1d9de6d0a5');
 
 	const ex2 = await db
@@ -271,7 +272,7 @@ window.addEventListener('load', async () => {
 		// .where((a) => a.name === 'Beto')
 		.select({ name: true })
 		.where('id', IDBKeyRange.bound('c', 'f'))
-		.sortByIndex('id', 'asc')
+		// .sortByIndex('id', 'asc')
 		.findAll();
 
 	const ex3 = await db
@@ -282,7 +283,7 @@ window.addEventListener('load', async () => {
 	console.info({ ex1, ex2, ex3 });
 	// await db.deleteTable('experiments');
 
-	const todoNo = await db.from('todos').sortByIndex('task').count();
+	const testWithToDo = await db.from('todos').where('task', 'hello').exists();
 
-	console.info(todoNo);
+	console.info(testWithToDo);
 });
