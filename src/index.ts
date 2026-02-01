@@ -1,5 +1,6 @@
 export type * from './types';
 
+export { ValidateFn } from './core';
 export type { Column, Table } from './core';
 
 export { Locality } from './client';

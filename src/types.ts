@@ -149,6 +149,9 @@ export type VoidFn = (...args: any[]) => void;
 /** Type for reject function of a promise */
 export type RejectFn = (reason: unknown) => void;
 
+/** Validator function type for {@link Column.validate()} */
+export type ValidatorFn<T = any> = (value: T) => string | null | undefined;
+
 /** Asynchronous function type */
 export type AsyncFunction<T> = (...args: any[]) => Promise<T>;
 

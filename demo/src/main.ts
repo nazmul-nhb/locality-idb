@@ -4,6 +4,7 @@ import './test';
 
 import { isValidArray } from 'nhb-toolbox';
 import { Chronos } from 'nhb-toolbox/chronos';
+import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
 import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
@@ -23,19 +24,28 @@ const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 const schema = defineSchema({
 	todos: {
 		serial: column.int().auto().pk(),
-		task: column.text().unique(),
+		task: column
+			.text()
+			// .validate((val) => {
+			// 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? null : 'Invalid email format';
+			// })
+			.unique(),
 		completed: column.bool().default(false),
-		uuid: column.uuid(),
+		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
+		// .default(new Chronos().toLocalISOString() as Timestamp)
 		test: column.char(3).optional(),
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
 		// TODO: Add some method that will trigger only when updating
-		updatedAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
+		updatedAt: column.timestamp(),
 	},
 	experiments: {
 		id: column.uuid().pk(),
 		name: column.text().index(),
-		active: column.bool().default(true),
+		active: column
+			.bool()
+			.default(true)
+			.validate((v) => (v ? null : 'Active must be true or false')),
 	},
 });
 

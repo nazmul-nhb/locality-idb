@@ -143,7 +143,7 @@ export const column = {
 	 * @returns A new {@link Column} instance for text.
 	 * @remarks This column type is used for large strings of text.
 	 */
-	text: () => new Column<string, 'text'>('text'),
+	text: <T extends string = string>() => new Column<T, 'text'>('text'),
 	/**
 	 * Creates a string column.
 	 * @returns A new {@link Column} instance for strings.

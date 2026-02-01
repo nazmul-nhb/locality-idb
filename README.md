@@ -775,6 +775,103 @@ column.bool().default(true)
 column.text().default('N/A')
 ```
 
+#### `validate(validator: (value: T) => string | null | undefined): Column`
+
+Adds custom validation logic to the column. The validation function receives the column value and should return:
+
+- `null` or `undefined` if the value is valid
+- An error message `string` if the value is invalid
+
+**When it runs:** During insert and update operations, before data is saved to `IndexedDB`.
+
+> **Error Handling:** If validation fails, a `TypeError` is thrown with details about the invalid field.
+
+**Precedence:** Custom validators override built-in type validation. If you provide a custom validator, the built-in type check for that column will be skipped.
+
+> **Note:**
+>
+> - Custom validation is not applied to auto-generated values (e.g. auto-increment, UUID, timestamp). But default values are validated if `.default(value)` is used.
+> - If multiple validators are chained, only the last one is used.
+> - Built-in type validation still applies to all other columns without custom validators.
+> - If the column is optional, the validator is only called when a value is provided (not `undefined`).
+
+```typescript
+// Email validation
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    email: column.text().validate((val) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(val) ? null : 'Invalid email format';
+    }),
+    age: column.int().validate((val) => {
+      if (val < 0) return 'Age cannot be negative';
+      if (val > 120) return 'Age must be 120 or less';
+      return null; // Valid
+    }),
+    username: column.text().validate((val) => {
+      if (val.length < 3) return 'Username must be at least 3 characters';
+      if (!/^[a-zA-Z0-9_]+$/.test(val)) return 'Username can only contain letters, numbers, and underscores';
+      return null;
+    }),
+  },
+});
+
+// ✅ Valid insert
+await db.insert('users').values({
+  email: 'user@example.com',
+  age: 25,
+  username: 'john_doe'
+}).run();
+
+// ❌ Throws TypeError: Invalid value for field 'email' in table 'users': Invalid email format
+await db.insert('users').values({
+  email: 'invalid-email',
+  age: 25,
+  username: 'john_doe'
+}).run();
+
+// ❌ Throws TypeError: Invalid value for field 'age' in table 'users': Age cannot be negative
+await db.insert('users').values({
+  email: 'user@example.com',
+  age: -5,
+  username: 'john_doe'
+}).run();
+```
+
+**Combining with `.optional()`:**
+
+```typescript
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    // Custom validation only runs when value is provided
+    bio: column.text().optional().validate((val) => {
+      return val.length <= 500 ? null : 'Bio must be 500 characters or less';
+    }),
+  },
+});
+
+// ✅ Valid - bio is optional and omitted
+await db.insert('users').values({}).run();
+
+// ✅ Valid - bio is provided and valid
+await db.insert('users').values({ bio: 'Short bio' }).run();
+
+// ❌ Throws TypeError - bio provided but exceeds 500 chars
+await db.insert('users').values({ bio: 'x'.repeat(501) }).run();
+```
+
+**Access the `ValidateFn` symbol (advanced):**
+
+```typescript
+import { ValidateFn } from 'locality-idb';
+
+// Access validator function programmatically
+const emailColumn = column.text().validate((val) => { /* ... */ });
+const validatorFn = emailColumn[ValidateFn]; // Function reference
+```
+
 ---
 
 ### Query Methods

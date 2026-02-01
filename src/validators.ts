@@ -14,7 +14,14 @@ import {
 	isUndefined,
 	isUUID,
 } from 'nhb-toolbox';
-import { type Column, ColumnType, DefaultValue, IsAutoInc, IsOptional } from './core';
+import {
+	type Column,
+	ColumnType,
+	DefaultValue,
+	IsAutoInc,
+	IsOptional,
+	ValidateFn,
+} from './core';
 import type { ColumnDefinition, GenericObject, Maybe, TypeName } from './types';
 import { getTimestamp, isTimestamp, uuidV4 } from './utils';
 
@@ -86,11 +93,6 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 
 			return `${strVal} is not a tuple`;
 
-		case 'set':
-			if (isSet(value)) return null;
-
-			return `${strVal} is not a set`;
-
 		case 'object':
 			if (isObject(value)) return null;
 
@@ -100,6 +102,11 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 			if (isDate(value)) return null;
 
 			return `${strVal} is not a Date object`;
+
+		case 'set':
+			if (isSet(value)) return null;
+
+			return `${strVal} is not a set`;
 
 		case 'map':
 			if (isMap(value)) return null;
@@ -185,13 +192,13 @@ export function validateAndPrepareData<Data extends GenericObject>(
 			// ! Auto-generate values for insert (not update)
 			if (!forUpdate && fieldNotPresent) {
 				// Auto-generate UUID
-				if (columnType === 'uuid') {
+				if (columnType === 'uuid' && isUndefined(defaultValue)) {
 					prepared[fieldName] = uuidV4() as Data[Key];
 					return; // Skip validation for auto-generated
 				}
 
 				// Auto-generate timestamp
-				if (columnType === 'timestamp') {
+				if (columnType === 'timestamp' && isUndefined(defaultValue)) {
 					prepared[fieldName] = getTimestamp() as Data[Key];
 					return; // Skip validation for auto-generated
 				}
@@ -240,7 +247,15 @@ export function validateAndPrepareData<Data extends GenericObject>(
 				!forUpdate && fieldName === keyPath && (column[IsAutoInc] ?? false);
 
 			if (!shouldSkip) {
-				const errorMsg = validateColumnType(columnType, fieldValue);
+				const customValidator = column[ValidateFn];
+				let errorMsg: string | null | undefined;
+
+				// Use custom validator if provided, otherwise use built-in validation
+				if (customValidator) {
+					errorMsg = customValidator(fieldValue);
+				} else {
+					errorMsg = validateColumnType(columnType, fieldValue);
+				}
 
 				if (errorMsg) {
 					throw new TypeError(
