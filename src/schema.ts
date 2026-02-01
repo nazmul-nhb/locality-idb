@@ -172,7 +172,7 @@ export const column = {
 	 * @remarks
 	 * - This column type is used for storing UUID strings.
 	 * - UUIDs are typically used as unique identifiers.
-	 * - Automatically genrates UUID v4 values when no value is provided.
+	 * - Automatically generates UUID v4 values when no value is provided.
 	 */
 	uuid: () => new Column<$UUID, 'uuid'>('uuid'),
 	/**

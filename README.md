@@ -640,7 +640,7 @@ Gets the underlying `IDBDatabase` instance.
 const idb = await db.getDBInstance();
 ```
 
-#### `seed<T>(table: T, data: InferInsertType<Schema[T]> | InferInsertType<Schema[T]>[]): Promise<InferSelectType<Schema[T]> | InferSelectType<Schema[T]>[]>`
+#### `seed<T>(table: T, data: InferInsertType<Schema[T]>[]): Promise<InferSelectType<Schema[T]>[]>`
 
 Inserts seed data into the specified table.
 
@@ -649,13 +649,14 @@ Inserts seed data into the specified table.
 > - This is a convenience method for inserting initial data.
 > - It uses the `insert` method internally.
 > - It does not clear existing data before inserting.
+> - Accepts only an **array** of records (for single record insertion, use `insert().values().run()`)
 
 **Parameters:**
 
 - `table`: Table name
-- `data`: Single record or array of records to insert
+- `data`: Array of records to insert
 
-**Returns:** Inserted record(s)
+**Returns:** Array of inserted record(s)
 
 **Example:**
 
