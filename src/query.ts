@@ -123,14 +123,14 @@ export class SelectQuery<
 	}
 
 	/** Fetch all matching records */
-	async all(this: SelectQuery<T, null>): Promise<T[]>;
+	async findAll(this: SelectQuery<T, null>): Promise<T[]>;
 
 	/** Fetch all matching records with selected fields */
-	async all<Selection extends Partial<Record<keyof T, boolean>>>(
+	async findAll<Selection extends Partial<Record<keyof T, boolean>>>(
 		this: SelectQuery<T, Selection>
 	): Promise<SelectFields<T, Selection>[]>;
 
-	async all() {
+	async findAll() {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
 			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
@@ -432,7 +432,7 @@ export class InsertQuery<
 			const promises: Promise<void>[] = this.#dataToInsert.map((data) => {
 				return new Promise((res, rej) => {
 					const request = store.add(
-						validateAndPrepareData(data, this.#columns, this.#keyPath)
+						validateAndPrepareData(data, this.#columns, this.#keyPath, this.#table)
 					);
 
 					request.onsuccess = () => {
@@ -544,6 +544,7 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 							{ ...row, ...this.#dataToUpdate },
 							this.#columns,
 							this.#keyPath,
+							this.#table,
 							true
 						);
 

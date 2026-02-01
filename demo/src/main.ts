@@ -61,7 +61,7 @@ const loadTodos = async () => {
 		.from('todos')
 		// .select({ serial: true, timestamp: true })
 		.orderBy('serial', 'asc')
-		.all();
+		.findAll();
 	// as Todo[];
 
 	console.table(todos);
@@ -135,10 +135,11 @@ const handleAddTodo = async () => {
 
 		console.dir(inserted);
 	} catch (error) {
-		console.error(error);
-		if (error instanceof DOMException) {
+		if (error instanceof Error) {
 			alert(error.message);
 		}
+
+		console.error(error);
 	}
 
 	todoInput.value = '';
@@ -149,11 +150,19 @@ const handleAddTodo = async () => {
 const toggleTodo = async (id: number, update: UpdateTodo) => {
 	// const updatedTodo = { completed: !update.completed };
 	// await updateTodo(updatedTodo);
-	await db
-		.update('todos')
-		.set(update)
-		.where((t) => t.serial === id)
-		.run();
+	try {
+		await db
+			.update('todos')
+			.set(update)
+			.where((t) => t.serial === id)
+			.run();
+	} catch (error) {
+		if (error instanceof Error) {
+			alert(error.message);
+		}
+
+		console.error(error);
+	}
 
 	await loadTodos();
 };
@@ -240,7 +249,7 @@ window.addEventListener('load', async () => {
 
 	await loadTodos();
 
-	const experiments = await db.from('experiments').all();
+	const experiments = await db.from('experiments').findAll();
 
 	if (!isValidArray(experiments)) {
 		await db.seed('experiments', [
@@ -261,7 +270,7 @@ window.addEventListener('load', async () => {
 		.from('experiments')
 		.select({ name: true })
 		.sortByIndex('id', 'desc')
-		.all();
+		.findAll();
 
 	const ex3 = await db
 		.from('experiments')

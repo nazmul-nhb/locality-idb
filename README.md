@@ -13,15 +13,9 @@
 <!-- ![bundle](https://img.shields.io/bundlephobia/minzip/locality-idb) -->
 <!-- ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) -->
 
-[API Reference](#-api-reference) • [Examples](#-usage) • [Contributing](#-contributing)
+[API Reference](#-api-reference) • [Examples](#-usage) • [Contributing](CONTRIBUTING.md)
 
 </div>
-
----
-
-## ⚠️ Beta Status
-
->This development of the package is currently in **beta stage**. The API is subject to change. Use in production at your own risk.
 
 ---
 
@@ -48,7 +42,6 @@
   - [Utility Functions](#utility-functions)
   - [Validation](#validation)
 - [Type System](#-type-system)
-- [Contributing](#-contributing)
 - [License](#-license)
 
 ---
@@ -124,7 +117,7 @@ const user = await db
   .run();
 
 // Query data
-const users = await db.from('users').all();
+const users = await db.from('users').findAll();
 const alice = await db
   .from('users')
   .where((user) => user.email === 'alice@example.com')
@@ -334,7 +327,7 @@ console.log(post);
 #### Get All Records
 
 ```typescript
-const allUsers = await db.from('users').all();
+const allUsers = await db.from('users').findAll();
 ```
 
 #### Filter with Where
@@ -343,12 +336,12 @@ const allUsers = await db.from('users').all();
 const admins = await db
   .from('users')
   .where((user) => user.role === 'admin')
-  .all();
+  .findAll();
 
 const activeUsers = await db
   .from('users')
   .where((user) => user.isActive && user.age >= 18)
-  .all();
+  .findAll();
 ```
 
 #### Select Specific Columns
@@ -358,14 +351,14 @@ const activeUsers = await db
 const userNames = await db
   .from('users')
   .select({ name: true, email: true })
-  .all();
+  .findAll();
 // Returns: Array<{ name: string; email: string }>
 
 // Exclude specified columns
 const usersWithoutPassword = await db
   .from('users')
   .select({ password: false })
-  .all();
+  .findAll();
 // Returns: Array<Omit<User, 'password'>>
 ```
 
@@ -375,13 +368,13 @@ const usersWithoutPassword = await db
 const sortedUsers = await db
   .from('users')
   .orderBy('name', 'asc') // or 'desc'
-  .all();
+  .findAll();
 
 // Supports nested keys
 const sorted = await db
   .from('users')
   .orderBy('profile.age', 'desc')
-  .all();
+  .findAll();
 ```
 
 #### Limit Results
@@ -391,7 +384,7 @@ const topTenUsers = await db
   .from('users')
   .orderBy('createdAt', 'desc')
   .limit(10)
-  .all();
+  .findAll();
 ```
 
 #### Get First Match
@@ -450,21 +443,21 @@ const result = await db
 const sortedUsers = await db
   .from('users')
   .sortByIndex('age', 'desc')
-  .all();
+  .findAll();
 
 // Combine with limit for efficient pagination
 const topTenOldest = await db
   .from('users')
   .sortByIndex('age', 'desc')
   .limit(10)
-  .all();
+  .findAll();
 
 // Works with select projection
 const names = await db
   .from('users')
   .select({ name: true, age: true })
   .sortByIndex('age', 'asc')
-  .all();
+  .findAll();
 ```
 
 > **Note:** `sortByIndex()` uses IndexedDB cursor iteration for optimal performance when no `where()` filter is applied.
@@ -478,7 +471,7 @@ const result = await db
   .where((user) => user.age >= 18)
   .orderBy('name', 'asc')
   .limit(5)
-  .all();
+  .findAll();
 ```
 
 ### Update Records
@@ -652,7 +645,7 @@ await db.seed('users', [
   { name: 'Bob', email: 'bob@top.com', },
 ]);
 
-const allUsers = await db.from('users').all();
+const allUsers = await db.from('users').findAll();
 
 console.log(allUsers);
 ```
@@ -804,12 +797,12 @@ Limits the number of results.
 db.from('users').limit(10)
 ```
 
-##### `all(): Promise<T[]>`
+##### `findAll(): Promise<T[]>`
 
 Fetches all matching records.
 
 ```typescript
-const users = await db.from('users').all()
+const users = await db.from('users').findAll()
 ```
 
 ##### `first(): Promise<T | null>`
@@ -862,10 +855,10 @@ Sorts results by an indexed field using IndexedDB cursor iteration (avoiding in-
 
 ```typescript
 // Optimized cursor-based sort
-const sorted = await db.from('users').sortByIndex('age', 'desc').all();
+const sorted = await db.from('users').sortByIndex('age', 'desc').findAll();
 
 // Efficient pagination
-const page = await db.from('users').sortByIndex('createdAt', 'desc').limit(20).all();
+const page = await db.from('users').sortByIndex('createdAt', 'desc').limit(20).findAll();
 ```
 
 #### InsertQuery Methods
@@ -1213,42 +1206,6 @@ type Keys = NestedPrimitiveKey<{ user: { profile: { age: number } } }>;
 type Selected = SelectFields<User, { name: true; email: true }>;
 // { name: string; email: string }
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Since this package is in beta, your feedback and contributions are especially valuable.
-
-### Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/nazmul-nhb/locality-idb.git
-cd locality-idb
-
-# Install dependencies
-pnpm install
-
-# Build package
-pnpm run build
-
-# Type check
-pnpm run typecheck
-
-# Run package in development mode (watch for changes)
-pnpm run dev:pkg
-
-# Run demo implementation
-pnpm run dev
-
-# Build demo implementation project
-pnpm run build:demo
-```
-
-### Reporting Issues
-
-Please report issues on the [GitHub issue tracker](https://github.com/nazmul-nhb/locality-idb/issues).
 
 ---
 

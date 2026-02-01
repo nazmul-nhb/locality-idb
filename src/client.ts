@@ -41,10 +41,10 @@ import { deleteDB } from './utils';
  * const inserted = await db.insert('users').values({ name: 'Alice', email: 'alice@wonderland.mad' }).run();
  *
  * // Get all users
- * const allUsers = await db.from('users').all();
+ * const allUsers = await db.from('users').findAll();
  *
  * // Select users with a specific condition
- * const allAlices = await db.from('users').where((user) => user.email.includes('alice')).all();
+ * const allAlices = await db.from('users').where((user) => user.email.includes('alice')).findAll();
  *
  * // Update a user
  * const updated = await db.update('users').set({ name: 'Alice Liddell' }).where((user) => user.id === 1).run();
@@ -281,7 +281,7 @@ export class Locality<
 	 *   { name: 'Bob', email: 'bob@top.com', },
 	 * ]);
 	 *
-	 * const allUsers = await db.from('users').all();
+	 * const allUsers = await db.from('users').findAll();
 	 *
 	 * console.log(allUsers);
 	 */

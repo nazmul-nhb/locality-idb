@@ -142,6 +142,7 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
  * @param data The data object to validate and prepare
  * @param columns The column definitions
  * @param keyPath The key path of the primary key column (if any)
+ * @param tableName The name of the table
  * @param forUpdate Whether the operation is an update (default: `false`)
  *
  * @returns The validated and prepared data object
@@ -153,6 +154,7 @@ export function validateAndPrepareData<Data extends GenericObject>(
 	data: Data,
 	columns: Maybe<ColumnDefinition>,
 	keyPath: Maybe<string>,
+	tableName: string,
 	forUpdate = false
 ): Data {
 	type Key = keyof Data;
@@ -163,7 +165,7 @@ export function validateAndPrepareData<Data extends GenericObject>(
 		for (const fieldName of Object.keys(prepared)) {
 			if (!Object.keys(columns).includes(fieldName)) {
 				throw new RangeError(
-					`"${fieldName}" in ${JSON.stringify(data)} is not defined in the table schema!`
+					`'${fieldName}' is not defined in the table (${tableName}) schema!`
 				);
 			}
 		}
