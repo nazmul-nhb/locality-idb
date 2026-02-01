@@ -16,13 +16,13 @@
 
 [API Reference](#-api-reference) • [Examples](#-usage) • [Contributing](CONTRIBUTING.md)
 
-</div>
-
 ---
 
 ## Why Locality IDB?
 
 [**IndexedDB**](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB) is a powerful browser-native database, but its low-level API can be cumbersome and complex to work with. `Locality IDB` simplifies `IndexedDB` interactions by providing a modern, type-safe, and SQL-like query builder inspired by [**Drizzle ORM**](https://github.com/drizzle-team/drizzle-orm).
+
+</div>
 
 ---
 
@@ -61,9 +61,9 @@
 - 📦 **Zero Dependencies**: Lightweight with only development dependencies
 - 🔄 **Auto-Generation**: Automatic UUID and timestamp generation
 - 🎨 **Schema-First**: Define your database schema with a simple, declarative API
-- ⚡ **Promise-Based**: Fully async/await compatible
 - 🛠️ **Rich Column Types**: Support for various data types including custom types
 - ✅ **Built-in Validation**: Automatic data type validation for built-in column types during insert and update operations
+- 🔧 **Custom Validators**: Define custom validation logic for columns to enforce complex rules
 
 ---
 
