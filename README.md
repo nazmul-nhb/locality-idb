@@ -128,7 +128,7 @@ const users = await db.from('users').findAll();
 const alice = await db
   .from('users')
   .where((user) => user.email === 'alice@example.com')
-  .first();
+  .findFirst();
 
 // Update data
 await db
@@ -400,7 +400,7 @@ const topTenUsers = await db
 const user = await db
   .from('users')
   .where((user) => user.email === 'john@example.com')
-  .first();
+  .findFirst();
 // Returns: User | null
 ```
 
@@ -812,12 +812,12 @@ Fetches all matching records.
 const users = await db.from('users').findAll()
 ```
 
-##### `first(): Promise<T | null>`
+##### `findFirst(): Promise<T | null>`
 
 Fetches the first matching record.
 
 ```typescript
-const user = await db.from('users').first()
+const user = await db.from('users').findFirst()
 ```
 
 ##### `findByPk<Key>(key: Key): Promise<T | null>`
@@ -828,10 +828,10 @@ Finds a single record by its primary key value using IndexedDB's optimized `get(
 
 ```typescript
 const user = await db.from('users').findByPk(1);
-const post = await db.from('posts').findByPk('uuid-string');
+const post = await db.from('posts').findByPk('some-uuid-string');
 ```
 
-##### `findByIndex<IndexKey>(indexName: IndexKey, query: T[IndexKey] | IDBKeyRange): Promise<T[]>`
+##### `findByIndex<IdxKey>(indexName: IdxKey, query: T[IdxKey] | IDBKeyRange): Promise<T[]>`
 
 Finds records using an indexed field. Only accepts field names that are marked with `.index()` or `.unique()`.
 
@@ -852,7 +852,7 @@ const adults = await db.from('users').findByIndex('age', IDBKeyRange.bound(18, 6
 > - Unique columns are automatically indexed.
 > - Unique indexes are recommended for this method to ensure a single result.
 
-##### `sortByIndex<IndexKey>(indexName: IndexKey, dir?: 'asc' | 'desc'): SelectQuery`
+##### `sortByIndex<IdxKey>(indexName: IdxKey, dir?: 'asc' | 'desc'): SelectQuery`
 
 Sorts results by an indexed field using IndexedDB cursor iteration (avoiding in-memory sorting).
 

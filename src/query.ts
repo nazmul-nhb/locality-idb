@@ -1,4 +1,10 @@
-import { isNonEmptyString, isNotEmptyObject, sortAnArray } from 'nhb-toolbox';
+import {
+	isFunction,
+	isNonEmptyString,
+	isNotEmptyObject,
+	isUndefined,
+	sortAnArray,
+} from 'nhb-toolbox';
 import { type Table } from './core';
 import { _abortTransaction } from './helpers';
 import type {
@@ -10,8 +16,10 @@ import type {
 	InferUpdateType,
 	Maybe,
 	NestedPrimitiveKey,
+	RejectFn,
 	SelectFields,
 	SortDirection,
+	WherePredicate,
 } from './types';
 import { validateAndPrepareData } from './validators';
 
@@ -34,7 +42,9 @@ export class SelectQuery<
 	#readyPromise: Promise<void>;
 
 	#dbGetter: IDBGetter;
-	#whereCondition?: (row: T) => boolean;
+	#whereCondition?: WherePredicate<T>;
+	#whereIndexName?: string;
+	#whereIndexQuery?: IDBKeyRange;
 
 	#orderByKey?: NestedPrimitiveKey<T>;
 	#orderByDir: SortDirection = 'asc';
@@ -49,44 +59,57 @@ export class SelectQuery<
 		this.#readyPromise = readyPromise;
 	}
 
-	/**
-	 * @instance Select or exclude specific columns
-	 * @param cols Columns to select or exclude
-	 */
-	select<Selection extends Partial<Record<keyof T, boolean>>>(cols: Selection) {
-		this[Selected] = cols as unknown as S;
-
-		return this as unknown as SelectQuery<T, Selection, Tbl>;
+	#createTransaction(): IDBTransaction {
+		return this.#dbGetter().transaction(this.#table, 'readonly');
 	}
 
-	/**
-	 * @instance  Filter rows based on predicate function
-	 * @param predicate Filtering function
-	 */
-	where(predicate: (row: T) => boolean): this {
-		this.#whereCondition = predicate;
-		return this;
+	#getStoreWithTransaction(): IDBObjectStore {
+		return this.#createTransaction().objectStore(this.#table);
 	}
 
-	/**
-	 * @instance  Order results by specified key and direction
-	 * @param key Key to order by
-	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
-	 */
-	orderBy<Key extends NestedPrimitiveKey<T>>(key: Key, dir: SortDirection = 'asc'): this {
-		this.#orderByKey = key;
-		this.#orderByDir = dir;
-
-		return this;
+	/** @internal Check if key is an index on the store for the `#whereIndexName` */
+	#isIndexKey(store: IDBObjectStore): boolean {
+		return (
+			isNonEmptyString(this.#whereIndexName) &&
+			store.indexNames.contains(this.#whereIndexName)
+		);
 	}
 
-	/**
-	 * @instance Limit number of results
-	 * @param count Maximum number of results to return
-	 */
-	limit(count: number): this {
-		this.#limitCount = count;
-		return this;
+	/** @internal Check if key is the primary key on the store for the `#whereIndexName` */
+	#isPrimaryKey(store: IDBObjectStore): boolean {
+		return isNonEmptyString(this.#whereIndexName) && store.keyPath === this.#whereIndexName;
+	}
+
+	#buildIndexedStore(store: IDBObjectStore, reject: RejectFn) {
+		const isPK = this.#isPrimaryKey(store);
+		const isIndex = this.#isIndexKey(store);
+
+		if (!isPK && !isIndex) {
+			reject(
+				new RangeError(
+					`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
+				)
+			);
+
+			return null;
+		}
+
+		// Primary keys use store directly, indexes use store.index()
+		return isPK ? store : store.index(this.#whereIndexName as string);
+	}
+
+	/** @internal Sort data in memory if needed */
+	#sort(data: T[]): T[] {
+		if (this.#orderByKey) {
+			return sortAnArray(data, {
+				sortOrder: this.#orderByDir,
+				sortByField: this.#orderByKey as FirstOverloadParams<
+					typeof sortAnArray
+				>[1]['sortByField'],
+			});
+		}
+
+		return data;
 	}
 
 	/** Projects a row based on selected fields */
@@ -122,6 +145,95 @@ export class SelectQuery<
 		return projected;
 	}
 
+	/**
+	 * @instance Select or exclude specific columns
+	 * @param cols Columns to select or exclude
+	 */
+	select<Selection extends Partial<Record<keyof T, boolean>>>(cols: Selection) {
+		this[Selected] = cols as unknown as S;
+
+		return this as unknown as SelectQuery<T, Selection, Tbl>;
+	}
+
+	/**
+	 * @instance  Filter rows based on predicate function
+	 * @param predicate Filtering function
+	 */
+	where(predicate: WherePredicate<T>): this;
+
+	/**
+	 * @instance  Filter rows based on index query
+	 * @param indexName Name of the index/primary key to query
+	 * @param query Key value or {@link IDBKeyRange} to search for
+	 */
+	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
+		indexName: IdxKey,
+		query: IDBKeyRange | T[keyof T]
+	): this;
+
+	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
+		predicate: WherePredicate<T> | IdxKey,
+		query?: IDBKeyRange | T[keyof T]
+	): this {
+		if (isFunction(predicate)) {
+			this.#whereCondition = predicate;
+			this.#whereIndexName = undefined;
+			this.#whereIndexQuery = undefined;
+		} else if (isNonEmptyString(predicate) && !isUndefined(query)) {
+			this.#whereIndexName = predicate;
+			this.#whereIndexQuery = query;
+			this.#whereCondition = undefined;
+		}
+
+		return this;
+	}
+
+	/**
+	 * @instance  Order results by specified key and direction
+	 * @param key Key to order by
+	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
+	 *
+	 * @remarks
+	 * - This method performs in-memory sorting.
+	 * - For optimized sorting using `IndexedDB` indexes, use {@link sortByIndex} instead.
+	 */
+	orderBy<Key extends NestedPrimitiveKey<T>>(key: Key, dir: SortDirection = 'asc'): this {
+		this.#orderByKey = key;
+		this.#orderByDir = dir;
+
+		return this;
+	}
+
+	/**
+	 * @instance Order results by index using optimized `IndexedDB` cursor
+	 * @param indexName Name of the index to sort by
+	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
+	 *
+	 * @remarks
+	 * - This method uses `IndexedDB` indexes for sorting, which is more efficient for large datasets.
+	 * - Ensure that the specified index exists on the table.
+	 * - For in-memory sorting, use {@link orderBy} instead.
+	 */
+	sortByIndex<IdxKey extends $InferIndex<Tbl['columns']> | $InferPrimaryKey<Tbl['columns']>>(
+		indexName: IdxKey,
+		dir: SortDirection = 'asc'
+	): this {
+		this.#orderByKey = indexName as unknown as NestedPrimitiveKey<T>;
+		this.#orderByDir = dir;
+		this.#useIndexCursor = true;
+
+		return this;
+	}
+
+	/**
+	 * @instance Limit number of results
+	 * @param count Maximum number of results to return
+	 */
+	limit(count: number): this {
+		this.#limitCount = count;
+		return this;
+	}
+
 	/** Fetch all matching records */
 	async findAll(this: SelectQuery<T, null>): Promise<T[]>;
 
@@ -133,8 +245,37 @@ export class SelectQuery<
 	async findAll() {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
-			const store = transaction.objectStore(this.#table);
+			const store = this.#getStoreWithTransaction();
+
+			// If we have an index-based where query, use it
+			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+				const source = this.#buildIndexedStore(store, reject);
+
+				if (!source) return;
+
+				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+
+				request.onsuccess = () => {
+					let results: T[] = request.result;
+
+					// Apply orderBy
+					results = this.#sort(results);
+
+					// Apply limit
+					if (this.#limitCount) {
+						results = results.slice(0, this.#limitCount);
+					}
+
+					// Apply projection (select)
+					const projectedResults = results.map((row) => this.#projectRow(row));
+
+					resolve(projectedResults);
+				};
+
+				request.onerror = () => reject(request.error);
+
+				return;
+			}
 
 			// Check if we can use an optimized index cursor
 			const useIdxCursor =
@@ -142,7 +283,7 @@ export class SelectQuery<
 				this.#orderByKey &&
 				isNonEmptyString(this.#orderByKey) &&
 				store.indexNames.contains(this.#orderByKey) &&
-				!this.#whereCondition; // Only use cursor if no where condition
+				!this.#whereCondition; // Only use cursor if no predicate where condition
 
 			if (useIdxCursor) {
 				// Use optimized index cursor
@@ -150,6 +291,7 @@ export class SelectQuery<
 				const direction = this.#orderByDir === 'desc' ? 'prev' : 'next';
 				const request = index.openCursor(null, direction);
 				const results: T[] = [];
+
 				let count = 0;
 
 				request.onsuccess = () => {
@@ -175,7 +317,7 @@ export class SelectQuery<
 				request.onerror = () => reject(request.error);
 			} else {
 				// Use standard getAll with in-memory sorting
-				const request = store.getAll();
+				const request = store.getAll() as IDBRequest<T[]>;
 
 				request.onsuccess = () => {
 					let results: T[] = request.result;
@@ -205,19 +347,42 @@ export class SelectQuery<
 	}
 
 	/** Fetch first matching record */
-	async first(this: SelectQuery<T, null>): Promise<T | null>;
+	async findFirst(this: SelectQuery<T, null>): Promise<T | null>;
 
 	/** Fetch first matching record with selected fields */
-	async first<Selection extends Partial<Record<keyof T, boolean>>>(
+	async findFirst<Selection extends Partial<Record<keyof T, boolean>>>(
 		this: SelectQuery<T, Selection>
 	): Promise<SelectFields<T, Selection> | null>;
 
-	async first() {
+	async findFirst() {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
-			const store = transaction.objectStore(this.#table);
-			const request = store.getAll();
+			const store = this.#getStoreWithTransaction();
+
+			// If we have an index-based where query, use it
+			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+				const source = this.#buildIndexedStore(store, reject);
+
+				if (!source) return;
+
+				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+
+				request.onsuccess = () => {
+					const results: T[] = request.result;
+
+					// Apply projection (select)
+					if (results.length > 0) {
+						resolve(this.#projectRow(results[0]));
+					} else {
+						resolve(null);
+					}
+				};
+
+				request.onerror = () => reject(request.error);
+				return;
+			}
+
+			const request = store.getAll() as IDBRequest<T[]>;
 
 			request.onsuccess = () => {
 				let results: T[] = request.result;
@@ -242,6 +407,11 @@ export class SelectQuery<
 	/**
 	 * @instance Find record by primary key (optimized `IndexedDB` get)
 	 * @param key Primary key value
+	 *
+	 * @remarks
+	 * - This method uses the `IndexedDB` primary key for efficient querying.
+	 * - Ensure that the specified key exists on the table.
+	 * - To find by index, use {@link findByIndex} instead.
 	 */
 	async findByPk(
 		key: $InferPrimaryKey<Tbl['columns']> extends keyof T ?
@@ -254,9 +424,8 @@ export class SelectQuery<
 	> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
-			const store = transaction.objectStore(this.#table);
-			const request = store.get(key);
+			const store = this.#getStoreWithTransaction();
+			const request = store.get(key) as IDBRequest<T>;
 
 			type ResolvedData =
 				S extends null ? T | null
@@ -286,13 +455,18 @@ export class SelectQuery<
 	}
 
 	/**
-	 * @instance Find records by index (optimized IndexedDB index query)
+	 * @instance Find records by index (optimized `IndexedDB` index query)
 	 * @param indexName Name of the index to query
 	 * @param query Key value to search for
+	 *
+	 * @remarks
+	 * - This method uses `IndexedDB` indexes for efficient querying.
+	 * - Ensure that the specified index exists on the table.
+	 * - To find by primary key, use {@link findByPk} instead.
 	 */
-	async findByIndex<IndexKey extends $InferIndex<Tbl['columns']> & keyof T & string>(
-		indexName: IndexKey,
-		query: T[IndexKey] | IDBKeyRange
+	async findByIndex<IdxKey extends $InferIndex<Tbl['columns']> & keyof T & string>(
+		indexName: IdxKey,
+		query: T[IdxKey] | IDBKeyRange
 	): Promise<
 		S extends null ? T[]
 		: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S>[]
@@ -300,19 +474,18 @@ export class SelectQuery<
 	> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
-			const store = transaction.objectStore(this.#table);
+			const store = this.#getStoreWithTransaction();
 
 			// Check if index exists
 			if (!store.indexNames.contains(indexName)) {
 				reject(
-					new Error(`Index "${indexName}" does not exist on table "${this.#table}"`)
+					new Error(`Index '${indexName}' does not exist on table '${this.#table}'`)
 				);
 				return;
 			}
 
 			const index = store.index(indexName);
-			const request = index.getAll(query);
+			const request = index.getAll(query) as IDBRequest<T[]>;
 
 			request.onsuccess = () => {
 				let results: T[] = request.result;
@@ -343,34 +516,46 @@ export class SelectQuery<
 		});
 	}
 
-	/**
-	 * @instance Order results by index using optimized IndexedDB cursor
-	 * @param indexName Name of the index to sort by
-	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
-	 */
-	sortByIndex<
-		IndexKey extends ($InferIndex<Tbl['columns']> | $InferPrimaryKey<Tbl['columns']>) &
-			keyof T &
-			string,
-	>(indexName: IndexKey, dir: SortDirection = 'asc'): this {
-		this.#orderByKey = indexName as unknown as NestedPrimitiveKey<T>;
-		this.#orderByDir = dir;
-		this.#useIndexCursor = true;
-		return this;
-	}
+	/** @instance Count matching records */
+	async count(): Promise<number> {
+		await this.#readyPromise;
 
-	/** @internal Sort data in memory if needed */
-	#sort(data: T[]): T[] {
-		if (this.#orderByKey) {
-			return sortAnArray(data, {
-				sortOrder: this.#orderByDir,
-				sortByField: this.#orderByKey as FirstOverloadParams<
-					typeof sortAnArray
-				>[1]['sortByField'],
-			});
-		}
+		return new Promise((resolve, reject) => {
+			const store = this.#getStoreWithTransaction();
 
-		return data;
+			// If we have an index-based where query, use it
+			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+				const source = this.#buildIndexedStore(store, reject);
+
+				if (!source) return;
+
+				const request = source.count(this.#whereIndexQuery);
+
+				request.onsuccess = () => resolve(request.result);
+				request.onerror = () => reject(request.error);
+				return;
+			}
+
+			// If we have a predicate-based where condition, we need to get all and filter
+			if (this.#whereCondition) {
+				const request = store.getAll() as IDBRequest<T[]>;
+
+				request.onsuccess = () => {
+					const results: T[] = request.result;
+					const filtered = results.filter(this.#whereCondition!);
+					resolve(filtered.length);
+				};
+
+				request.onerror = () => reject(request.error);
+				return;
+			}
+
+			// No where conditions, use optimized count
+			const request = store.count();
+
+			request.onsuccess = () => resolve(request.result);
+			request.onerror = () => reject(request.error);
+		});
 	}
 }
 
@@ -606,7 +791,7 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 		return new Promise((resolve, reject) => {
 			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
-			const request = store.getAll();
+			const request = store.getAll() as IDBRequest<T[]>;
 
 			let deleteCount = 0;
 

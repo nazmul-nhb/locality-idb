@@ -444,6 +444,9 @@ export type Timestamp = Branded<string, 'Timestamp'>;
 /** Sort direction type for ordering queries */
 export type SortDirection = 'asc' | 'desc';
 
+/** Predicate function type for WHERE clauses in queries */
+export type WherePredicate<T extends GenericObject> = (row: T) => boolean;
+
 /** Creates a type for insert operations with auto-generated fields optional. */
 export type InferInsertType<T extends Table> = Prettify<
 	Omit<

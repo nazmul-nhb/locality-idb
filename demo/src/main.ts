@@ -268,8 +268,10 @@ window.addEventListener('load', async () => {
 
 	const ex2 = await db
 		.from('experiments')
+		// .where((a) => a.name === 'Beto')
 		.select({ name: true })
-		.sortByIndex('id', 'desc')
+		.where('id', IDBKeyRange.bound('c', 'f'))
+		.sortByIndex('id', 'asc')
 		.findAll();
 
 	const ex3 = await db
@@ -279,4 +281,8 @@ window.addEventListener('load', async () => {
 
 	console.info({ ex1, ex2, ex3 });
 	// await db.deleteTable('experiments');
+
+	const todoNo = await db.from('todos').sortByIndex('task').count();
+
+	console.info(todoNo);
 });
