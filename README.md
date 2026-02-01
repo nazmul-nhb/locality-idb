@@ -19,6 +19,12 @@
 
 ---
 
+## Why Locality IDB?
+
+`IndexedDB` is a powerful browser-native database, but its low-level API can be cumbersome and complex to work with. `Locality IDB` simplifies `IndexedDB` interactions by providing a modern, type-safe, and SQL-like query builder inspired by Drizzle ORM.
+
+---
+
 ## 📋 Table of Contents
 
 - [Features](#-features)
