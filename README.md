@@ -196,26 +196,182 @@ const multiPkSchema = defineSchema({
 
 Locality IDB supports a wide range of column types:
 
-| Type                   | Description                                                | Example                            |
-| ---------------------- | ---------------------------------------------------------- | ---------------------------------- |
-| `number()` / `float()` | Numeric values (integer or float)                          | `column.int()`                     |
-| `int()`                | Numeric values (only integer is allowed)                   | `column.int()`                     |
-| `numeric()`            | Number or numeric string                                   | `column.numeric()`                 |
-| `bigint()`             | Large integers                                             | `column.bigint()`                  |
-| `text()` / `string()`  | Text strings                                               | `column.text()`                    |
-| `char(length?)`        | Fixed-length string                                        | `column.char(10)`                  |
-| `varchar(length?)`     | Variable-length string                                     | `column.varchar(255)`              |
-| `bool()` / `boolean()` | Boolean values                                             | `column.bool()`                    |
-| `date()`               | Date objects                                               | `column.date()`                    |
-| `timestamp()`          | ISO 8601 timestamps ([auto-generated](#utility-functions)) | `column.timestamp()`               |
-| `uuid()`               | UUID strings ([auto-generated](#utility-functions) v4)     | `column.uuid()`                    |
-| `object<T>()`          | Generic objects                                            | `column.object<UserData>()`        |
-| `array<T>()`           | Arrays                                                     | `column.array<number>()`           |
-| `list<T>()`            | Read-only arrays                                           | `column.list<string>()`            |
-| `tuple<T>()`           | Fixed-size tuples                                          | `column.tuple<[string, number]>()` |
-| `set<T>()`             | Sets                                                       | `column.set<string>()`             |
-| `map<K,V>()`           | Maps                                                       | `column.map<string, number>()`     |
-| `custom<T>()`          | Custom types                                               | `column.custom<MyType>()`          |
+| Type                   | Description                                                | Example                          |
+| ---------------------- | ---------------------------------------------------------- | -------------------------------- |
+| `number()` / `float()` | Numeric values (integer or float)                          | `column.number()`                |
+| `int()`                | Numeric values (only integer is allowed)                   | `column.int()`                   |
+| `numeric()`            | Number or numeric string                                   | `column.numeric()`               |
+| `bigint()`             | Large integers                                             | `column.bigint()`                |
+| `text()` / `string()`  | Text strings                                               | `column.text()`                  |
+| `char(length?)`        | Fixed-length string                                        | `column.char(10)`                |
+| `varchar(length?)`     | Variable-length string                                     | `column.varchar(255)`            |
+| `bool()` / `boolean()` | Boolean values                                             | `column.bool()`                  |
+| `date()`               | Date objects                                               | `column.date()`                  |
+| `timestamp()`          | ISO 8601 timestamps ([auto-generated](#utility-functions)) | `column.timestamp()`             |
+| `uuid()`               | UUID strings ([auto-generated](#utility-functions) v4)     | `column.uuid()`                  |
+| `object<T>()`          | Generic objects                                            | `column.object<UserData>()`      |
+| `array<T>()`           | Arrays                                                     | `column.array<number>()`         |
+| `list<T>()`            | Read-only arrays                                           | `column.list<string>()`          |
+| `tuple<T>()`           | Fixed-size tuples                                          | `column.tuple<string, number>()` |
+| `set<T>()`             | Sets                                                       | `column.set<string>()`           |
+| `map<K,V>()`           | Maps                                                       | `column.map<string, number>()`   |
+| `custom<T>()`          | Custom types                                               | `column.custom<MyType>()`        |
+
+#### Type Extensions
+
+Most column types support **generic type parameters** for creating branded types, literal unions, or domain-specific types:
+
+##### Numeric Types (`int`, `float`, `number`)
+
+```typescript
+// Basic usage
+const age = column.int();
+const price = column.float();
+const score = column.number();
+
+// Branded types for type safety
+type UserId = Branded<number, 'UserId'>;
+type ProductId = Branded<number, 'ProductId'>;
+
+const schema = defineSchema({
+  users: {
+    id: column.int<UserId>().pk().auto(),
+    age: column.int(),
+  },
+  products: {
+    id: column.int<ProductId>().pk().auto(),
+    userId: column.int<UserId>(), // Type-safe foreign key
+    price: column.float(),
+  },
+});
+
+// ✅ Type safety prevents mixing IDs
+const userId: UserId = 1 as UserId;
+const productId: ProductId = 2 as ProductId;
+// userId = productId; // ❌ Type error!
+```
+
+##### String Types (`text`, `string`, `char`, `varchar`)
+
+```typescript
+// Literal unions for enum-like behavior
+type Role = 'admin' | 'user' | 'guest';
+type Status = 'draft' | 'published' | 'archived';
+
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    role: column.text<Role>().default('user'),
+    status: column.string<Status>().default('draft'),
+  },
+});
+
+// Branded types for domain-specific strings
+type Email = Branded<string, 'Email'>;
+type URL = Branded<string, 'URL'>;
+
+const profileSchema = defineSchema({
+  profiles: {
+    id: column.int().pk().auto(),
+    email: column.varchar<Email>(255).unique(),
+    website: column.varchar<URL>(500).optional(),
+  },
+});
+```
+
+##### Boolean Types (`bool`, `boolean`)
+
+```typescript
+// Branded booleans for clarity
+type EmailVerified = Branded<boolean, 'EmailVerified'>;
+type TwoFactorEnabled = Branded<boolean, 'TwoFactorEnabled'>;
+
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    emailVerified: column.bool<EmailVerified>().default(false as EmailVerified),
+    twoFactorEnabled: column.boolean<TwoFactorEnabled>().default(false as TwoFactorEnabled),
+  },
+});
+```
+
+##### Complex Types (`object`, `array`, `list`, `tuple`, `set`, `map`)
+
+```typescript
+// Object with typed structure
+interface UserProfile {
+  avatar: string;
+  bio: string;
+  socials: {
+    twitter?: string;
+    github?: string;
+  };
+}
+
+// Array of typed elements
+interface Comment {
+  author: string;
+  text: string;
+  date: string;
+}
+
+// Map with typed keys and values
+interface CacheEntry {
+  value: any;
+  expires: number;
+}
+
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    profile: column.object<UserProfile>(),
+    tags: column.array<string>(),
+    comments: column.array<Comment>(),
+    permissions: column.set<'read' | 'write' | 'delete'>(),
+    cache: column.map<string, CacheEntry>(),
+  },
+  
+  // Tuples for fixed structures
+  locations: {
+    id: column.int().pk().auto(),
+    coordinates: column.tuple<number, number>(), // [latitude, longitude]
+    rgbColor: column.tuple<number, number, number>(), // [r, g, b]
+  },
+  
+  // List (readonly array)
+  config: {
+    id: column.int().pk().auto(),
+    allowedOrigins: column.list<string>(), // Immutable at type level
+  },
+});
+```
+
+##### Numeric & Bigint with `Numeric` & `bigint` Types
+
+```typescript
+// Numeric accepts both number and numeric strings
+const schema = defineSchema({
+  products: {
+    id: column.int().pk().auto(),
+    serialNumber: column.numeric(), // Can be 123 or "123"
+    largeId: column.bigint(), // For very large integers
+  },
+});
+
+// Branded Numeric types
+type SerialNumber = Branded<Numeric, 'SerialNumber'>;
+type SnowflakeId = Branded<bigint, 'SnowflakeId'>;
+
+const advancedSchema = defineSchema({
+  items: {
+    id: column.int().pk().auto(),
+    serial: column.numeric<SerialNumber>(),
+    snowflake: column.bigint<SnowflakeId>(),
+  },
+});
+```
+
+> **Note:** Type extensions are compile-time only and do not affect runtime validation. Use [custom validators](#validatevalidator-value-t--string--null--undefined-column) for runtime type enforcement.
 
 ### Type Inference
 

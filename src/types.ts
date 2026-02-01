@@ -502,7 +502,7 @@ export type IndexKeyType<S extends Table> = InferSelectType<S>[$InferUnique<S['c
 export type UniqueKeyType<S extends Table> = InferSelectType<S>[$InferIndex<S['columns']>];
 
 /** Column type strings used in {@link Column} definitions */
-export type TypeName<L extends number = number> = LooseLiteral<
+export type TypeName = LooseLiteral<
 	| 'int'
 	| 'float'
 	| 'number'
@@ -510,8 +510,6 @@ export type TypeName<L extends number = number> = LooseLiteral<
 	| 'bigint'
 	| 'text'
 	| 'string'
-	| `char(${L})`
-	| `varchar(${L})`
 	| 'uuid'
 	| 'timestamp'
 	| 'bool'

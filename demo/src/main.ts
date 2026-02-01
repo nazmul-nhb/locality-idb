@@ -34,7 +34,7 @@ const schema = defineSchema({
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
 		// .default(new Chronos().toLocalISOString() as Timestamp)
-		test: column.char(3).optional(),
+		test: column.char<'kl'>(3).optional(),
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
 		// TODO: Add some method that will trigger only when updating
 		updatedAt: column.timestamp(),

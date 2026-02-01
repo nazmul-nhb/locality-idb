@@ -4,6 +4,7 @@ import {
 	isBigInt,
 	isBoolean,
 	isDate,
+	isFunction,
 	isInteger,
 	isMap,
 	isNumber,
@@ -251,7 +252,7 @@ export function validateAndPrepareData<Data extends GenericObject>(
 				let errorMsg: string | null | undefined;
 
 				// Use custom validator if provided, otherwise use built-in validation
-				if (customValidator) {
+				if (isFunction(customValidator)) {
 					errorMsg = customValidator(fieldValue);
 				} else {
 					errorMsg = validateColumnType(columnType, fieldValue);
