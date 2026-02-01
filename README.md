@@ -10,7 +10,7 @@
 ![npm downloads](https://img.shields.io/npm/dm/locality-idb)
 ![bundle size](https://deno.bundlejs.com/badge?q=locality-idb)
 ![license](https://img.shields.io/npm/l/locality-idb)
-![beta](https://img.shields.io/badge/status-beta-orange)
+<!-- ![beta](https://img.shields.io/badge/status-beta-orange) -->
 <!-- ![bundle](https://img.shields.io/bundlephobia/minzip/locality-idb) -->
 <!-- ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) -->
 

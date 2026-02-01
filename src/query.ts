@@ -451,15 +451,11 @@ export class InsertQuery<
 			});
 
 			// Start handling promises immediately (don't wait for transaction events)
-			Promise.all(promises).catch(reject);
+			Promise.all(promises).catch((err) => reject(err));
 
 			// Handle transaction completion (only fires if all succeeded)
 			transaction.oncomplete = () => {
-				resolve(
-					this[IsArray] === true ?
-						(insertedDocs as Return)
-					:	(insertedDocs[0] as unknown as Return)
-				);
+				resolve((this[IsArray] === true ? insertedDocs : insertedDocs[0]) as Return);
 			};
 
 			// Handle transaction abort (happens on errors like unique constraint violations)
@@ -561,7 +557,7 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 
 				Promise.all(updatePromises)
 					.then(() => resolve(updateCount))
-					.catch(reject);
+					.catch((err) => reject(err));
 			};
 
 			request.onerror = () => reject(request.error);
@@ -637,7 +633,7 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 
 				Promise.all(deletePromises)
 					.then(() => resolve(deleteCount))
-					.catch(reject);
+					.catch((err) => reject(err));
 			};
 
 			request.onerror = () => reject(request.error);
