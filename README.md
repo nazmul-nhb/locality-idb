@@ -1,6 +1,6 @@
 # Locality IDB
 
-> **SQL**-like query builder for [**IndexedDB**](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB) with [**Drizzle**](https://github.com/drizzle-team/drizzle-orm)-style API
+> **SQL**-like query builder for `IndexedDB` with `Drizzle`-style API
 
 <!-- markdownlint-disable-file MD024 -->
 
@@ -8,6 +8,7 @@
 
 ![npm version](https://img.shields.io/npm/v/locality-idb?color=blue)
 ![npm downloads](https://img.shields.io/npm/dm/locality-idb)
+![bundle size](https://deno.bundlejs.com/badge?q=locality-idb)
 ![license](https://img.shields.io/npm/l/locality-idb)
 ![beta](https://img.shields.io/badge/status-beta-orange)
 <!-- ![bundle](https://img.shields.io/bundlephobia/minzip/locality-idb) -->
@@ -21,7 +22,7 @@
 
 ## Why Locality IDB?
 
-`IndexedDB` is a powerful browser-native database, but its low-level API can be cumbersome and complex to work with. `Locality IDB` simplifies `IndexedDB` interactions by providing a modern, type-safe, and SQL-like query builder inspired by Drizzle ORM.
+[**IndexedDB**](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB) is a powerful browser-native database, but its low-level API can be cumbersome and complex to work with. `Locality IDB` simplifies `IndexedDB` interactions by providing a modern, type-safe, and SQL-like query builder inspired by [**Drizzle ORM**](https://github.com/drizzle-team/drizzle-orm).
 
 ---
 
