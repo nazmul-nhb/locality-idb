@@ -467,7 +467,7 @@ const names = await db
   .findAll();
 ```
 
-> **Note:** `sortByIndex()` uses IndexedDB cursor iteration for optimal performance when no `where()` filter is applied.
+> **Note:** `sortByIndex()` uses IndexedDB cursor iteration for optimal performance when `where()` filter is applied without index.
 
 #### Chain Multiple Methods
 
@@ -795,6 +795,24 @@ Filters rows using an indexed field.
 db.from('users').where('age', IDBKeyRange.bound(18, 30))
 ```
 
+##### `sortByIndex<IdxKey>(indexName: IdxKey, dir?: 'asc' | 'desc'): SelectQuery`
+
+Sorts results by an indexed field using IndexedDB cursor iteration (avoiding in-memory sorting).
+
+**Type Safety:** `indexName` must be a field with an index.
+
+**Performance:** Uses IndexedDB's cursor for optimized sorting. For large datasets, this is significantly more efficient than in-memory sorting.
+
+> For sorting on non-indexed fields, use [`orderBy()`](#orderbykeykey-key-direction-asc--desc-selectquery) which performs in-memory sorting.
+
+```typescript
+// Optimized cursor-based sort
+const sorted = await db.from('users').sortByIndex('age', 'desc').findAll();
+
+// Efficient pagination
+const page = await db.from('users').sortByIndex('createdAt', 'desc').limit(20).findAll();
+```
+
 ##### `orderBy<Key>(key: Key, direction?: 'asc' | 'desc'): SelectQuery`
 
 Orders results by a specified key. Supports nested keys using dot notation.
@@ -803,6 +821,8 @@ Orders results by a specified key. Supports nested keys using dot notation.
 db.from('users').orderBy('name', 'asc')
 db.from('users').orderBy('profile.age', 'desc')
 ```
+
+> **Note:** This method performs in-memory sorting. For large datasets, consider using [`sortByIndex()`](#sortbyindexidxkeyindexname-idxkey-dir-asc--desc-selectquery) with an indexed field for better performance.
 
 ##### `limit(count: number): SelectQuery`
 
@@ -860,21 +880,30 @@ const adults = await db.from('users').findByIndex('age', IDBKeyRange.bound(18, 6
 > - Unique columns are automatically indexed.
 > - Unique indexes are recommended for this method to ensure a single result.
 
-##### `sortByIndex<IdxKey>(indexName: IdxKey, dir?: 'asc' | 'desc'): SelectQuery`
+##### `count(): Promise<number>`
 
-Sorts results by an indexed field using IndexedDB cursor iteration (avoiding in-memory sorting).
-
-**Type Safety:** `indexName` must be a field with an index.
-
-**Performance:** When no `where()` filter is applied, uses optimized cursor iteration. Otherwise falls back to in-memory sorting.
+Counts the number of matching records.
 
 ```typescript
-// Optimized cursor-based sort
-const sorted = await db.from('users').sortByIndex('age', 'desc').findAll();
-
-// Efficient pagination
-const page = await db.from('users').sortByIndex('createdAt', 'desc').limit(20).findAll();
+const userCount = await db.from('users').where((user) => user.isActive).count()
 ```
+
+> **Note:**
+>
+> - This method internally uses IndexedDB's `count()` for optimal performance.
+> - If a `where()` filter is applied without index, it falls back to in-memory counting.
+
+##### `exists(): Promise<boolean>`
+
+Checks if any matching records exist.
+
+```typescript
+const hasAdmins = await db.from('users').where((user) => user.role === 'admin').exists()
+```
+
+> **Note:** This method internally uses [`count()`](#count-promisenumber) for checking existence.
+
+---
 
 #### InsertQuery Methods
 
@@ -920,6 +949,8 @@ Executes the update query and returns the number of updated records.
 ```typescript
 const count = await db.update('users').set({ name: 'Jane' }).run()
 ```
+
+---
 
 #### DeleteQuery Methods
 
