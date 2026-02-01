@@ -59,12 +59,11 @@ export class SelectQuery<
 		this.#readyPromise = readyPromise;
 	}
 
-	#createTransaction(): IDBTransaction {
-		return this.#dbGetter().transaction(this.#table, 'readonly');
-	}
-
-	#getStoreWithTransaction(): IDBObjectStore {
-		return this.#createTransaction().objectStore(this.#table);
+	/** @internal Create a readonly transaction and return the store */
+	#getStore(): { transaction: IDBTransaction; store: IDBObjectStore } {
+		const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
+		const store = transaction.objectStore(this.#table);
+		return { transaction, store };
 	}
 
 	/** @internal Check if key is an index on the store for the `#whereIndexName` */
@@ -111,6 +110,20 @@ export class SelectQuery<
 		}
 
 		return data;
+	}
+
+	/** @internal Apply sort, limit, and projection pipeline to results */
+	#applyPipeline(results: T[]): Partial<T>[] {
+		// Apply orderBy
+		let processed = this.#sort(results);
+
+		// Apply limit
+		if (this.#limitCount) {
+			processed = processed.slice(0, this.#limitCount);
+		}
+
+		// Apply projection (select)
+		return processed.map((row) => this.#projectRow(row));
 	}
 
 	/** Projects a row based on selected fields */
@@ -246,7 +259,7 @@ export class SelectQuery<
 	async findAll() {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const store = this.#getStoreWithTransaction();
+			const { store } = this.#getStore();
 
 			// If we have an index-based where query, use it
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
@@ -257,20 +270,7 @@ export class SelectQuery<
 				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
 
 				request.onsuccess = () => {
-					let results: T[] = request.result;
-
-					// Apply orderBy
-					results = this.#sort(results);
-
-					// Apply limit
-					if (this.#limitCount) {
-						results = results.slice(0, this.#limitCount);
-					}
-
-					// Apply projection (select)
-					const projectedResults = results.map((row) => this.#projectRow(row));
-
-					resolve(projectedResults);
+					resolve(this.#applyPipeline(request.result));
 				};
 
 				request.onerror = () => reject(request.error);
@@ -321,25 +321,14 @@ export class SelectQuery<
 				const request = store.getAll() as IDBRequest<T[]>;
 
 				request.onsuccess = () => {
-					let results: T[] = request.result;
+					let results = request.result;
 
 					// Apply where filter
 					if (this.#whereCondition) {
 						results = results.filter(this.#whereCondition);
 					}
 
-					// Apply orderBy
-					results = this.#sort(results);
-
-					// Apply limit
-					if (this.#limitCount) {
-						results = results.slice(0, this.#limitCount);
-					}
-
-					// Apply projection (select)
-					const projectedResults = results.map((row) => this.#projectRow(row));
-
-					resolve(projectedResults);
+					resolve(this.#applyPipeline(results));
 				};
 
 				request.onerror = () => reject(request.error);
@@ -358,7 +347,7 @@ export class SelectQuery<
 	async findFirst() {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const store = this.#getStoreWithTransaction();
+			const { store } = this.#getStore();
 
 			// If we have an index-based where query, use it
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
@@ -369,14 +358,10 @@ export class SelectQuery<
 				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
 
 				request.onsuccess = () => {
-					const results: T[] = request.result;
+					const results = request.result;
 
 					// Apply projection (select)
-					if (results.length > 0) {
-						resolve(this.#projectRow(results[0]));
-					} else {
-						resolve(null);
-					}
+					resolve(results.length > 0 ? this.#projectRow(results[0]) : null);
 				};
 
 				request.onerror = () => reject(request.error);
@@ -386,7 +371,7 @@ export class SelectQuery<
 			const request = store.getAll() as IDBRequest<T[]>;
 
 			request.onsuccess = () => {
-				let results: T[] = request.result;
+				let results = request.result;
 
 				// Apply where filter
 				if (this.#whereCondition) {
@@ -394,11 +379,7 @@ export class SelectQuery<
 				}
 
 				// Apply projection (select)
-				if (results.length > 0) {
-					resolve(this.#projectRow(results[0]));
-				} else {
-					resolve(null);
-				}
+				resolve(results.length > 0 ? this.#projectRow(results[0]) : null);
 			};
 
 			request.onerror = () => reject(request.error);
@@ -425,7 +406,7 @@ export class SelectQuery<
 	> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const store = this.#getStoreWithTransaction();
+			const { store } = this.#getStore();
 			const request = store.get(key) as IDBRequest<T>;
 
 			type ResolvedData =
@@ -475,12 +456,14 @@ export class SelectQuery<
 	> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const store = this.#getStoreWithTransaction();
+			const { store } = this.#getStore();
 
 			// Check if index exists
 			if (!store.indexNames.contains(indexName)) {
 				reject(
-					new Error(`Index '${indexName}' does not exist on table '${this.#table}'`)
+					new RangeError(
+						`Index '${indexName}' does not exist on table '${this.#table}'`
+					)
 				);
 				return;
 			}
@@ -489,25 +472,15 @@ export class SelectQuery<
 			const request = index.getAll(query) as IDBRequest<T[]>;
 
 			request.onsuccess = () => {
-				let results: T[] = request.result;
+				let results = request.result;
 
 				// Apply where filter
 				if (this.#whereCondition) {
 					results = results.filter(this.#whereCondition);
 				}
 
-				// Apply orderBy
-				results = this.#sort(results);
-
-				// Apply limit
-				if (this.#limitCount) {
-					results = results.slice(0, this.#limitCount);
-				}
-
-				// Apply projection
-				const projectedResults = results.map((row) => this.#projectRow(row));
 				resolve(
-					projectedResults as S extends null ? T[]
+					this.#applyPipeline(results) as S extends null ? T[]
 					: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S>[]
 					: never
 				);
@@ -522,7 +495,7 @@ export class SelectQuery<
 		await this.#readyPromise;
 
 		return new Promise((resolve, reject) => {
-			const store = this.#getStoreWithTransaction();
+			const { store } = this.#getStore();
 
 			// If we have an index-based where query, use it
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
@@ -542,8 +515,7 @@ export class SelectQuery<
 				const request = store.getAll() as IDBRequest<T[]>;
 
 				request.onsuccess = () => {
-					const results: T[] = request.result;
-					const filtered = results.filter(this.#whereCondition!);
+					const filtered = request.result.filter(this.#whereCondition!);
 					resolve(filtered.length);
 				};
 
