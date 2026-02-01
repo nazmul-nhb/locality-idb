@@ -340,6 +340,7 @@ const allUsers = await db.from('users').findAll();
 #### Filter with Where
 
 ```typescript
+// Predicate-based filtering (in-memory)
 const admins = await db
   .from('users')
   .where((user) => user.role === 'admin')
@@ -348,6 +349,18 @@ const admins = await db
 const activeUsers = await db
   .from('users')
   .where((user) => user.isActive && user.age >= 18)
+  .findAll();
+
+// Index-based filtering (optimized) - requires index or primary key
+const usersByEmail = await db
+  .from('users')
+  .where('email', 'alice@example.com')
+  .findAll();
+
+// Range queries with IDBKeyRange
+const adults = await db
+  .from('users')
+  .where('age', IDBKeyRange.bound(18, 65))
   .findAll();
 ```
 
@@ -789,17 +802,25 @@ db.from('users').where((user) => user.age >= 18)
 
 ##### `where<IdxKey>(indexName: IdxKey, query: T[IdxKey] | IDBKeyRange): SelectQuery`
 
-Filters rows using an indexed field.
+Filters rows using an indexed field or primary key.
+
+**Type Safety:** `indexName` must be either an indexed field or the primary key.
+
+**Performance:** Uses IndexedDB's optimized index/key query for efficient lookups.
 
 ```typescript
+// Using an indexed field
 db.from('users').where('age', IDBKeyRange.bound(18, 30))
+
+// Using primary key
+db.from('users').where('id', IDBKeyRange.bound(1, 100))
 ```
 
 ##### `sortByIndex<IdxKey>(indexName: IdxKey, dir?: 'asc' | 'desc'): SelectQuery`
 
 Sorts results by an indexed field using IndexedDB cursor iteration (avoiding in-memory sorting).
 
-**Type Safety:** `indexName` must be a field with an index.
+**Type Safety:** `indexName` must be a field with an index or the primary key.
 
 **Performance:** Uses IndexedDB's cursor for optimized sorting. For large datasets, this is significantly more efficient than in-memory sorting.
 
@@ -890,8 +911,10 @@ const userCount = await db.from('users').where((user) => user.isActive).count()
 
 > **Note:**
 >
-> - This method internally uses IndexedDB's `count()` for optimal performance.
-> - If a `where()` filter is applied without index, it falls back to in-memory counting.
+> - Uses IndexedDB's optimized `count()` when:
+>   - No `where()` clause is applied, OR
+>   - `where()` uses an index or primary key
+> - Falls back to in-memory counting when `where()` uses a predicate function
 
 ##### `exists(): Promise<boolean>`
 
