@@ -12,6 +12,8 @@ export const IsPrimaryKey = Symbol('IsPrimaryKey');
 export const IsAutoInc = Symbol('IsAutoInc');
 /** Symbol key for optional marker */
 export const IsOptional = Symbol('IsOptional');
+/** Symbol key for nullable (null) marker */
+export const IsNullable = Symbol('IsNullable');
 /** Symbol key for indexed marker */
 export const IsIndexed = Symbol('IsIndexed');
 /** Symbol key for unique marker */
@@ -26,6 +28,7 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	declare [IsPrimaryKey]?: boolean;
 	declare [IsAutoInc]?: boolean;
 	declare [IsOptional]?: boolean;
+	declare [IsNullable]?: boolean;
 	declare [IsIndexed]?: boolean;
 	declare [IsUnique]?: boolean;
 	declare [DefaultValue]?: T;
@@ -87,6 +90,12 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		this[IsOptional] = true;
 		return this as this & { [IsOptional]: true };
 	}
+
+	// TODO: Implement nullable support in the future
+	// nullable() {
+	// 	this[IsNullable] = true;
+	// 	return this as this & { [IsNullable]: true };
+	// }
 }
 
 /** @class Represents a table. */

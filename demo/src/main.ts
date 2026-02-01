@@ -27,7 +27,7 @@ const schema = defineSchema({
 		completed: column.bool().default(false),
 		uuid: column.uuid(),
 		timestamp: column.timestamp().optional(),
-		test: column.char(3).optional().default('N/A'),
+		test: column.char(3).optional(),
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
 		// TODO: Add some method that will trigger only when updating
 		updatedAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
@@ -60,7 +60,7 @@ const loadTodos = async () => {
 	todos = await db
 		.from('todos')
 		// .select({ serial: true, timestamp: true })
-		.orderBy('serial', 'asc')
+		.sortByIndex('serial', 'desc')
 		.findAll();
 	// as Todo[];
 

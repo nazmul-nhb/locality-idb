@@ -11,9 +11,10 @@ import {
 	isObject,
 	isSet,
 	isString,
+	isUndefined,
 	isUUID,
 } from 'nhb-toolbox';
-import { type Column, ColumnType, DefaultValue } from './core';
+import { type Column, ColumnType, DefaultValue, IsAutoInc, IsOptional } from './core';
 import type { ColumnDefinition, GenericObject, Maybe, TypeName } from './types';
 import { getTimestamp, isTimestamp, uuidV4 } from './utils';
 
@@ -148,7 +149,7 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
  * @returns The validated and prepared data object
  * @throws
  * - A {@link TypeError} if any value does not match the expected column type
- * - A {@link RangeError} if any field is not defined in the table schema
+ * - A {@link RangeError} if any field is not defined in the table schema or required field is missing
  */
 export function validateAndPrepareData<Data extends GenericObject>(
 	data: Data,
@@ -162,37 +163,90 @@ export function validateAndPrepareData<Data extends GenericObject>(
 	const prepared = { ...data };
 
 	if (columns) {
+		// ! Validate that all provided fields exist in schema
 		for (const fieldName of Object.keys(prepared)) {
 			if (!Object.keys(columns).includes(fieldName)) {
 				throw new RangeError(
-					`'${fieldName}' is not defined in the table (${tableName}) schema!`
+					`Field '${fieldName}' is not defined in the table '${tableName}' schema!`
 				);
 			}
 		}
 
+		// ! Process each column
 		Object.entries(columns).forEach((entry) => {
 			const [fieldName, column] = entry as [Key, Column];
 
-			const defaultValue = column[DefaultValue];
-
-			if (!(fieldName in prepared) && defaultValue !== undefined && !forUpdate) {
-				prepared[fieldName] = defaultValue;
-			}
-
 			const columnType = column[ColumnType];
+			const defaultValue = column[DefaultValue];
+			const isOptional = column[IsOptional] ?? false;
 
-			if (columnType === 'uuid' && !(fieldName in prepared) && !forUpdate) {
-				prepared[fieldName] = uuidV4() as Data[Key];
+			let fieldNotPresent = !(fieldName in prepared);
+
+			// ! Auto-generate values for insert (not update)
+			if (!forUpdate && fieldNotPresent) {
+				// Auto-generate UUID
+				if (columnType === 'uuid') {
+					prepared[fieldName] = uuidV4() as Data[Key];
+					return; // Skip validation for auto-generated
+				}
+
+				// Auto-generate timestamp
+				if (columnType === 'timestamp') {
+					prepared[fieldName] = getTimestamp() as Data[Key];
+					return; // Skip validation for auto-generated
+				}
+
+				// Apply default value
+				if (!isUndefined(defaultValue)) {
+					prepared[fieldName] = defaultValue;
+					fieldNotPresent = false; // Update flag after applying default
+				}
 			}
 
-			if (columnType === 'timestamp' && !(fieldName in prepared) && !forUpdate) {
-				prepared[fieldName] = getTimestamp() as Data[Key];
+			// Recalculate field value after potential auto-generation/default
+			const fieldValue = prepared[fieldName];
+
+			// ! Handle missing fields
+			if (fieldNotPresent) {
+				// For updates, missing fields are OK (partial update)
+				if (forUpdate) return;
+
+				// For inserts, check if field is required
+				if (!isOptional && fieldName !== keyPath) {
+					throw new RangeError(
+						`Required field '${String(fieldName)}' is missing in table '${tableName}'!`
+					);
+				}
+
+				// Optional field can be omitted
+				return;
 			}
 
-			if (fieldName !== keyPath) {
-				const errorMsg = validateColumnType(columnType, prepared[fieldName]);
+			// ! Handle undefined values
+			if (isUndefined(fieldValue)) {
+				// Undefined is only allowed for optional fields
+				if (!isOptional && fieldName !== keyPath) {
+					throw new TypeError(
+						`Field '${String(fieldName)}' in table '${tableName}' cannot be undefined. It is a required field.`
+					);
+				}
 
-				if (errorMsg) throw new TypeError(errorMsg);
+				return; // Skip validation for undefined optional fields
+			}
+
+			// ! Validate the value type
+			// Skip validation for primary key during inserts ONLY if auto-increment
+			const shouldSkip =
+				!forUpdate && fieldName === keyPath && (column[IsAutoInc] ?? false);
+
+			if (!shouldSkip) {
+				const errorMsg = validateColumnType(columnType, fieldValue);
+
+				if (errorMsg) {
+					throw new TypeError(
+						`Invalid value for field '${String(fieldName)}' in table '${tableName}': ${errorMsg}`
+					);
+				}
 			}
 		});
 	}

@@ -4,6 +4,7 @@ import type {
 	DefaultValue,
 	IsAutoInc,
 	IsIndexed,
+	IsNullable,
 	IsOptional,
 	IsPrimaryKey,
 	IsUnique,
@@ -408,6 +409,11 @@ export type $InferOptional<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsOptional]: true } ? K : never;
 }[keyof T];
 
+/** Finds the field name with nullable key. */
+export type $InferNullable<T extends ColumnDefinition> = {
+	[K in keyof T]: T[K] extends { [IsNullable]: true } ? K : never;
+}[keyof T];
+
 /** Finds the field name with unique key. */
 export type $InferUnique<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsUnique]: true } ? K : never;
@@ -456,6 +462,10 @@ export type InferInsertType<T extends Table> = Prettify<
 		| $InferTimestamp<T['columns']>
 		| $InferUUID<T['columns']>
 	> & {
+		[K in $InferNullable<T['columns']>]: K extends keyof $InferRow<T['columns']> ?
+			$InferRow<T['columns']>[K] | null
+		:	never;
+	} & {
 		[K in
 			| $InferAutoInc<T['columns']>
 			| $InferDefault<T['columns']>
