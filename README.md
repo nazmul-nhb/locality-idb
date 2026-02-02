@@ -205,6 +205,8 @@ Locality IDB supports a wide range of column types:
 | `text()` / `string()`  | Text strings                                               | `column.text()`                  |
 | `char(length?)`        | Fixed-length string                                        | `column.char(10)`                |
 | `varchar(length?)`     | Variable-length string                                     | `column.varchar(255)`            |
+| `email()`              | Email strings                                              | `column.email()`                 |
+| `url()`                | URL strings                                                | `column.url()`                   |
 | `bool()` / `boolean()` | Boolean values                                             | `column.bool()`                  |
 | `date()`               | Date objects                                               | `column.date()`                  |
 | `timestamp()`          | ISO 8601 timestamps ([auto-generated](#utility-functions)) | `column.timestamp()`             |
@@ -251,7 +253,7 @@ const productId: ProductId = 2 as ProductId;
 // userId = productId; // ❌ Type error!
 ```
 
-##### String Types (`text`, `string`, `char`, `varchar`)
+##### String Types (`text`, `string`, `char`, `varchar`, `email`, `url`)
 
 ```typescript
 // Literal unions for enum-like behavior
@@ -277,7 +279,39 @@ const profileSchema = defineSchema({
     website: column.varchar<URL>(500).optional(),
   },
 });
+
+// or use specialized `email` & `url` methods + types with built-in validation
+const advancedProfileSchema = defineSchema({
+  profiles: {
+    id: column.int().pk().auto(),
+    email: column.email().unique(), // Validates emails
+    website: column.url().optional(), // Validates URLs (internally uses URL constructor)
+  },
+});
 ```
+
+#### Auto-generated Types (`uuid`, `timestamp`)
+
+```typescript
+const schema = defineSchema({
+  sessions: {
+    id: column.uuid().pk(), // Auto-generated UUID v4
+    idWithDefault: column.uuid().pk().default(uuid({ version: 'v6' })), // Replace auto-generated UUID v4
+    createdAt: column.timestamp(), // Auto-generated timestamp
+    defaultXmpl: column.timestamp().default(getTimestamp()), // Auto-generated timestamp with default using utility built-in function
+    customTs: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp), // Default timestamp with custom format
+  },
+});
+```
+
+> **Note:**
+>
+> - Auto-generated values can be overridden by providing explicit values during insert.
+> - Use the `default()` modifier to set custom default values instead of auto-generated ones.
+> - Auto-generated values are generated at runtime during insert operations.
+> - Type extensions for `uuid` and `timestamp` are not applicable since they are already typed.
+> - For custom UUID versions, use [`uuid`](https://toolbox.nazmul-nhb.dev/docs/utilities/hash/uuid) utility from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox).
+> - For custom timestamp formats, use date libraries like [`Chronos`](https://toolbox.nazmul-nhb.dev/docs/classes/Chronos) (from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox)) or [`date-fns`](https://www.npmjs.com/package/date-fns) to generate ISO 8601 strings.
 
 ##### Boolean Types (`bool`, `boolean`)
 
@@ -1028,6 +1062,30 @@ const emailColumn = column.text().validate((val) => { /* ... */ });
 const validatorFn = emailColumn[ValidateFn]; // Function reference
 ```
 
+#### `onUpdate<T>(updater: (currentValue: T) => T): Column`
+
+Sets a function to auto-update the column value during update operations.
+
+```typescript
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+    updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
+  },
+});
+```
+
+> **Note:**
+>
+> - The updater function is called automatically during update operations.
+> - **Important**: It overrides any value provided during updates.
+> - It receives the current value of the column and should return the updated value.
+> - This is useful for fields like `"updatedAt"` timestamps that need to be refreshed on each update.
+> - If multiple updaters are chained, only the last one is used.
+> - Should not be used with auto-generated indexed columns like primary keys.
+> - The updated value is validated according to the column's type and custom validators (if any).
+
 ---
 
 ### Query Methods
@@ -1327,6 +1385,86 @@ isTimestamp('2026-01-29T12:34:56.789Z'); // true
 isTimestamp('2026-01-29'); // false (not full ISO 8601)
 isTimestamp('invalid'); // false
 isTimestamp(123); // false
+```
+
+#### `isUUID(value: unknown): value is UUID<UUIDVersion>`
+
+Checks if a value is a valid UUID string (v1, v4, or v5).
+
+**Parameters:**
+
+- `value`: The value to check
+
+**Returns:** `true` if the value is a valid UUID, otherwise `false`
+
+**Example:**
+
+```typescript
+import { isUUID } from 'locality-idb';
+
+// Valid UUIDs
+isUUID('d9428888-122b-11e8-b642-0ed5f89f718b'); // true (v1)
+isUUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8'); // true (v1)
+isUUID('550e8400-e29b-41d4-a716-446655440000'); // true (v4)
+
+// Invalid formats
+isUUID('not-a-uuid');             // false
+isUUID('12345678-1234-1234-1234-123456789abc'); // false (invalid version)
+isUUID(123456789);                // false
+```
+
+#### `isEmail(value: unknown): value is EmailString`
+
+Checks if a value is a valid email string.
+
+**Parameters:**
+
+- `value`: The value to check
+
+**Returns:** `true` if the value is a valid email, otherwise `false`
+
+**Example:**
+
+```typescript
+import { isEmail } from 'locality-idb';
+
+// Valid emails
+isEmail('user@example.com');              // true
+isEmail('first.last@sub.domain.co.uk');   // true
+isEmail('user+filter@example.org');       // true
+
+// Invalid emails
+isEmail('plainstring');           // false
+isEmail('user@.com');             // false
+isEmail('@example.com');          // false
+isEmail('user@domain');           // false
+isEmail(12345);                   // false
+```
+
+#### `isURL(value: unknown): value is URLString`
+
+Checks if a value is a valid URL string.
+
+**Parameters:**
+
+- `value`: The value to check
+
+**Returns:** `true` if the value is a valid URL, otherwise `false`
+
+**Example:**
+
+```typescript
+import { isURL } from 'locality-idb';
+
+// Valid URLs
+isURL('https://example.com');       // true
+isURL('ftp://files.test/path?q=1'); // true
+
+// Invalid URLs
+isURL('example.com');             // false (missing protocol)
+isURL('http://');                 // false (empty domain)
+isURL('//cdn.domain/image.png');  // false (`URL` constructor cannot parse it)
+isURL(123456);                    // false
 ```
 
 #### `openDBWithStores(name: string, stores: StoreConfig[], version?: number): Promise<IDBDatabase>`

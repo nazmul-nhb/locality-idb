@@ -8,11 +8,11 @@ import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
 import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
-import { column, defineSchema, deleteDB, Locality } from 'locality';
+import { column, defineSchema, deleteDB, getTimestamp, Locality } from 'locality';
 
 Chronos.register(timeZonePlugin);
 
-let todos: Todo[] = [];
+let todos: Partial<Todo>[] = [];
 
 const todoInput = document.getElementById('todoInput') as HTMLInputElement;
 const addBtn = document.getElementById('addBtn') as HTMLButtonElement;
@@ -29,15 +29,15 @@ const schema = defineSchema({
 			// .validate((val) => {
 			// 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? null : 'Invalid email format';
 			// })
-			.unique(),
+			.unique()
+			.onUpdate((old) => (old?.startsWith('pello ') ? 'pello' : (old ?? 'No Task'))),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
 		// .default(new Chronos().toLocalISOString() as Timestamp)
-		test: column.char<'kl'>(3).optional(),
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
 		// TODO: Add some method that will trigger only when updating
-		updatedAt: column.timestamp(),
+		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
 	},
 	experiments: {
 		id: column.float().pk().auto(),
@@ -71,7 +71,7 @@ const db = new Locality({
 const loadTodos = async () => {
 	todos = await db
 		.from('todos')
-		// .select({ serial: true, timestamp: true })
+		.select({ serial: true, task: true, completed: true, createdAt: true, updatedAt: true })
 		.sortByIndex('serial', 'desc')
 		.findAll();
 	// as Todo[];
@@ -99,12 +99,12 @@ const renderTodos = () => {
 
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
-		checkbox.checked = todo.completed;
+		checkbox.checked = todo?.completed ?? false;
 		checkbox.className = 'w-5 h-5 cursor-pointer accent-blue-600';
 		checkbox.addEventListener('change', () =>
-			toggleTodo(todo.serial, {
+			toggleTodo(todo.serial!, {
 				completed: !todo.completed,
-				updatedAt: new Chronos().toLocalISOString() as Timestamp,
+				// updatedAt: new Chronos().toLocalISOString() as Timestamp,
 			})
 		);
 
@@ -294,7 +294,7 @@ window.addEventListener('load', async () => {
 		]);
 	}
 
-	console.table(experiments);
+	// console.table(experiments);
 
 	const ex1 = await db
 		.from('experiments')

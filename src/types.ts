@@ -152,6 +152,9 @@ export type RejectFn = (reason: unknown) => void;
 /** Validator function type for {@link Column.validate()} */
 export type ValidatorFn<T = any> = (value: T) => string | null | undefined;
 
+/** Updater function type for {@link Column.onUpdate()} */
+export type UpdaterFn<T = any> = (currentValue?: T) => T;
+
 /** Asynchronous function type */
 export type AsyncFunction<T> = (...args: any[]) => Promise<T>;
 

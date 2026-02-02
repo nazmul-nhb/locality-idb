@@ -21,6 +21,7 @@ import {
 	DefaultValue,
 	IsAutoInc,
 	IsOptional,
+	OnUpdate,
 	ValidateFn,
 } from './core';
 import type { ColumnDefinition, GenericObject, Maybe, TypeName } from './types';
@@ -197,6 +198,7 @@ export function validateAndPrepareData<Data extends GenericObject>(
 			const columnType = column[ColumnType];
 			const defaultValue = column[DefaultValue];
 			const isOptional = column[IsOptional] ?? false;
+			const onUpdate = column[OnUpdate];
 
 			let fieldNotPresent = !(fieldName in prepared);
 
@@ -224,10 +226,16 @@ export function validateAndPrepareData<Data extends GenericObject>(
 			// Recalculate field value after potential auto-generation/default
 			const fieldValue = prepared[fieldName];
 
+			// ! Apply onUpdate function for updates
+			if (forUpdate && isFunction(onUpdate)) {
+				prepared[fieldName] = onUpdate(fieldValue);
+				fieldNotPresent = false; // Update flag after applying onUpdate
+			}
+
 			// ! Handle missing fields
 			if (fieldNotPresent) {
 				// For updates, missing fields are OK (partial update)
-				if (forUpdate) return;
+				if (forUpdate && !isFunction(onUpdate)) return;
 
 				// For inserts, check if field is required
 				if (!isOptional && fieldName !== keyPath) {
