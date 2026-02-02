@@ -13,6 +13,7 @@ import type {
 	StoreConfig,
 } from './types';
 import { deleteDB } from './utils';
+import { validateAndPrepareData } from './validators';
 
 /**
  * @class `Locality` class for `IndexedDB` interactions.
@@ -299,5 +300,264 @@ export class Locality<
 		);
 
 		return await insertQuery.values(data).run();
+	}
+
+	/**
+	 * @instance Execute multiple operations across multiple tables in a single atomic transaction.
+	 *
+	 * @remarks
+	 * - All operations succeed or all fail (atomicity guaranteed by IndexedDB).
+	 * - If any operation fails, the entire transaction is rolled back automatically.
+	 * - Useful for maintaining data consistency across related tables.
+	 *
+	 * @param tables Array of table names to include in the transaction
+	 * @param callback Async function that receives a transaction context and performs operations
+	 * @returns A promise that resolves when the transaction completes successfully
+	 *
+	 * @throws Error if the transaction is aborted due to constraint violations or other errors
+	 *
+	 * @example
+	 * const db = new Locality({
+	 * 	dbName: 'my-database',
+	 * 	version: 1,
+	 * 	schema: defineSchema({
+	 * 		users: {
+	 * 			id: column.int().pk().auto(),
+	 * 			name: column.text(),
+	 * 		},
+	 * 		posts: {
+	 * 			id: column.int().pk().auto(),
+	 * 			userId: column.int(),
+	 * 			title: column.text(),
+	 * 		},
+	 * 	}),
+	 * });
+	 *
+	 * // Create a user and their first post atomically
+	 * await db.transaction(['users', 'posts'], async (tx) => {
+	 * 	const userId = await tx.insert('users', { name: 'Alice' });
+	 * 	await tx.insert('posts', { userId, title: 'First Post' });
+	 * });
+	 */
+	async transaction<Tables extends TName[]>(
+		tables: Tables,
+		callback: (tx: {
+			insert: <T extends Tables[number]>(
+				table: T,
+				data: InferInsertType<Schema[T]>
+			) => Promise<IDBValidKey>;
+			update: <T extends Tables[number]>(
+				table: T,
+				key: IDBValidKey,
+				data: Partial<InferSelectType<Schema[T]>>
+			) => Promise<void>;
+			delete: <T extends Tables[number]>(table: T, key: IDBValidKey) => Promise<void>;
+			get: <T extends Tables[number]>(
+				table: T,
+				key: IDBValidKey
+			) => Promise<InferSelectType<Schema[T]> | null>;
+		}) => Promise<void>
+	): Promise<void> {
+		await this.#readyPromise;
+
+		return new Promise((resolve, reject) => {
+			const transaction = this.#db.transaction(tables as string[], 'readwrite');
+
+			const txContext = {
+				insert: <T extends Tables[number]>(
+					table: T,
+					data: InferInsertType<Schema[T]>
+				): Promise<IDBValidKey> => {
+					return new Promise((res, rej) => {
+						const store = transaction.objectStore(table as string);
+						const preparedData = validateAndPrepareData(
+							data,
+							this.#schema[table].columns,
+							this.#keyPaths[table],
+							table as string
+						);
+						const request = store.add(preparedData);
+						request.onsuccess = () => res(request.result);
+						request.onerror = () => rej(request.error);
+					});
+				},
+
+				update: <T extends Tables[number]>(
+					table: T,
+					key: IDBValidKey,
+					data: Partial<InferSelectType<Schema[T]>>
+				): Promise<void> => {
+					return new Promise((res, rej) => {
+						const store = transaction.objectStore(table as string);
+						const getRequest = store.get(key);
+
+						getRequest.onsuccess = () => {
+							const existing = getRequest.result;
+
+							if (!existing) {
+								rej(
+									new Error(
+										`Record with key '${key}' not found in table '${String(table)}'`
+									)
+								);
+								return;
+							}
+
+							const updatedData = validateAndPrepareData(
+								{ ...existing, ...data },
+								this.#schema[table].columns,
+								this.#keyPaths[table],
+								table as string,
+								true
+							);
+
+							const putRequest = store.put(updatedData);
+							putRequest.onsuccess = () => res();
+							putRequest.onerror = () => rej(putRequest.error);
+						};
+
+						getRequest.onerror = () => rej(getRequest.error);
+					});
+				},
+
+				delete: <T extends Tables[number]>(
+					table: T,
+					key: IDBValidKey
+				): Promise<void> => {
+					return new Promise((res, rej) => {
+						const store = transaction.objectStore(table as string);
+						const request = store.delete(key);
+						request.onsuccess = () => res();
+						request.onerror = () => rej(request.error);
+					});
+				},
+
+				get: <T extends Tables[number]>(
+					table: T,
+					key: IDBValidKey
+				): Promise<InferSelectType<Schema[T]> | null> => {
+					return new Promise((res, rej) => {
+						const store = transaction.objectStore(table as string);
+						const request = store.get(key);
+						request.onsuccess = () => res(request.result || null);
+						request.onerror = () => rej(request.error);
+					});
+				},
+			};
+
+			// Execute the callback
+			callback(txContext)
+				.then(() => {
+					// Callback completed successfully, wait for transaction to commit
+				})
+				.catch((err) => {
+					// Abort transaction if callback fails
+					transaction.abort();
+					reject(err);
+				});
+
+			transaction.oncomplete = () => resolve();
+			transaction.onabort = () => _abortTransaction(transaction.error, reject);
+			transaction.onerror = () => reject(transaction.error);
+		});
+	}
+
+	/**
+	 * @instance Export database data as JSON file and trigger browser download.
+	 *
+	 * @remarks
+	 * - Exports all tables by default, or only specified tables if provided.
+	 * - Generates a JSON file with schema metadata and table data.
+	 * - Automatically triggers a download in the browser.
+	 *
+	 * @param options Export configuration options
+	 * @param options.tables Optional array of table names to export (exports all if not specified)
+	 * @param options.filename Optional custom filename (default: `{dbName}-export-{timestamp}.json`)
+	 * @param options.pretty Optional flag to enable pretty-printed JSON (default: `false`)
+	 * @param options.includeMetadata Optional flag to include export metadata (default: `true`)
+	 * @returns A promise that resolves when the export completes
+	 *
+	 * @example
+	 * const db = new Locality({
+	 * 	dbName: 'my-database',
+	 * 	version: 1,
+	 * 	schema: defineSchema({
+	 * 		users: {
+	 * 			id: column.int().pk().auto(),
+	 * 			name: column.text(),
+	 * 		},
+	 * 		posts: {
+	 * 			id: column.int().pk().auto(),
+	 * 			title: column.text(),
+	 * 		},
+	 * 	}),
+	 * });
+	 *
+	 * // Export all tables with default filename
+	 * await db.export();
+	 *
+	 * // Export specific tables with custom filename
+	 * await db.export({ tables: ['users'], filename: 'users-backup.json' });
+	 *
+	 * // Export with pretty-printed JSON
+	 * await db.export({ pretty: true });
+	 */
+	async export(options?: {
+		tables?: TName[];
+		filename?: string;
+		pretty?: boolean;
+		includeMetadata?: boolean;
+	}): Promise<void> {
+		await this.#readyPromise;
+
+		const { tables, filename, pretty = false, includeMetadata = true } = options || {};
+
+		// Determine which tables to export
+		const tablesToExport = (tables || Object.keys(this.#schema)) as TName[];
+
+		// Export data from all specified tables
+		const exportData: Record<string, unknown[]> = {};
+
+		for (const table of tablesToExport) {
+			const data = await this.from(table).findAll();
+			exportData[table as string] = data;
+		}
+
+		// Build export object
+		const exportObj: Record<string, unknown> = {};
+
+		if (includeMetadata) {
+			exportObj.metadata = {
+				dbName: this.#name,
+				version: this.version,
+				exportedAt: new Date().toISOString(),
+				tables: tablesToExport,
+			};
+		}
+
+		exportObj.data = exportData;
+
+		// Convert to JSON
+		const jsonString = JSON.stringify(exportObj, null, pretty ? 2 : undefined);
+
+		// Create blob
+		const blob = new Blob([jsonString], { type: 'application/json' });
+
+		// Generate filename if not provided
+		const finalFilename =
+			filename ||
+			`${this.#name}-export-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+
+		// Create download link and trigger download
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = finalFilename;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+
+		// Clean up
+		URL.revokeObjectURL(url);
 	}
 }

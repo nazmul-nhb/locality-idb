@@ -1,9 +1,6 @@
 import { isNonEmptyString } from 'nhb-toolbox';
 import type { ColumnDefinition, TypeName, UpdaterFn, ValidatorFn } from './types';
 
-/** Symbol for type extraction (exists only in type system) */
-export const $ColumnType = Symbol('$ColumnType');
-
 /** Symbol key for column column data type */
 export const ColumnType = Symbol('ColumnType');
 /** Symbol key for primary key marker */
@@ -27,7 +24,6 @@ export const OnUpdate = Symbol('OnUpdate');
 
 /** @class Represents a column definition. */
 export class Column<T = any, TName extends TypeName = TypeName> {
-	declare [$ColumnType]: T;
 	declare [ColumnType]: TName;
 	declare [IsPrimaryKey]?: boolean;
 	declare [IsAutoInc]?: boolean;
@@ -163,7 +159,6 @@ export class PKColumn<T = any, TName extends TypeName = TypeName> extends Column
 	constructor(type: TName, column: Column<T, TName>) {
 		super(type);
 
-		this[$ColumnType] = column[$ColumnType];
 		this[ColumnType] = column[ColumnType];
 
 		this[IsPrimaryKey] = true;

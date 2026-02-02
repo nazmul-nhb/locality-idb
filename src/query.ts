@@ -592,34 +592,50 @@ export class InsertQuery<
 			const store = transaction.objectStore(this.#table);
 
 			const insertedDocs: Data[] = [];
+			const insertedKeys: IDBValidKey[] = [];
 
-			const promises: Promise<void>[] = this.#dataToInsert.map((data) => {
-				return new Promise((res, rej) => {
-					const request = store.add(
-						validateAndPrepareData(data, this.#columns, this.#keyPath, this.#table)
-					);
+			// Start all insert operations
+			for (const data of this.#dataToInsert) {
+				const request = store.add(
+					validateAndPrepareData(data, this.#columns, this.#keyPath, this.#table)
+				);
 
-					request.onsuccess = () => {
-						const key = request.result;
-						const getRequest = store.get(key);
+				request.onsuccess = () => {
+					insertedKeys.push(request.result);
+				};
 
-						getRequest.onsuccess = () => {
-							insertedDocs.push(getRequest.result);
-							res();
-						};
-
-						getRequest.onerror = () => rej(getRequest.error);
-					};
-					request.onerror = () => rej(request.error);
-				});
-			});
-
-			// Start handling promises immediately (don't wait for transaction events)
-			Promise.all(promises).catch((err) => reject(err));
+				request.onerror = () => {
+					// Error will trigger transaction abort automatically
+					reject(request.error);
+				};
+			}
 
 			// Handle transaction completion (only fires if all succeeded)
 			transaction.oncomplete = () => {
-				resolve((this[IsArray] === true ? insertedDocs : insertedDocs[0]) as Return);
+				// Retrieve all inserted documents after successful transaction
+				const readTx = this.#dbGetter().transaction(this.#table, 'readonly');
+				const readStore = readTx.objectStore(this.#table);
+
+				let completed = 0;
+
+				for (const key of insertedKeys) {
+					const getRequest = readStore.get(key);
+
+					getRequest.onsuccess = () => {
+						insertedDocs.push(getRequest.result);
+						completed++;
+
+						if (completed === insertedKeys.length) {
+							resolve(
+								(this[IsArray] === true ?
+									insertedDocs
+								:	insertedDocs[0]) as Return
+							);
+						}
+					};
+
+					getRequest.onerror = () => reject(getRequest.error);
+				}
 			};
 
 			// Handle transaction abort (happens on errors like unique constraint violations)

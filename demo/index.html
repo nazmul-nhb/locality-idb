@@ -28,7 +28,7 @@
 					id="clearDBBtn"
 					class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
 				>
-					Clear Databse
+					Clear Database
 				</button>
 			</div>
 
@@ -96,13 +96,28 @@
 			</div>
 
 			<!-- Footer Actions -->
-			<div class="text-center">
+			<div class="text-center space-y-3">
 				<button
 					id="clearCompleted"
 					class="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
 				>
 					Clear Completed
 				</button>
+
+				<div class="mt-4 pt-4 border-t border-gray-300">
+					<h3 class="text-lg font-semibold text-gray-700 mb-3">
+						🧪 New Features Testing
+					</h3>
+					<button
+						id="runTestsBtn"
+						class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg cursor-pointer hover:bg-purple-700 transition-colors active:scale-95"
+					>
+						Run Feature Tests
+					</button>
+					<p class="text-xs text-gray-500 mt-2">
+						Tests: Bulk Insert Atomicity, Transactions, and Export
+					</p>
+				</div>
 			</div>
 		</main>
 		<script type="module" src="/src/main.ts"></script>

@@ -1,5 +1,4 @@
 import type {
-	$ColumnType,
 	Column,
 	DefaultValue,
 	IsAutoInc,
@@ -338,8 +337,8 @@ export type LocalityConfig<DB extends string, V extends number, S extends Schema
 	schema: S;
 };
 
-/** Column definition type */
-export type ColumnDefinition<T = any> = Record<string, Column<T>>;
+/** Column definition type - preserves both Column generics */
+export type ColumnDefinition = Record<string, Column<any, string>>;
 
 /** Validated column definition with single PK constraint */
 export type ValidatedColumnDefinition<T extends ColumnDefinition = ColumnDefinition> =
@@ -359,8 +358,8 @@ export type SchemaDefinition<T extends ColumnDefinition = ColumnDefinition> = Re
 	Table<T>
 >;
 
-/** Helper to reliably extract the generic type parameter from a Column using a symbol property. */
-type ExtractColumnType<C> = C extends { [$ColumnType]: infer U } ? U : never;
+/** Helper to reliably extract the generic type parameter from a Column directly from its type parameters. */
+type ExtractColumnType<C> = C extends Column<infer T, TypeName> ? T : never;
 
 /** Extracts inferred row type from columns. */
 export type $InferRow<T extends ColumnDefinition> = Prettify<
@@ -434,7 +433,7 @@ export type $InferIndex<T extends ColumnDefinition> = {
  * Finds the field name with {@link UUID} type.
  */
 export type $InferUUID<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends Column<infer C> ?
+	[K in keyof T]: T[K] extends Column<infer C, TypeName> ?
 		C extends $UUID ?
 			K
 		:	never
@@ -443,7 +442,7 @@ export type $InferUUID<T extends ColumnDefinition> = {
 
 /** Finds the field name with {@link Timestamp} type. */
 export type $InferTimestamp<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends Column<infer C> ?
+	[K in keyof T]: T[K] extends Column<infer C, TypeName> ?
 		C extends Timestamp ?
 			K
 		:	never
@@ -535,7 +534,7 @@ export type TypeName = LooseLiteral<
 export type Email = `${string}@${string}.${string}`;
 
 /** URL string type in basic format */
-export type URLString = `${LooseLiteral<'http' | 'https'>}://${string}`;
+export type URLString = `${string}://${string}`;
 
 /** Index configuration type for `IndexedDB` */
 export type IndexConfig = {

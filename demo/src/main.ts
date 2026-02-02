@@ -9,6 +9,7 @@ import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 
 import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
 import { column, defineSchema, deleteDB, getTimestamp, Locality } from 'locality';
+import { runAllTests } from './transaction-export';
 
 Chronos.register(timeZonePlugin);
 
@@ -38,6 +39,7 @@ const schema = defineSchema({
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
 		// TODO: Add some method that will trigger only when updating
 		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
+		url: column.url().optional(),
 	},
 	experiments: {
 		id: column.float().pk().auto(),
@@ -321,4 +323,11 @@ window.addEventListener('load', async () => {
 	const testWithToDo = await db.from('todos').where('task', 'hello').exists();
 
 	console.info(testWithToDo);
+
+	// Add test button event listener
+	const runTestsBtn = document.getElementById('runTestsBtn') as HTMLButtonElement;
+	runTestsBtn.addEventListener('click', async () => {
+		console.info('🚀 Starting feature tests...');
+		await runAllTests();
+	});
 });

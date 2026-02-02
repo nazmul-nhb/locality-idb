@@ -7,7 +7,6 @@ import type {
 	GenericObject,
 	List,
 	Numeric,
-	SchemaRecord,
 	Timestamp,
 	Tuple,
 	URLString,
@@ -45,13 +44,16 @@ import type {
  * type InsertPost = InferInsertType<typeof schema.posts>;
  * type UpdatePost = InferUpdateType<typeof schema.posts>;
  */
-export function defineSchema<Schema extends ColumnRecord, Keys extends keyof Schema>(
-	schema: Schema
-): SchemaRecord<Schema, Keys> {
-	const result = {} as SchemaRecord<Schema, Keys>;
+export function defineSchema<Schema>(schema: Schema): {
+	[K in keyof Schema]: Table<Extract<Schema[K], ColumnDefinition>>;
+} {
+	const result = {} as { [K in keyof Schema]: Table<Extract<Schema[K], ColumnDefinition>> };
 
-	for (const [tableName, columns] of Object.entries(schema)) {
-		result[tableName as Keys] = new Table(tableName, columns) as Table<Schema[Keys]>;
+	for (const [tableName, columns] of Object.entries(schema as ColumnRecord)) {
+		result[tableName as keyof Schema] = new Table(
+			tableName,
+			columns as Extract<Schema[keyof Schema], ColumnDefinition>
+		);
 	}
 
 	return result;
@@ -504,4 +506,4 @@ export const column = {
 	 * - No built-in serialization/deserialization is provided; you must handle it yourself.
 	 */
 	custom: <T = any>() => new Column<T, `custom`>(`custom`),
-} as const;
+};
