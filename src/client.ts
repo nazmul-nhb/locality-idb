@@ -4,6 +4,7 @@ import { _abortTransaction } from './helpers';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
+	ExportOptions,
 	IndexConfig,
 	InferInsertType,
 	InferSelectType,
@@ -11,8 +12,10 @@ import type {
 	Maybe,
 	SchemaDefinition,
 	StoreConfig,
+	TransactionCallback,
+	TransactionContext,
 } from './types';
-import { deleteDB } from './utils';
+import { deleteDB, getTimestamp } from './utils';
 import { validateAndPrepareData } from './validators';
 
 /**
@@ -341,33 +344,15 @@ export class Locality<
 	 */
 	async transaction<Tables extends TName[]>(
 		tables: Tables,
-		callback: (tx: {
-			insert: <T extends Tables[number]>(
-				table: T,
-				data: InferInsertType<Schema[T]>
-			) => Promise<IDBValidKey>;
-			update: <T extends Tables[number]>(
-				table: T,
-				key: IDBValidKey,
-				data: Partial<InferSelectType<Schema[T]>>
-			) => Promise<void>;
-			delete: <T extends Tables[number]>(table: T, key: IDBValidKey) => Promise<void>;
-			get: <T extends Tables[number]>(
-				table: T,
-				key: IDBValidKey
-			) => Promise<InferSelectType<Schema[T]> | null>;
-		}) => Promise<void>
+		callback: TransactionCallback<Schema, TName, Tables>
 	): Promise<void> {
 		await this.#readyPromise;
 
 		return new Promise((resolve, reject) => {
 			const transaction = this.#db.transaction(tables as string[], 'readwrite');
 
-			const txContext = {
-				insert: <T extends Tables[number]>(
-					table: T,
-					data: InferInsertType<Schema[T]>
-				): Promise<IDBValidKey> => {
+			const txContext: TransactionContext<Schema, TName, Tables> = {
+				insert: (table, data) => {
 					return new Promise((res, rej) => {
 						const store = transaction.objectStore(table as string);
 						const preparedData = validateAndPrepareData(
@@ -382,11 +367,7 @@ export class Locality<
 					});
 				},
 
-				update: <T extends Tables[number]>(
-					table: T,
-					key: IDBValidKey,
-					data: Partial<InferSelectType<Schema[T]>>
-				): Promise<void> => {
+				update: (table, key, data) => {
 					return new Promise((res, rej) => {
 						const store = transaction.objectStore(table as string);
 						const getRequest = store.get(key);
@@ -420,10 +401,7 @@ export class Locality<
 					});
 				},
 
-				delete: <T extends Tables[number]>(
-					table: T,
-					key: IDBValidKey
-				): Promise<void> => {
+				delete: (table, key) => {
 					return new Promise((res, rej) => {
 						const store = transaction.objectStore(table as string);
 						const request = store.delete(key);
@@ -432,10 +410,7 @@ export class Locality<
 					});
 				},
 
-				get: <T extends Tables[number]>(
-					table: T,
-					key: IDBValidKey
-				): Promise<InferSelectType<Schema[T]> | null> => {
+				get: (table, key) => {
 					return new Promise((res, rej) => {
 						const store = transaction.objectStore(table as string);
 						const request = store.get(key);
@@ -471,10 +446,6 @@ export class Locality<
 	 * - Automatically triggers a download in the browser.
 	 *
 	 * @param options Export configuration options
-	 * @param options.tables Optional array of table names to export (exports all if not specified)
-	 * @param options.filename Optional custom filename (default: `{dbName}-export-{timestamp}.json`)
-	 * @param options.pretty Optional flag to enable pretty-printed JSON (default: `false`)
-	 * @param options.includeMetadata Optional flag to include export metadata (default: `true`)
 	 * @returns A promise that resolves when the export completes
 	 *
 	 * @example
@@ -493,24 +464,19 @@ export class Locality<
 	 * 	}),
 	 * });
 	 *
-	 * // Export all tables with default filename
+	 * // Export all tablespretty-printed pretty-printed with default filename
 	 * await db.export();
 	 *
-	 * // Export specific tables with custom filename
+	 * // Export specific tables pretty-printed with custom filename
 	 * await db.export({ tables: ['users'], filename: 'users-backup.json' });
 	 *
-	 * // Export with pretty-printed JSON
-	 * await db.export({ pretty: true });
+	 * // Export with raw JSON
+	 * await db.export({ pretty: false });
 	 */
-	async export(options?: {
-		tables?: TName[];
-		filename?: string;
-		pretty?: boolean;
-		includeMetadata?: boolean;
-	}): Promise<void> {
+	async export(options?: ExportOptions<TName>): Promise<void> {
 		await this.#readyPromise;
 
-		const { tables, filename, pretty = false, includeMetadata = true } = options || {};
+		const { tables, filename, pretty = true, includeMetadata = true } = options || {};
 
 		// Determine which tables to export
 		const tablesToExport = (tables || Object.keys(this.#schema)) as TName[];
@@ -545,8 +511,7 @@ export class Locality<
 
 		// Generate filename if not provided
 		const finalFilename =
-			filename ||
-			`${this.#name}-export-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+			filename ?? `${this.#name}-export-${getTimestamp().replace(/[:.]/g, '-')}.json`;
 
 		// Create download link and trigger download
 		const url = URL.createObjectURL(blob);

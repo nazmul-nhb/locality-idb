@@ -558,3 +558,51 @@ export type StoreConfig = {
 	/** Array of index configurations for this store */
 	indexes?: IndexConfig[];
 };
+
+/** Export options for database `export` method */
+export type ExportOptions<T extends PropertyKey> = {
+	/** Optional array of table names to export (exports all if not specified) */
+	tables?: T[];
+	/** Optional custom filename (default: `{dbName}-export-{timestamp}.json`) */
+	filename?: string;
+	/** Optional flag to enable pretty-printed JSON (default: `true`) */
+	pretty?: boolean;
+	/** Optional flag to include export metadata (default: `true`) */
+	includeMetadata?: boolean;
+};
+
+/** Transaction context type providing methods for database operations within a transaction */
+export type TransactionContext<
+	Schema extends SchemaDefinition,
+	TName extends keyof Schema,
+	Tables extends TName[],
+> = {
+	/** Inserts a new record into the specified table */
+	insert: <T extends Tables[number]>(
+		table: T,
+		data: InferInsertType<Schema[T]>
+	) => Promise<IDBValidKey>;
+
+	/** Updates an existing record in the specified table */
+	update: <T extends Tables[number]>(
+		table: T,
+		key: IDBValidKey,
+		data: Partial<InferSelectType<Schema[T]>>
+	) => Promise<void>;
+
+	/** Deletes a record from the specified table */
+	delete: <T extends Tables[number]>(table: T, key: IDBValidKey) => Promise<void>;
+
+	/** Retrieves a record by primary key from the specified table */
+	get: <T extends Tables[number]>(
+		table: T,
+		key: IDBValidKey
+	) => Promise<InferSelectType<Schema[T]> | null>;
+};
+
+/** Transaction callback function type */
+export type TransactionCallback<
+	Schema extends SchemaDefinition,
+	TName extends keyof Schema,
+	Tables extends TName[],
+> = (ctx: TransactionContext<Schema, TName, Tables>) => Promise<void>;

@@ -123,6 +123,8 @@ export async function testTransaction() {
 					email: 'rollback@test.com',
 				});
 
+				tx.delete('users', 9);
+
 				await tx.insert('posts', {
 					userId: Number(userId),
 					title: 'Post 1',
