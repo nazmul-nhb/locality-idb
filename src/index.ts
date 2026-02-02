@@ -1,7 +1,7 @@
 export type * from './types';
 
-export { ValidateFn } from './core';
-export type { Column, Table } from './core';
+// ! Export only class types to avoid unexpected side effects
+export type { Column, PKColumn, Table } from './core';
 
 export { Locality } from './client';
 export { openDBWithStores } from './factory';

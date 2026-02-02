@@ -34,16 +34,27 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	declare [IsIndexed]?: boolean;
 	declare [IsUnique]?: boolean;
 	declare [DefaultValue]?: T;
-	declare [ValidateFn]?: (value: T) => string | null | undefined;
+	declare [ValidateFn]?: ValidatorFn<T>;
 
 	constructor(type: TName) {
 		this[ColumnType] = type;
 	}
 
-	/** @instance Marks column as primary key */
+	/**
+	 * @instance Marks column as primary key
+	 *
+	 * @returns The {@link PKColumn column instance} marked as primary key
+	 *
+	 */
 	pk() {
 		this[IsPrimaryKey] = true;
-		return this as this & { [IsPrimaryKey]: true };
+		// return this as this & { [IsPrimaryKey]: true };
+
+		return new PKColumn<T, TName>(this[ColumnType], this) as TName extends (
+			'int' | 'integer' | 'float' | 'number'
+		) ?
+			this & PKColumn<T, TName> & { [IsPrimaryKey]: true }
+		:	this & Omit<PKColumn<T, TName>, 'auto'> & { [IsPrimaryKey]: true };
 	}
 
 	/**
@@ -59,21 +70,6 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 			[IsIndexed]: true;
 			[IsUnique]: true;
 		};
-	}
-
-	/** @instance Enables auto increment - only available for numeric columns */
-	auto() {
-		const colType = this[ColumnType];
-
-		const allowedTypes = ['int', 'integer', 'float', 'number'] as TypeName[];
-
-		if (!isNonEmptyString(colType) || !allowedTypes.includes(colType)) {
-			throw new Error(`auto() can only be used with number columns, got: ${colType}`);
-		}
-
-		this[IsAutoInc] = true;
-
-		return this as T extends number ? this & { [IsAutoInc]: true } : Omit<this, 'auto'>;
 	}
 
 	/** @instance Marks column as indexed */
@@ -130,7 +126,41 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	// }
 }
 
-/** @class Represents a table. */
+/** @class Extends {@link Column} and represents a primary key column. */
+export class PKColumn<T = any, TName extends TypeName = TypeName> extends Column<T, TName> {
+	constructor(type: TName, column: Column<T, TName>) {
+		super(type);
+
+		this[$ColumnType] = column[$ColumnType];
+		this[ColumnType] = column[ColumnType];
+
+		this[IsPrimaryKey] = true;
+		this[IsAutoInc] = column[IsAutoInc];
+		this[IsOptional] = column[IsOptional];
+		this[IsNullable] = column[IsNullable];
+		this[IsIndexed] = column[IsIndexed];
+		this[IsUnique] = column[IsUnique];
+		this[DefaultValue] = column[DefaultValue];
+		this[ValidateFn] = column[ValidateFn];
+	}
+
+	/** @instance Enables auto increment - only available for numeric columns */
+	auto() {
+		const colType = this[ColumnType];
+
+		const allowedTypes = ['int', 'integer', 'float', 'number'] as TypeName[];
+
+		if (!isNonEmptyString(colType) || !allowedTypes.includes(colType)) {
+			throw new Error(`auto() can only be used with number columns, got: ${colType}`);
+		}
+
+		this[IsAutoInc] = true;
+
+		return this as T extends number ? this & { [IsAutoInc]: true } : Omit<this, 'auto'>;
+	}
+}
+
+/** @class Represents a table definition. */
 export class Table<C extends ColumnDefinition = ColumnDefinition> {
 	readonly name: string;
 	readonly columns: C;

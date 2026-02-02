@@ -23,7 +23,7 @@ const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 
 const schema = defineSchema({
 	todos: {
-		serial: column.int().auto().pk(),
+		serial: column.int().pk().auto(),
 		task: column
 			.text()
 			// .validate((val) => {
@@ -40,12 +40,12 @@ const schema = defineSchema({
 		updatedAt: column.timestamp(),
 	},
 	experiments: {
-		id: column.uuid().pk(),
+		id: column.float().pk().auto(),
 		name: column.text().index(),
 		active: column
 			.bool()
 			.default(true)
-			.validate((v) => (v ? null : 'Active must be true or false')),
+			.validate((v) => (v ? null : 'Active must be true')),
 	},
 });
 
@@ -263,9 +263,32 @@ window.addEventListener('load', async () => {
 
 	if (!isValidArray(experiments)) {
 		await db.seed('experiments', [
-			{ name: 'Ato', active: false },
+			{ name: 'Aeto' },
 			{ name: 'Beto' },
 			{ name: 'Ceto' },
+			{ name: 'Deto' },
+			{ name: 'Eeto' },
+			{ name: 'Feto' },
+			{ name: 'Geto' },
+			{ name: 'Heto' },
+			{ name: 'Ieto' },
+			{ name: 'Jeto' },
+			{ name: 'Keto' },
+			{ name: 'Leto' },
+			{ name: 'Meto' },
+			{ name: 'Neto' },
+			{ name: 'Oeto' },
+			{ name: 'Peto' },
+			{ name: 'Qeto' },
+			{ name: 'Reto' },
+			{ name: 'Seto' },
+			{ name: 'Teto' },
+			{ name: 'Ueto' },
+			{ name: 'Veto' },
+			{ name: 'Weto' },
+			{ name: 'Xeto' },
+			{ name: 'Yeto' },
+			{ name: 'Zeto' },
 		]);
 	}
 
@@ -275,7 +298,7 @@ window.addEventListener('load', async () => {
 		.from('experiments')
 		.select({ name: true })
 		// .select({ id: true })
-		.findByPk('84864f8a-31e7-42b0-950d-de1d9de6d0a5');
+		.findAll();
 
 	const ex2 = await db
 		.from('experiments')
