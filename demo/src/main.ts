@@ -46,6 +46,8 @@ const schema = defineSchema({
 			.bool()
 			.default(true)
 			.validate((v) => (v ? null : 'Active must be true')),
+		email: column.email().optional(),
+		url: column.url().optional(),
 	},
 });
 
@@ -263,8 +265,8 @@ window.addEventListener('load', async () => {
 
 	if (!isValidArray(experiments)) {
 		await db.seed('experiments', [
-			{ name: 'Aeto' },
-			{ name: 'Beto' },
+			{ name: 'Aeto', email: 'nazmul@yahoo.com' },
+			{ name: 'Beto', url: 'https://example.com' },
 			{ name: 'Ceto' },
 			{ name: 'Deto' },
 			{ name: 'Eeto' },

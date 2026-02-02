@@ -510,8 +510,12 @@ export type TypeName = LooseLiteral<
 	| 'bigint'
 	| 'text'
 	| 'string'
+	| `char${number}`
+	| `varchar${number}`
 	| 'uuid'
 	| 'timestamp'
+	| 'email'
+	| 'url'
 	| 'bool'
 	| 'boolean'
 	| 'date'
@@ -523,6 +527,12 @@ export type TypeName = LooseLiteral<
 	| 'map'
 	| 'custom'
 >;
+
+/** Email string type in basic format */
+export type Email = `${string}@${string}.${string}`;
+
+/** URL string type in basic format */
+export type URLString = `${LooseLiteral<'http' | 'https'>}://${string}`;
 
 /** Index configuration type for `IndexedDB` */
 export type IndexConfig = {

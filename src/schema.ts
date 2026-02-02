@@ -3,12 +3,14 @@ import type {
 	$UUID,
 	ColumnDefinition,
 	ColumnRecord,
+	Email,
 	GenericObject,
 	List,
 	Numeric,
 	SchemaRecord,
 	Timestamp,
 	Tuple,
+	URLString,
 } from './types';
 
 /**
@@ -305,6 +307,24 @@ export const column = {
 	 * - Automatically generates the current timestamp when no value is provided.
 	 */
 	timestamp: () => new Column<Timestamp, 'timestamp'>('timestamp'),
+
+	/**
+	 * Creates an email column.
+	 * @returns A new {@link Column} instance for emails.
+	 * @remarks
+	 * - This column type is used for storing email address strings.
+	 * - Includes built-in validation to ensure the value is a valid email format.
+	 */
+	email: () => new Column<Email, 'email'>('email'),
+
+	/**
+	 * Creates a URL column.
+	 * @returns A new {@link Column} instance for URLs.
+	 * @remarks
+	 * - This column type is used for storing URL strings.
+	 * - Includes built-in validation to ensure the value is a valid URL format.
+	 */
+	url: () => new Column<URLString, 'url'>('url'),
 	/**
 	 * Creates a boolean column. Same as {@link column.boolean boolean}.
 	 * @returns A new {@link Column} instance for booleans.

@@ -24,7 +24,7 @@ import {
 	ValidateFn,
 } from './core';
 import type { ColumnDefinition, GenericObject, Maybe, TypeName } from './types';
-import { getTimestamp, isTimestamp, uuidV4 } from './utils';
+import { getTimestamp, isEmail, isTimestamp, isURL, uuidV4 } from './utils';
 
 /**
  * * Validate if a value matches the specified column data type
@@ -62,6 +62,16 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 			if (isString(value)) return null;
 
 			return `${strVal} is not a ${type === 'text' ? 'text ' : ''}string`;
+
+		case 'email':
+			if (isEmail(value)) return null;
+
+			return `${strVal} is not a valid email address`;
+
+		case 'url':
+			if (isURL(value)) return null;
+
+			return `${strVal} is not a valid URL string`;
 
 		case 'timestamp':
 			if (isTimestamp(value)) return null;

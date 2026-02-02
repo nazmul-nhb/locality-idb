@@ -1,6 +1,6 @@
-import { isNonEmptyString } from 'nhb-toolbox';
+import { isNonEmptyString, isValidEmail, isValidURL, isUUID as isValidUUID } from 'nhb-toolbox';
 import { _formatUUID } from './helpers';
-import type { Timestamp, UUID } from './types';
+import type { Email, Timestamp, URLString, UUID, UUIDVersion } from './types';
 
 /**
  * * Generate a random UUID v4 string
@@ -91,4 +91,31 @@ export function deleteDB(name: string): Promise<void> {
 			reject(new Error(`Delete blocked for database '${name}'`));
 		};
 	});
+}
+
+/**
+ * * Check if a value is a valid Email string
+ * @param value The value to check
+ * @returns `true` if the value is a valid Email, otherwise `false`
+ */
+export function isEmail(value: unknown): value is Email {
+	return isValidEmail(value);
+}
+
+/**
+ * * Check if a value is a valid URL string
+ * @param value The value to check
+ * @returns `true` if the value is a valid URL, otherwise `false`
+ */
+export function isURL(value: unknown): value is URLString {
+	return isValidURL(value);
+}
+
+/**
+ * * Check if a value is a valid UUID (`RFC4122` `v1`-`v8`).
+ * @param value - The value to check.
+ * @returns `true` if the value matches standard UUID pattern, otherwise `false`.
+ */
+export function isUUID(value: unknown): value is UUID<UUIDVersion> {
+	return isValidUUID(value);
 }
