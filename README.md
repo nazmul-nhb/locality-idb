@@ -298,7 +298,7 @@ const schema = defineSchema({
     id: column.uuid().pk(), // Auto-generated UUID v4
     idWithDefault: column.uuid().pk().default(uuid({ version: 'v6' })), // Replace auto-generated UUID v4
     createdAt: column.timestamp(), // Auto-generated timestamp
-    defaultXmpl: column.timestamp().default(getTimestamp()), // Auto-generated timestamp with default using utility built-in function
+    defaultTs: column.timestamp().default(getTimestamp()), // Auto-generated timestamp with default using utility built-in function
     customTs: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp), // Default timestamp with custom format
   },
 });
@@ -1434,7 +1434,7 @@ isEmail('first.last@sub.domain.co.uk');   // true
 isEmail('user+filter@example.org');       // true
 
 // Invalid emails
-isEmail('plainstring');           // false
+isEmail('plain-string');           // false
 isEmail('user@.com');             // false
 isEmail('@example.com');          // false
 isEmail('user@domain');           // false
