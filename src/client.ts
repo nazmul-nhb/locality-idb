@@ -421,15 +421,11 @@ export class Locality<
 			};
 
 			// Execute the callback
-			callback(txContext)
-				.then(() => {
-					// Callback completed successfully, wait for transaction to commit
-				})
-				.catch((err) => {
-					// Abort transaction if callback fails
-					transaction.abort();
-					reject(err);
-				});
+			callback(txContext).catch((err) => {
+				// Abort transaction if callback fails
+				transaction.abort();
+				reject(err);
+			});
 
 			transaction.oncomplete = () => resolve();
 			transaction.onabort = () => _abortTransaction(transaction.error, reject);

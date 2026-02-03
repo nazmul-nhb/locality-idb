@@ -186,7 +186,7 @@ export async function testExport() {
 		// Export all tables
 		console.info('📦 Triggering export (check downloads folder)...');
 		await db.export({
-			filename: 'test-export.json',
+			// filename: 'test-export.json',
 			pretty: true,
 			includeMetadata: true,
 		});
@@ -198,7 +198,7 @@ export async function testExport() {
 		console.info('📦 Exporting only users table...');
 		await db.export({
 			tables: ['users'],
-			filename: 'test-export-users-only.json',
+			// filename: 'test-export-users-only.json',
 			pretty: true,
 		});
 
