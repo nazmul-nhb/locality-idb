@@ -572,6 +572,23 @@ export type ExportOptions<T extends PropertyKey> = {
 	includeMetadata?: boolean;
 };
 
+/** Exported database data structure */
+export type ExportData = {
+	/** Optional metadata about the export */
+	metadata?: {
+		/** Database name */
+		dbName: string;
+		/** Database version */
+		version: number;
+		/** Export creation time */
+		exportedAt: Timestamp;
+		/** List of exported table names */
+		tables: string[];
+	};
+	/** Actual exported data, mapping table names to arrays of records */
+	data: Record<string, GenericObject[]>;
+};
+
 /** Transaction context type providing methods for database operations within a transaction */
 export type TransactionContext<
 	Schema extends SchemaDefinition,

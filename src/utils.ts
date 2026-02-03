@@ -32,7 +32,7 @@ export function getTimestamp(value?: string | number | Date): Timestamp {
 	let date =
 		value instanceof Date ? value : (
 			new Date(
-				isNonEmptyString(value) ? value.replace(/['"]/g, '') : (value ?? new Date())
+				isNonEmptyString(value) ? value.replace(/['"]/g, '') : (value ?? Date.now())
 			)
 		);
 
@@ -68,9 +68,9 @@ export function deleteDB(name: string): Promise<void> {
 			throw new Error('IndexedDB is not supported in this environment or browser!');
 		}
 
-		const databses = window.indexedDB.databases();
+		const idbInfo = window.indexedDB.databases();
 
-		databses
+		idbInfo
 			.then((dbs) => {
 				const dbExists = dbs.some((db) => db.name === name);
 

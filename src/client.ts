@@ -4,7 +4,9 @@ import { _abortTransaction } from './helpers';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
+	ExportData,
 	ExportOptions,
+	GenericObject,
 	IndexConfig,
 	InferInsertType,
 	InferSelectType,
@@ -151,7 +153,7 @@ export class Locality<
 		});
 	}
 
-	#getKeyPath<T extends TName, R extends $InferRow<Schema[T]['columns']>>(table: TName) {
+	#extractTablePk<T extends TName, R extends $InferRow<Schema[T]['columns']>>(table: TName) {
 		const columns = this.#schema[table].columns;
 
 		const column = Object.entries(columns).find(([_, col]) => col[IsPrimaryKey]);
@@ -221,7 +223,7 @@ export class Locality<
 			table as string,
 			() => this.#db,
 			this.#readyPromise,
-			this.#getKeyPath(table)
+			this.#extractTablePk(table)
 		);
 	}
 
@@ -413,7 +415,7 @@ export class Locality<
 					table as string,
 					() => this.#db,
 					this.#readyPromise,
-					this.#getKeyPath(table),
+					this.#extractTablePk(table),
 					transaction
 				);
 
@@ -440,6 +442,10 @@ export class Locality<
 		} catch {
 			transaction.abort();
 		}
+
+		// transaction.oncomplete = () => {};
+		// transaction.onabort = () => {};
+		// transaction.onerror = () => {};
 
 		// Execute the callback
 		// cb(txContext).catch(() => {
@@ -575,25 +581,27 @@ export class Locality<
 		const { tables, filename, pretty = true, includeMetadata = true } = options || {};
 
 		// Determine which tables to export
-		const tablesToExport = (tables || Object.keys(this.#schema)) as TName[];
+		const tablesToExport = tables || Object.keys(this.#schema);
 
 		// Export data from all specified tables
-		const exportData: Record<string, unknown[]> = {};
+		const exportData: Record<string, GenericObject[]> = {};
 
-		for (const table of tablesToExport) {
+		for (const table of tablesToExport as TName[]) {
 			const data = await this.from(table).findAll();
 			exportData[table as string] = data;
 		}
 
 		// Build export object
-		const exportObj: Record<string, unknown> = {};
+		const exportObj = {} as ExportData;
+
+		const ts = getTimestamp();
 
 		if (includeMetadata) {
 			exportObj.metadata = {
 				dbName: this.#name,
 				version: this.version,
-				exportedAt: new Date().toISOString(),
-				tables: tablesToExport,
+				exportedAt: ts,
+				tables: tablesToExport as string[],
 			};
 		}
 
@@ -605,20 +613,19 @@ export class Locality<
 		// Create blob
 		const blob = new Blob([jsonString], { type: 'application/json' });
 
-		// Generate filename if not provided
-		const finalFilename =
-			filename ?? `${this.#name}-export-${getTimestamp().replace(/[:.]/g, '-')}.json`;
-
 		// Create download link and trigger download
-		const url = URL.createObjectURL(blob);
 		const link = document.createElement('a');
+		const url = URL.createObjectURL(blob);
+
 		link.href = url;
-		link.download = finalFilename;
+		link.download = filename ?? `${this.#name}-${ts.replace(/[:.]/g, '-')}.json`;
+
 		document.body.appendChild(link);
+
 		link.click();
-		document.body.removeChild(link);
 
 		// Clean up
+		document.body.removeChild(link);
 		URL.revokeObjectURL(url);
 	}
 }
