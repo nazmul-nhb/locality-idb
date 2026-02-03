@@ -86,8 +86,8 @@ export async function testTransaction() {
 		await db.clearTable('posts');
 
 		// Test successful transaction
-		await db.transaction(['users', 'posts'], async (tx) => {
-			const newUser = await tx
+		await db.transaction(['users', 'posts'], async (ctx) => {
+			const newUser = await ctx
 				.insert('users')
 				.values({
 					name: 'Transaction User',
@@ -95,7 +95,7 @@ export async function testTransaction() {
 				})
 				.run();
 
-			await tx
+			await ctx
 				.insert('posts')
 				.values({
 					userId: newUser.id,
@@ -123,8 +123,8 @@ export async function testTransaction() {
 		await db.clearTable('posts');
 
 		try {
-			await db.transaction(['users', 'posts'], async (tx) => {
-				const newUser = await tx
+			await db.transaction(['users', 'posts'], async (ctx) => {
+				const newUser = await ctx
 					.insert('users')
 					.values({
 						name: 'Rollback User',
@@ -132,12 +132,16 @@ export async function testTransaction() {
 					})
 					.run();
 
-				await tx
+				console.log({ newUser });
+
+				const d = await ctx
 					.delete('users')
 					.where((u) => u.id === newUser.id)
 					.run();
 
-				await tx
+				console.log({ d });
+
+				const f = await ctx
 					.insert('posts')
 					.values({
 						userId: newUser.id,
@@ -146,6 +150,10 @@ export async function testTransaction() {
 					})
 					.run();
 
+				console.log({ f });
+
+				const p = await ctx.from('posts').select({ title: true }).findAll();
+				console.log({ p });
 				// Intentionally throw error to trigger rollback
 				throw new Error('Intentional error to test rollback');
 			});
@@ -231,8 +239,8 @@ export async function runAllTests() {
 	await db.ready();
 
 	await testBulkInsertAtomicity();
+	// await testExport();
 	await testTransaction();
-	await testExport();
 
 	console.info('\n✨ All tests completed!\n');
 }

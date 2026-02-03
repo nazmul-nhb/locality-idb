@@ -609,6 +609,7 @@ export class InsertQuery<
 
 			const insertedDocs: Data[] = [];
 			const insertedKeys: IDBValidKey[] = [];
+			let insertCompleted = 0;
 
 			// Start all insert operations
 			for (const data of this.#dataToInsert) {
@@ -618,42 +619,67 @@ export class InsertQuery<
 
 				request.onsuccess = () => {
 					insertedKeys.push(request.result);
+					insertCompleted++;
+
+					// When all inserts complete, read the data back
+					if (insertCompleted === this.#dataToInsert.length) {
+						if (this.#transaction) {
+							// In transaction context: read from same transaction
+							let readCompleted = 0;
+
+							for (const key of insertedKeys) {
+								const getRequest = store.get(key) as IDBRequest<Data>;
+
+								getRequest.onsuccess = () => {
+									insertedDocs.push(getRequest.result);
+									readCompleted++;
+
+									if (readCompleted === insertedKeys.length) {
+										resolve(
+											(this[IsArray] ? insertedDocs : (
+												insertedDocs[0]
+											)) as Return
+										);
+									}
+								};
+
+								getRequest.onerror = () => reject(getRequest.error);
+							}
+						}
+						// If not in transaction context, oncomplete handler will read the data
+					}
 				};
 
-				request.onerror = () => {
-					// Error will trigger transaction abort automatically
-					reject(request.error);
-				};
+				request.onerror = () => reject(request.error);
 			}
 
-			// Handle transaction completion (only fires if all succeeded)
-			transaction.oncomplete = () => {
-				// Retrieve all inserted documents after successful transaction
-				const readTx =
-					this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readonly');
-				const readStore = readTx.objectStore(this.#table);
+			// If not in a transaction context, wait for transaction to complete and then read
+			if (!this.#transaction) {
+				transaction.oncomplete = () => {
+					// Retrieve all inserted documents after successful transaction
+					const readTx = this.#dbGetter().transaction(this.#table, 'readonly');
+					const readStore = readTx.objectStore(this.#table);
 
-				let completed = 0;
+					let completed = 0;
 
-				for (const key of insertedKeys) {
-					const getRequest = readStore.get(key);
+					for (const key of insertedKeys) {
+						const getRequest = readStore.get(key) as IDBRequest<Data>;
 
-					getRequest.onsuccess = () => {
-						insertedDocs.push(getRequest.result);
-						completed++;
+						getRequest.onsuccess = () => {
+							insertedDocs.push(getRequest.result);
+							completed++;
 
-						if (completed === insertedKeys.length) {
-							resolve(
-								(this[IsArray] === true ?
-									insertedDocs
-								:	insertedDocs[0]) as Return
-							);
-						}
-					};
+							if (completed === insertedKeys.length) {
+								resolve(
+									(this[IsArray] ? insertedDocs : insertedDocs[0]) as Return
+								);
+							}
+						};
 
-					getRequest.onerror = () => reject(getRequest.error);
-				}
-			};
+						getRequest.onerror = () => reject(getRequest.error);
+					}
+				};
+			}
 
 			// Handle transaction abort (happens on errors like unique constraint violations)
 			transaction.onabort = () => _abortTransaction(transaction.error, reject);

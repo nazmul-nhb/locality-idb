@@ -357,6 +357,15 @@ export class Locality<
 		const transaction = this.#db.transaction(tables as string[], 'readwrite');
 
 		const txContext: TransactionContext<Schema, TName, Tables> = {
+			from: (table) => {
+				return new SelectQuery(
+					table as string,
+					() => this.#db,
+					this.#readyPromise,
+					transaction
+				);
+			},
+
 			insert: (table) => {
 				return new InsertQuery(
 					table as string,
@@ -377,37 +386,6 @@ export class Locality<
 					this.#keyPaths[table],
 					transaction
 				);
-				// return new Promise((res, rej) => {
-				// 	const store = transaction.objectStore(table as string);
-				// 	const getRequest = store.get(key);
-
-				// 	getRequest.onsuccess = () => {
-				// 		const existing = getRequest.result;
-
-				// 		if (!existing) {
-				// 			rej(
-				// 				new Error(
-				// 					`Record with key '${key}' not found in table '${String(table)}'`
-				// 				)
-				// 			);
-				// 			return;
-				// 		}
-
-				// 		const updatedData = validateAndPrepareData(
-				// 			{ ...existing, ...data },
-				// 			this.#schema[table].columns,
-				// 			this.#keyPaths[table],
-				// 			table as string,
-				// 			true
-				// 		);
-
-				// 		const putRequest = store.put(updatedData);
-				// 		putRequest.onsuccess = () => res();
-				// 		putRequest.onerror = () => rej(putRequest.error);
-				// 	};
-
-				// 	getRequest.onerror = () => rej(getRequest.error);
-				// });
 			},
 
 			delete: (table) => {
@@ -418,125 +396,30 @@ export class Locality<
 					this.#extractTablePk(table),
 					transaction
 				);
-
-				// return new Promise((res, rej) => {
-				// 	const store = transaction.objectStore(table as string);
-				// 	const request = store.delete(key);
-				// 	request.onsuccess = () => res();
-				// 	request.onerror = () => rej(request.error);
-				// });
-			},
-
-			from: (table) => {
-				return new SelectQuery(
-					table as string,
-					() => this.#db,
-					this.#readyPromise,
-					transaction
-				);
 			},
 		};
 
-		try {
-			await callback(txContext);
-		} catch {
-			transaction.abort();
-		}
+		return new Promise<void>((resolve, reject) => {
+			// Set up transaction event handlers
+			let callbackError: DOMException | null = null;
 
-		// transaction.oncomplete = () => {};
-		// transaction.onabort = () => {};
-		// transaction.onerror = () => {};
+			// Execute the callback
+			callback(txContext).catch((error) => {
+				// Store the callback error for later
+				callbackError = error;
+				// Abort transaction if callback fails
+				transaction.abort();
+				// Error will be handled by onabort handler
+			});
 
-		// Execute the callback
-		// cb(txContext).catch(() => {
-		// 	// Abort transaction if callback fails
-		// 	transaction.abort();
-		// 	// reject(err);
-		// });
+			transaction.oncomplete = () => resolve();
+			transaction.onabort = () => {
+				// If callback threw an error, reject with that error; otherwise use transaction error
+				_abortTransaction(callbackError || transaction.error, reject);
+			};
 
-		// return new Promise((resolve, reject) => {
-		// 	const transaction = this.#db.transaction(tables as string[], 'readwrite');
-
-		// 	const txContext: TransactionContext<Schema, TName, Tables> = {
-		// 		insert: (table, data) => {
-		// 			return new Promise((res, rej) => {
-		// 				const store = transaction.objectStore(table as string);
-		// 				const preparedData = validateAndPrepareData(
-		// 					data,
-		// 					this.#schema[table].columns,
-		// 					this.#keyPaths[table],
-		// 					table as string
-		// 				);
-		// 				const request = store.add(preparedData);
-		// 				request.onsuccess = () => res(request.result);
-		// 				request.onerror = () => rej(request.error);
-		// 			});
-		// 		},
-
-		// 		update: (table, key, data) => {
-		// 			return new Promise((res, rej) => {
-		// 				const store = transaction.objectStore(table as string);
-		// 				const getRequest = store.get(key);
-
-		// 				getRequest.onsuccess = () => {
-		// 					const existing = getRequest.result;
-
-		// 					if (!existing) {
-		// 						rej(
-		// 							new Error(
-		// 								`Record with key '${key}' not found in table '${String(table)}'`
-		// 							)
-		// 						);
-		// 						return;
-		// 					}
-
-		// 					const updatedData = validateAndPrepareData(
-		// 						{ ...existing, ...data },
-		// 						this.#schema[table].columns,
-		// 						this.#keyPaths[table],
-		// 						table as string,
-		// 						true
-		// 					);
-
-		// 					const putRequest = store.put(updatedData);
-		// 					putRequest.onsuccess = () => res();
-		// 					putRequest.onerror = () => rej(putRequest.error);
-		// 				};
-
-		// 				getRequest.onerror = () => rej(getRequest.error);
-		// 			});
-		// 		},
-
-		// 		delete: (table, key) => {
-		// 			return new Promise((res, rej) => {
-		// 				const store = transaction.objectStore(table as string);
-		// 				const request = store.delete(key);
-		// 				request.onsuccess = () => res();
-		// 				request.onerror = () => rej(request.error);
-		// 			});
-		// 		},
-
-		// 		get: (table, key) => {
-		// 			return new Promise((res, rej) => {
-		// 				const store = transaction.objectStore(table as string);
-		// 				const request = store.get(key);
-		// 				request.onsuccess = () => res(request.result || null);
-		// 				request.onerror = () => rej(request.error);
-		// 			});
-		// 		},
-		// 	};
-
-		// 	// Execute the callback
-		// 	callback(txContext).catch(() => {
-		// 		// Abort transaction if callback fails
-		// 		transaction.abort();
-		// 		// reject(err);
-		// 	});
-
-		// 	// transaction.oncomplete = () => resolve();
-		// 	// transaction.onabort = () => _abortTransaction(transaction.error, reject);
-		// 	// transaction.onerror = () => reject(transaction.error);
-		// });
+			transaction.onerror = () => reject(transaction.error);
+		});
 	}
 
 	/**
