@@ -51,17 +51,27 @@ export class SelectQuery<
 	#limitCount?: number;
 	#useIndexCursor?: boolean;
 
+	#transaction?: IDBTransaction;
+
 	declare [Selected]?: S;
 
-	constructor(table: string, dbGetter: IDBGetter, readyPromise: Promise<void>) {
+	constructor(
+		table: string,
+		dbGetter: IDBGetter,
+		readyPromise: Promise<void>,
+		transaction?: IDBTransaction
+	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
+
+		this.#transaction = transaction;
 	}
 
 	/** @internal Create a readonly transaction and return the store */
 	#getStore(): { transaction: IDBTransaction; store: IDBObjectStore } {
-		const transaction = this.#dbGetter().transaction(this.#table, 'readonly');
+		const transaction =
+			this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readonly');
 		const store = transaction.objectStore(this.#table);
 		return { transaction, store };
 	}
@@ -553,6 +563,8 @@ export class InsertQuery<
 	// TODO: Handle multiple primary keys later
 	#keyPath?: string;
 
+	#transaction?: IDBTransaction;
+
 	declare [IsArray]: boolean;
 
 	constructor(
@@ -560,13 +572,16 @@ export class InsertQuery<
 		dbGetter: () => IDBDatabase,
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
-		keyPath?: string
+		keyPath?: string,
+		transaction?: IDBTransaction
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 		this.#columns = columns;
 		this.#keyPath = keyPath;
+
+		this.#transaction = transaction;
 	}
 
 	/**
@@ -588,7 +603,8 @@ export class InsertQuery<
 	async run(): Promise<Return> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
+			const transaction =
+				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
 
 			const insertedDocs: Data[] = [];
@@ -613,7 +629,8 @@ export class InsertQuery<
 			// Handle transaction completion (only fires if all succeeded)
 			transaction.oncomplete = () => {
 				// Retrieve all inserted documents after successful transaction
-				const readTx = this.#dbGetter().transaction(this.#table, 'readonly');
+				const readTx =
+					this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readonly');
 				const readStore = readTx.objectStore(this.#table);
 
 				let completed = 0;
@@ -657,18 +674,22 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	// TODO: Handle multiple primary keys later
 	#keyPath?: string;
 
+	#transaction?: IDBTransaction;
+
 	constructor(
 		table: string,
 		dbGetter: () => IDBDatabase,
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
-		keyPath?: string
+		keyPath?: string,
+		transaction?: IDBTransaction
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 		this.#columns = columns;
 		this.#keyPath = keyPath;
+		this.#transaction = transaction;
 	}
 
 	/**
@@ -701,7 +722,8 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 		}
 
 		return new Promise((resolve, reject) => {
-			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
+			const transaction =
+				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
 			const request = store.getAll() as IDBRequest<T[]>;
 
@@ -756,16 +778,20 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 	#keyField: Key;
 	#whereCondition?: (row: T) => boolean;
 
+	#transaction?: IDBTransaction;
+
 	constructor(
 		table: string,
 		dbGetter: () => IDBDatabase,
 		readyPromise: Promise<void>,
-		keyField: Key
+		keyField: Key,
+		transaction?: IDBTransaction
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 		this.#keyField = keyField;
+		this.#transaction = transaction;
 	}
 
 	/**
@@ -784,7 +810,8 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 	async run(): Promise<number> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
-			const transaction = this.#dbGetter().transaction(this.#table, 'readwrite');
+			const transaction =
+				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
 			const request = store.getAll() as IDBRequest<T[]>;
 

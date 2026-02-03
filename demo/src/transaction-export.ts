@@ -87,16 +87,22 @@ export async function testTransaction() {
 
 		// Test successful transaction
 		await db.transaction(['users', 'posts'], async (tx) => {
-			const userId = await tx.insert('users', {
-				name: 'Transaction User',
-				email: 'tx-user@test.com',
-			});
+			const newUser = await tx
+				.insert('users')
+				.values({
+					name: 'Transaction User',
+					email: 'tx-user@test.com',
+				})
+				.run();
 
-			await tx.insert('posts', {
-				userId: Number(userId),
-				title: 'First Post',
-				content: 'Created in transaction',
-			});
+			await tx
+				.insert('posts')
+				.values({
+					userId: newUser.id,
+					title: 'First Post',
+					content: 'Created in transaction',
+				})
+				.run();
 
 			console.info('✅ Transaction operations completed');
 		});
@@ -118,18 +124,27 @@ export async function testTransaction() {
 
 		try {
 			await db.transaction(['users', 'posts'], async (tx) => {
-				const userId = await tx.insert('users', {
-					name: 'Rollback User',
-					email: 'rollback@test.com',
-				});
+				const newUser = await tx
+					.insert('users')
+					.values({
+						name: 'Rollback User',
+						email: 'rollback@test.com',
+					})
+					.run();
 
-				tx.delete('users', 9);
+				await tx
+					.delete('users')
+					.where((u) => u.id === newUser.id)
+					.run();
 
-				await tx.insert('posts', {
-					userId: Number(userId),
-					title: 'Post 1',
-					content: 'First post',
-				});
+				await tx
+					.insert('posts')
+					.values({
+						userId: newUser.id,
+						title: 'Post 1',
+						content: 'First post',
+					})
+					.run();
 
 				// Intentionally throw error to trigger rollback
 				throw new Error('Intentional error to test rollback');

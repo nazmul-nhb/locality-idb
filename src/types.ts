@@ -9,6 +9,7 @@ import type {
 	IsUnique,
 	Table,
 } from './core';
+import type { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 
 declare const __brand: unique symbol;
 type $Brand<B> = {
@@ -578,26 +579,30 @@ export type TransactionContext<
 	Tables extends TName[],
 > = {
 	/** Inserts a new record into the specified table */
-	insert: <T extends Tables[number]>(
-		table: T,
-		data: InferInsertType<Schema[T]>
-	) => Promise<IDBValidKey>;
+	insert: <
+		T extends Tables[number],
+		Raw extends InferInsertType<Schema[T]>,
+		Inserted extends Raw | Raw[],
+		Data extends InferSelectType<Schema[T]>,
+		Return extends Inserted extends Array<infer _> ? Data[] : Data,
+	>(
+		table: T
+	) => InsertQuery<Raw, Inserted, Data, Return>;
 
 	/** Updates an existing record in the specified table */
-	update: <T extends Tables[number]>(
-		table: T,
-		key: IDBValidKey,
-		data: Partial<InferSelectType<Schema[T]>>
-	) => Promise<void>;
+	update: <T extends Tables[number], Row extends $InferRow<Schema[T]['columns']>>(
+		table: T
+	) => UpdateQuery<Row, Schema[T]>;
 
 	/** Deletes a record from the specified table */
-	delete: <T extends Tables[number]>(table: T, key: IDBValidKey) => Promise<void>;
+	delete: <T extends Tables[number], Row extends $InferRow<Schema[T]['columns']>>(
+		table: T
+	) => DeleteQuery<Row, keyof Row>;
 
 	/** Retrieves a record by primary key from the specified table */
-	get: <T extends Tables[number]>(
-		table: T,
-		key: IDBValidKey
-	) => Promise<InferSelectType<Schema[T]> | null>;
+	from: <T extends Tables[number], Row extends $InferRow<Schema[T]['columns']>>(
+		table: T
+	) => SelectQuery<Row, null, Schema[T]>;
 };
 
 /** Transaction callback function type */
