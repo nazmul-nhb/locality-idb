@@ -400,25 +400,21 @@ export class Locality<
 		};
 
 		return new Promise<void>((resolve, reject) => {
-			// Set up transaction event handlers
-			let callbackError: DOMException | null = null;
-
-			// Execute the callback
-			callback(txContext).catch((error) => {
-				// Store the callback error for later
-				callbackError = error;
-				// Abort transaction if callback fails
-				transaction.abort();
-				// Error will be handled by onabort handler
-			});
-
+			// Set up transaction event handlers FIRST
 			transaction.oncomplete = () => resolve();
-			transaction.onabort = () => {
-				// If callback threw an error, reject with that error; otherwise use transaction error
-				_abortTransaction(callbackError || transaction.error, reject);
-			};
-
+			transaction.onabort = () => _abortTransaction(transaction.error, reject);
 			transaction.onerror = () => reject(transaction.error);
+
+			// * Execute the callback and handle errors
+			callback(txContext)
+				.then(() => {
+					// ! Callback completed successfully, transaction will auto-commit
+				})
+				.catch((error) => {
+					// ! Callback threw an error - abort and reject immediately
+					transaction.abort();
+					reject(error);
+				});
 		});
 	}
 

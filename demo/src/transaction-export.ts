@@ -132,16 +132,12 @@ export async function testTransaction() {
 					})
 					.run();
 
-				console.log({ newUser });
-
-				const d = await ctx
+				await ctx
 					.delete('users')
 					.where((u) => u.id === newUser.id)
 					.run();
 
-				console.log({ d });
-
-				const f = await ctx
+				await ctx
 					.insert('posts')
 					.values({
 						userId: newUser.id,
@@ -150,10 +146,8 @@ export async function testTransaction() {
 					})
 					.run();
 
-				console.log({ f });
-
 				const p = await ctx.from('posts').select({ title: true }).findAll();
-				console.log({ p });
+				console.info({ p });
 				// Intentionally throw error to trigger rollback
 				throw new Error('Intentional error to test rollback');
 			});
