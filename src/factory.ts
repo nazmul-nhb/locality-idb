@@ -6,7 +6,7 @@ import type { StoreConfig } from './types';
  * * Opens an `IndexedDB` database instance with the specified stores.
  * @param name Database name
  * @param stores Array of store configurations
- * @param version Database version (default is `1`)
+ * @param version Database version (default is `undefined`)
  * @returns Promise that resolves to the opened {@link IDBDatabase} instance.
  */
 export function openDBWithStores(

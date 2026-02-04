@@ -261,16 +261,16 @@ window.addEventListener('load', async () => {
 	await populateExportTables();
 
 	clearDBBtn.addEventListener('click', async () => {
-		const storeNameInput = document.getElementById('dbNameInput') as HTMLInputElement;
+		const dbNameInput = document.getElementById('dbNameInput') as HTMLInputElement;
 
-		const storeName = storeNameInput.value.trim();
+		const dbName = dbNameInput.value.trim();
 
-		if (!storeName) {
+		if (!dbName) {
 			alert('Please enter a database name!');
 			return;
 		}
 
-		await deleteDB(storeName);
+		await deleteDB(dbName);
 
 		location.reload();
 	});
@@ -358,6 +358,9 @@ window.addEventListener('load', async () => {
 	const testWithToDo = await db.from('todos').where('task', 'hello').exists();
 
 	console.info(testWithToDo);
+
+	console.info(await db.dbList);
+	console.info(await Locality.getDatabaseList());
 
 	// Add test button event listener
 	const runTestsBtn = document.getElementById('runTestsBtn') as HTMLButtonElement;

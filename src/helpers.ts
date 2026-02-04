@@ -23,7 +23,7 @@ export function _abortTransaction(error: DOMException | null, reject: RejectFn) 
 	reject(error || new Error('IndexedDB transaction was aborted!'));
 }
 
-/** Ensure IndexedDB is supported in the current environment */
+/** Ensure `IndexedDB` is supported in the current environment */
 export function _ensureIndexedDB() {
 	if (!window.indexedDB) {
 		throw new Error('IndexedDB is not supported in this environment or browser!');
@@ -31,15 +31,7 @@ export function _ensureIndexedDB() {
 }
 
 /** Get the list of existing `IndexedDB` databases */
-export function _getDBList() {
-	let list: IDBDatabaseInfo[] = [];
-
-	if ('databases' in window.indexedDB) {
-		window.indexedDB
-			.databases()
-			.then((dbs) => (list = dbs))
-			.catch(() => (list = []));
-	}
-
-	return list;
+export async function _getDBList(): Promise<IDBDatabaseInfo[]> {
+	if (!('databases' in window.indexedDB)) return [];
+	return await window.indexedDB.databases();
 }

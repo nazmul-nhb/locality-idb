@@ -911,6 +911,58 @@ const db = new Locality({
 });
 ```
 
+#### Properties
+
+##### `version: number` (getter)
+
+Gets the current database version.
+
+**Returns:** The database version number
+
+**Example:**
+
+```typescript
+const db = new Locality({
+  dbName: 'my-database',
+  version: 2,
+  schema: mySchema,
+});
+
+await db.ready(); // (optional) for extra safety
+console.log(db.version); // 2
+```
+
+##### `tableList: string[]` (getter)
+
+Gets all table (store) names in the current database.
+
+**Returns:** Array of table names
+
+**Example:**
+
+```typescript
+const tables = db.tableList;
+console.log(tables); // ['users', 'posts', 'comments']
+```
+
+##### `dbList: Promise<IDBDatabaseInfo[]>` (getter)
+
+Gets the list of all existing IndexedDB databases in the current origin.
+
+**Returns:** Array of database information objects containing name and version
+
+**Example:**
+
+```typescript
+const databases = await db.dbList;
+console.log(databases);
+// [{ name: 'my-database', version: 1 }, { name: 'other-db', version: 2 }]
+```
+
+> This is an instance method that calls the static [`Locality.getDatabaseList()`](#localitygetdatabaselist-promiseidbdatabaseinfo) internally.
+
+---
+
 #### Methods
 
 ##### `ready(): Promise<void>`
@@ -1120,6 +1172,63 @@ await db.export({
 > - Exported data includes all records from specified tables.
 > - Use for backup, debugging, or data migration.
 > - File download works in browser environments only.
+
+---
+
+#### Static Methods
+
+##### `Locality.getDatabaseList(): Promise<IDBDatabaseInfo[]>`
+
+Gets the list of all existing IndexedDB databases in the current origin (static method).
+
+**Returns:** Array of database information objects containing name and version
+
+**Example:**
+
+```typescript
+import { Locality } from 'locality-idb';
+
+const databases = await Locality.getDatabaseList();
+console.log(databases);
+// [{ name: 'app-db', version: 1 }, { name: 'cache-db', version: 2 }]
+```
+
+> **Note:**
+>
+> - This method requires IndexedDB support in the browser.
+> - Returns an empty array if the browser doesn't support `indexedDB.databases()`.
+> - Can be called without instantiating the Locality class.
+
+##### `Locality.deleteDatabase(name: string): Promise<void>`
+
+Deletes an IndexedDB database by name (static method).
+
+**Parameters:**
+
+- `name`: The name of the database to delete
+
+**Returns:** Promise that resolves when the database is deleted
+
+**Example:**
+
+```typescript
+import { Locality } from 'locality-idb';
+
+// Delete a database without creating an instance
+await Locality.deleteDatabase('old-database');
+
+// Alternative: Get list of databases first
+const databases = await Locality.getDatabaseList();
+for (const db of databases) {
+  if (db.name.startsWith('temp-')) {
+    await Locality.deleteDatabase(db.name);
+  }
+}
+```
+
+> **Warning:** This will permanently remove all data from the specified database and cannot be undone.
+>
+> **Note:** This is a static method that can be called without creating a Locality instance. For deleting the current database instance, use the instance method `db.deleteDB()` instead.
 
 ---
 
@@ -1747,7 +1856,7 @@ Opens an IndexedDB database with specified stores (low-level API).
 
 - `name`: Database name
 - `stores`: Array of store configurations
-- `version`: Database version (optional, default: 1)
+- `version`: Database version (optional, default: `undefined`)
 
 **Returns:** Promise resolving to `IDBDatabase` instance
 

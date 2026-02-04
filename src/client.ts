@@ -102,10 +102,6 @@ export class Locality<
 			});
 	}
 
-	get version(): Version {
-		return (this.#db?.version ?? this.#version ?? this.#configVersion) as Version;
-	}
-
 	/** Build store configurations from schema. */
 	#buildStoresConfig(): StoreConfig[] {
 		return Object.entries(this.#schema).map(([tableName, table]) => {
@@ -162,6 +158,20 @@ export class Locality<
 		const column = Object.entries(columns).find(([_, col]) => col[IsPrimaryKey]);
 
 		return column?.[0] as keyof R;
+	}
+
+	get version(): Version {
+		return (this.#db?.version ?? this.#version ?? this.#configVersion) as Version;
+	}
+
+	/** @instance Get all table (store) names in the current database. */
+	get tableList(): LooseLiteral<TName>[] {
+		return Array.from(this.#db.objectStoreNames) as LooseLiteral<TName>[];
+	}
+
+	/** @instance Get the list of existing `IndexedDB` databases. */
+	get dbList(): Promise<IDBDatabaseInfo[]> {
+		return Locality.getDatabaseList();
 	}
 
 	/** @instance Waits for database initialization to complete. */
@@ -263,16 +273,6 @@ export class Locality<
 	async getDBInstance(): Promise<IDBDatabase> {
 		await this.#readyPromise;
 		return this.#db;
-	}
-
-	/** @instance Get all table (store) names in the current database. */
-	get tableList(): LooseLiteral<TName>[] {
-		return Array.from(this.#db.objectStoreNames) as LooseLiteral<TName>[];
-	}
-
-	/** @instance Get the list of existing `IndexedDB` databases. */
-	get dbList(): IDBDatabaseInfo[] {
-		return Locality.getDatabaseList();
 	}
 
 	/**

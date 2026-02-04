@@ -62,12 +62,12 @@ export function isTimestamp(value: unknown): value is Timestamp {
  * @returns A promise that resolves when the database is deleted
  * @throws Error if `IndexedDB` is not supported or if the database does not exist
  */
-export function deleteDB(name: string): Promise<void> {
+export async function deleteDB(name: string): Promise<void> {
 	_ensureIndexedDB();
 
-	return new Promise((resolve, reject) => {
-		const dbList = _getDBList();
+	const dbList = await _getDBList();
 
+	return new Promise((resolve, reject) => {
 		const dbExists = dbList.some((db) => db.name === name);
 
 		if (!dbExists) {
