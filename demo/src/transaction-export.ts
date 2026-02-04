@@ -1,5 +1,5 @@
-import type { InferInsertType, InferSelectType, Timestamp } from 'locality-idb';
-import { column, defineSchema, Locality } from 'locality-idb';
+import type { InferInsertType, InferSelectType, Timestamp } from 'locality';
+import { column, defineSchema, Locality } from 'locality';
 import { Chronos } from 'nhb-toolbox/chronos';
 
 // Test schema
