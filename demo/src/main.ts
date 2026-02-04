@@ -38,7 +38,6 @@ const schema = defineSchema({
 		timestamp: column.timestamp().optional(),
 		// .default(new Chronos().toLocalISOString() as Timestamp)
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
-		// TODO: Add some method that will trigger only when updating
 		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
 		url: column.url().optional(),
 	},
@@ -223,9 +222,12 @@ clearCompletedBtn.addEventListener('click', handleClearCompleted);
 const clearStoreBtn = document.getElementById('clearStoreBtn') as HTMLButtonElement;
 const clearDBBtn = document.getElementById('clearDBBtn') as HTMLButtonElement;
 const clearThisDBBtn = document.getElementById('clearThisDBBtn') as HTMLButtonElement;
-
 const exportDBBtn = document.getElementById('exportDBBtn') as HTMLButtonElement;
+
+const dbNameSelect = document.getElementById('dbNameSelect') as HTMLSelectElement;
 const tableNameSelect = document.getElementById('tableNameSelect') as HTMLSelectElement;
+const storeNameSelect = document.getElementById('storeNameSelect') as HTMLSelectElement;
+
 const prettyPrintInput = document.getElementById('prettyPrint') as HTMLInputElement;
 const includeMetaInput = document.getElementById('includeMeta') as HTMLInputElement;
 
@@ -259,15 +261,24 @@ exportDBBtn.addEventListener('click', async () => {
 
 // Initialize on page load
 window.addEventListener('load', async () => {
+	const dbNames = await db.dbList;
+
+	for (const { name, version } of dbNames) {
+		const option = document.createElement('option');
+
+		option.value = `${name}`;
+		option.textContent = `${name} (v${version})`;
+
+		dbNameSelect.appendChild(option);
+	}
+
 	await populateExportTables();
 
 	clearDBBtn.addEventListener('click', async () => {
-		const dbNameInput = document.getElementById('dbNameInput') as HTMLInputElement;
-
-		const dbName = dbNameInput.value.trim();
+		const dbName = dbNameSelect.value;
 
 		if (!dbName) {
-			alert('Please enter a database name!');
+			alert('Please select a database name!');
 			return;
 		}
 
@@ -282,13 +293,20 @@ window.addEventListener('load', async () => {
 		location.reload();
 	});
 
-	clearStoreBtn.addEventListener('click', async () => {
-		const storeNameInput = document.getElementById('storeNameInput') as HTMLInputElement;
+	for (const storeName of db.tableList) {
+		const option = document.createElement('option');
 
-		const storeName = storeNameInput.value.trim();
+		option.value = storeName;
+		option.textContent = storeName;
+
+		storeNameSelect.appendChild(option);
+	}
+
+	clearStoreBtn.addEventListener('click', async () => {
+		const storeName = storeNameSelect.value;
 
 		if (!storeName) {
-			alert('Please enter a store name!');
+			alert('Please select a store name!');
 			return;
 		}
 

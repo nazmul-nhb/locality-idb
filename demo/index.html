@@ -15,30 +15,97 @@
 				<p class="text-gray-600">Stay organized with IndexedDB</p>
 			</div>
 
-			<!-- Button to Clear a specific database -->
-			<div class="flex justify-center items-center mb-6">
-				<input
-					type="text"
-					id="dbNameInput"
-					placeholder="Enter a DB name to clear"
-					class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mr-2"
-				/>
+			<!-- Stats Card -->
+			<div class="grid grid-cols-2 gap-4 mb-8">
+				<div class="bg-white rounded-xl shadow-md p-6 text-center">
+					<div class="text-3xl font-bold text-blue-600" id="statsTotal">0</div>
+					<div class="text-gray-600 text-sm mt-1">Total Tasks</div>
+				</div>
+				<div class="bg-white rounded-xl shadow-md p-6 text-center">
+					<div class="text-3xl font-bold text-green-600" id="statsCompleted">0</div>
+					<div class="text-gray-600 text-sm mt-1">Completed</div>
+				</div>
+			</div>
 
+			<!-- Input Card -->
+			<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+				<div class="flex gap-3">
+					<input
+						id="todoInput"
+						type="text"
+						placeholder="Add a new task..."
+						class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					/>
+					<button
+						id="addBtn"
+						class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg cursor-pointer hover:bg-blue-700 transition-colors active:scale-95"
+					>
+						Add
+					</button>
+				</div>
+			</div>
+
+			<div class="flex justify-end mb-4">
 				<button
-					id="clearDBBtn"
-					class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+					id="clearCompleted"
+					class="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
 				>
-					Clear Database
+					Clear Completed
 				</button>
 			</div>
 
-			<div class="flex justify-center items-center mb-6">
+			<!-- Todos List -->
+			<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+				<ul id="todoList" class="space-y-3">
+					<!-- Todos will be rendered here -->
+				</ul>
+			</div>
+
+			<!-- Button to Clear a specific database -->
+			<div
+				class="flex flex-col gap-4 items-center mb-6 bg-white/60 backdrop-blur-sm border border-white/70 rounded-xl p-4 shadow-sm"
+			>
+				<div class="flex justify-center items-center gap-4">
+					<select
+						id="dbNameSelect"
+						class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					>
+						<option value="" disabled selected hidden>Select a Database</option>
+						<!-- ! Options will be populated dynamically based on available tables -->
+					</select>
+
+					<button
+						id="clearDBBtn"
+						class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+					>
+						Clear Database
+					</button>
+				</div>
+
 				<button
 					id="clearThisDBBtn"
 					class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
 				>
 					Or Delete This Database
 				</button>
+
+				<!-- Button to Clear a specific store (column) -->
+				<div class="flex justify-center items-center gap-4 mb-6">
+					<select
+						id="storeNameSelect"
+						class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					>
+						<option value="" disabled selected hidden>Select a Table/Store</option>
+						<!-- ! Options will be populated dynamically based on available tables -->
+					</select>
+
+					<button
+						id="clearStoreBtn"
+						class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+					>
+						Clear Store
+					</button>
+				</div>
 			</div>
 
 			<!-- Button to Export a specific database or all -->
@@ -88,69 +155,8 @@
 				</button>
 			</div>
 
-			<!-- Button to Clear a specific store (column) -->
-			<div class="flex justify-center items-center mb-6">
-				<input
-					type="text"
-					id="storeNameInput"
-					placeholder="Enter store name to clear"
-					class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mr-2"
-				/>
-
-				<button
-					id="clearStoreBtn"
-					class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
-				>
-					Clear Store
-				</button>
-			</div>
-
-			<!-- Stats Card -->
-			<div class="grid grid-cols-2 gap-4 mb-8">
-				<div class="bg-white rounded-xl shadow-md p-6 text-center">
-					<div class="text-3xl font-bold text-blue-600" id="statsTotal">0</div>
-					<div class="text-gray-600 text-sm mt-1">Total Tasks</div>
-				</div>
-				<div class="bg-white rounded-xl shadow-md p-6 text-center">
-					<div class="text-3xl font-bold text-green-600" id="statsCompleted">0</div>
-					<div class="text-gray-600 text-sm mt-1">Completed</div>
-				</div>
-			</div>
-
-			<!-- Input Card -->
-			<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-				<div class="flex gap-3">
-					<input
-						id="todoInput"
-						type="text"
-						placeholder="Add a new task..."
-						class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					/>
-					<button
-						id="addBtn"
-						class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg cursor-pointer hover:bg-blue-700 transition-colors active:scale-95"
-					>
-						Add
-					</button>
-				</div>
-			</div>
-
-			<!-- Todos List -->
-			<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-				<ul id="todoList" class="space-y-3">
-					<!-- Todos will be rendered here -->
-				</ul>
-			</div>
-
 			<!-- Footer Actions -->
 			<div class="text-center space-y-3">
-				<button
-					id="clearCompleted"
-					class="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
-				>
-					Clear Completed
-				</button>
-
 				<div class="mt-4 pt-4 border-t border-gray-300">
 					<h3 class="text-lg font-semibold text-gray-700 mb-3">
 						🧪 New Features Testing
