@@ -304,7 +304,9 @@ export type PageOptions = {
 
 /** Cursor-based pagination result */
 export type PageResult<T, Selection extends Partial<Record<keyof T, boolean>> | null> = {
+	/** Retrieved items for the current page */
 	items: Selection extends null ? T[] : SelectFields<T, Extract<Selection, object>>[];
+	/** Cursor key for the next page, if more results are available */
 	nextCursor: Maybe<IDBValidKey>;
 };
 

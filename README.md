@@ -1273,6 +1273,8 @@ Imports database data using merge, replace, or upsert modes.
 await db.import(exported, { mode: 'replace' });
 ```
 
+> **Note:** `merge` uses `add()` under the hood, so primary key or unique conflicts will abort the transaction.
+
 #### `clearAll(): Promise<void>`
 
 Clears all records from all tables in a single transaction.
@@ -1680,6 +1682,12 @@ const page2 = await db.from('users').sortByIndex('id').page({
   cursor: page1.nextCursor,
 });
 ```
+
+> **Notes:**
+>
+> - `page()` does not support in-memory `orderBy()`. Use `sortByIndex()` instead.
+> - `page()` does not support combining `cursor` with `where(indexName, query)`.
+> - `nextCursor` may be `undefined` when there are no more results.
 
 ##### `stream(callback: (row, index) => void | Promise<void>): Promise<void>`
 
@@ -2281,7 +2289,7 @@ type PagedResult = PageResult<User, null>;
 /*
 {
   items: User[];
-  nextCursor: IDBValidKey | null;
+  nextCursor: IDBValidKey | undefined;
 }
 */
 ```

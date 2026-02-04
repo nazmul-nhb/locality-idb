@@ -384,15 +384,15 @@ window.addEventListener('load', async () => {
 	const page1 = await db
 		.from('experiments')
 		.select({ id: true, name: true })
-		.orderBy('id', 'desc')
-		// .sortByIndex('id')
+		// .orderBy('id', 'desc')
+		.sortByIndex('id')
 		.page({ limit: 7 });
 
 	const page2 = await db
 		.from('experiments')
 		.select({ id: true, name: true })
-		.orderBy('id', 'desc')
-		// .sortByIndex('id')
+		// .orderBy('id', 'desc')
+		.sortByIndex('id')
 		.page({
 			limit: 5,
 			cursor: page1.nextCursor,
