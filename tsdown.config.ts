@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig({
 	globalName: 'LocalityIDB',
-	format: ['cjs', 'esm', 'umd', 'iife'],
+	format: ['esm', 'cjs', 'iife'],
 	dts: true,
 	exports: true,
 	unbundle: false,

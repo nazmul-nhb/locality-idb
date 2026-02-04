@@ -6,6 +6,7 @@ import { isValidArray } from 'nhb-toolbox';
 import { Chronos } from 'nhb-toolbox/chronos';
 import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
+import { Stylog } from 'nhb-toolbox/stylog';
 
 import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
 import { column, defineSchema, deleteDB, getTimestamp, Locality } from 'locality';
@@ -335,21 +336,21 @@ window.addEventListener('load', async () => {
 
 	const ex1 = await db
 		.from('experiments')
-		.select({ name: true })
+		.select({ id: true, name: true })
 		// .select({ id: true })
 		.findAll();
 
 	const ex2 = await db
 		.from('experiments')
 		// .where((a) => a.name === 'Beto')
-		.select({ name: true })
-		.where('id', IDBKeyRange.bound('c', 'f'))
+		.select({ id: true, name: true })
+		.where('id', IDBKeyRange.bound(20, 29))
 		// .sortByIndex('id', 'asc')
 		.findAll();
 
 	const ex3 = await db
 		.from('experiments')
-		.select({ name: true })
+		.select({ id: true, name: true })
 		.findByIndex('name', IDBKeyRange.bound('A', 'B'));
 
 	console.info({ ex1, ex2, ex3 });
@@ -365,7 +366,7 @@ window.addEventListener('load', async () => {
 	// Add test button event listener
 	const runTestsBtn = document.getElementById('runTestsBtn') as HTMLButtonElement;
 	runTestsBtn.addEventListener('click', async () => {
-		console.info('🚀 Starting feature tests...');
+		Stylog.green.bold.log('🚀 Starting feature tests...');
 		await runAllTests();
 	});
 });
