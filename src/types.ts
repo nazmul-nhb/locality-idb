@@ -288,6 +288,12 @@ export type SelectFields<
 		}
 >;
 
+/** Callback function type for cursor-based queries */
+export type CursorCallback<T extends GenericObject> = (
+	row: T,
+	index: number
+) => void | Promise<void>;
+
 /** Pagination options for cursor-based queries */
 export type PageOptions = {
 	/** Cursor key returned from a previous page */

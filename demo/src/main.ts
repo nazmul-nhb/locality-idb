@@ -384,13 +384,15 @@ window.addEventListener('load', async () => {
 	const page1 = await db
 		.from('experiments')
 		.select({ id: true, name: true })
-		.sortByIndex('id')
+		.orderBy('id', 'desc')
+		// .sortByIndex('id')
 		.page({ limit: 7 });
 
 	const page2 = await db
 		.from('experiments')
 		.select({ id: true, name: true })
-		.sortByIndex('id')
+		.orderBy('id', 'desc')
+		// .sortByIndex('id')
 		.page({
 			limit: 5,
 			cursor: page1.nextCursor,
@@ -399,13 +401,14 @@ window.addEventListener('load', async () => {
 	console.info({ page1, page2 });
 	console.info(uuidV4());
 
-	await db
-		.from('experiments')
-		.sortByIndex('id')
-		.where('id', IDBKeyRange.lowerBound(8))
-		.stream(async (row, idx) => {
-			console.info(row.name, idx);
-		});
+	// await db
+	// 	.from('experiments')
+	// 	.sortByIndex('id')
+	// 	.where('id', IDBKeyRange.lowerBound(8))
+	// 	.select({ name: true })
+	// 	.stream(async (row, idx) => {
+	// 		console.info(row, idx);
+	// 	});
 
 	await db.delete('todos').where('task', 'ff').run();
 

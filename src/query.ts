@@ -11,6 +11,7 @@ import type {
 	$InferIndex,
 	$InferPrimaryKey,
 	ColumnDefinition,
+	CursorCallback,
 	FirstOverloadParams,
 	ForcedAny,
 	GenericObject,
@@ -465,22 +466,17 @@ export class SelectQuery<
 	}
 
 	/** Stream records with a cursor */
-	async stream(
-		this: SelectQuery<T, null>,
-		callback: (row: T, index: number) => void | Promise<void>
-	): Promise<void>;
+	async stream(this: SelectQuery<T, null>, callback: CursorCallback<T>): Promise<void>;
 
 	/** Stream records with a cursor and selected fields */
 	async stream<Selection extends Partial<Record<keyof T, boolean>>>(
 		this: SelectQuery<T, Selection>,
-		callback: (row: SelectFields<T, Selection>, index: number) => void | Promise<void>
+		callback: CursorCallback<SelectFields<T, Selection>>
 	): Promise<void>;
 
 	async stream<Selection extends Partial<Record<keyof T, boolean>>>(
 		this: SelectQuery<T, Selection>,
-		callback:
-			| ((row: T, index: number) => void | Promise<void>)
-			| ((row: SelectFields<T, Selection>, index: number) => void | Promise<void>)
+		callback: CursorCallback<T> | CursorCallback<SelectFields<T, Selection>>
 	) {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
