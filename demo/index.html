@@ -32,6 +32,53 @@
 				</button>
 			</div>
 
+			<!-- Button to Export a specific database or all -->
+			<div
+				class="flex flex-col gap-4 items-center mb-6 bg-white/60 backdrop-blur-sm border border-white/70 rounded-xl p-4 shadow-sm"
+			>
+				<select
+					id="tableNameSelect"
+					class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				>
+					<option value="__all__">Export Entire Database</option>
+					<!-- ! Options will be populated dynamically based on available tables -->
+				</select>
+				<div class="flex flex-col flex-wrap gap-4 items-center select-none">
+					<label
+						for="prettyPrint"
+						class="inline-flex items-center gap-2 text-sm text-gray-700"
+					>
+						<input
+							type="checkbox"
+							name="prettyPrint"
+							id="prettyPrint"
+							class="accent-blue-600"
+							checked
+						/>
+						Pretty Print JSON
+					</label>
+					<label
+						for="includeMeta"
+						class="inline-flex items-center gap-2 text-sm text-gray-700"
+					>
+						<input
+							type="checkbox"
+							name="includeMeta"
+							id="includeMeta"
+							class="accent-blue-600"
+							checked
+						/>
+						Include Metadata
+					</label>
+				</div>
+				<button
+					id="exportDBBtn"
+					class="px-4 py-2 bg-teal-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-teal-600 transition-colors active:scale-95"
+				>
+					Export Database
+				</button>
+			</div>
+
 			<div class="flex justify-center items-center mb-6">
 				<button
 					id="clearThisDBBtn"

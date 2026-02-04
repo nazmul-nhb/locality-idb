@@ -1,6 +1,6 @@
 import { IsAutoInc, IsIndexed, IsPrimaryKey, IsUnique } from './core';
 import { openDBWithStores } from './factory';
-import { _abortTransaction } from './helpers';
+import { _abortTransaction, _ensureIndexedDB, _getDBList } from './helpers';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
@@ -11,6 +11,7 @@ import type {
 	InferInsertType,
 	InferSelectType,
 	LocalityConfig,
+	LooseLiteral,
 	Maybe,
 	SchemaDefinition,
 	StoreConfig,
@@ -175,7 +176,7 @@ export class Locality<
 	 */
 	from<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new SelectQuery<Row, null, Schema[T]>(
-			table as string,
+			table,
 			() => this.#db,
 			this.#readyPromise
 			// this.#keyPaths[table]
@@ -194,7 +195,7 @@ export class Locality<
 		Return extends Inserted extends Array<infer _> ? Data[] : Data,
 	>(table: T) {
 		return new InsertQuery<Raw, Inserted, Data, Return>(
-			table as string,
+			table,
 			() => this.#db,
 			this.#readyPromise,
 			this.#schema[table].columns,
@@ -208,7 +209,7 @@ export class Locality<
 	 */
 	update<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new UpdateQuery<Row, Schema[T]>(
-			table as string,
+			table,
 			() => this.#db,
 			this.#readyPromise,
 			this.#schema[table].columns,
@@ -222,7 +223,7 @@ export class Locality<
 	 */
 	delete<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new DeleteQuery<Row, keyof Row>(
-			table as string,
+			table,
 			() => this.#db,
 			this.#readyPromise,
 			this.#extractTablePk(table)
@@ -235,8 +236,8 @@ export class Locality<
 	 */
 	async clearTable<T extends TName>(table: T) {
 		return new Promise<void>((resolve, reject) => {
-			const transaction = this.#db.transaction(table as string, 'readwrite');
-			const store = transaction.objectStore(table as string);
+			const transaction = this.#db.transaction(table, 'readwrite');
+			const store = transaction.objectStore(table);
 			const clearRequest = store.clear();
 
 			transaction.onabort = () => _abortTransaction(transaction.error, reject);
@@ -250,7 +251,7 @@ export class Locality<
 	async deleteDB() {
 		this.#db.close();
 
-		return await deleteDB(this.#name);
+		await deleteDB(this.#name);
 	}
 
 	/** @instance Closes the current database connection. */
@@ -262,6 +263,16 @@ export class Locality<
 	async getDBInstance(): Promise<IDBDatabase> {
 		await this.#readyPromise;
 		return this.#db;
+	}
+
+	/** @instance Get all table (store) names in the current database. */
+	get tableList(): LooseLiteral<TName>[] {
+		return Array.from(this.#db.objectStoreNames) as LooseLiteral<TName>[];
+	}
+
+	/** @instance Get the list of existing `IndexedDB` databases. */
+	get dbList(): IDBDatabaseInfo[] {
+		return Locality.getDatabaseList();
 	}
 
 	/**
@@ -303,7 +314,7 @@ export class Locality<
 		Data extends InferSelectType<Schema[T]>,
 	>(table: T, data: Raw[]): Promise<Data[]> {
 		const insertQuery = new InsertQuery<Raw, Raw[], Data, Data[]>(
-			table as string,
+			table,
 			() => this.#db,
 			this.#readyPromise,
 			this.#schema[table].columns,
@@ -360,17 +371,12 @@ export class Locality<
 
 		const txContext: TransactionContext<Schema, TName, Tables> = {
 			from: (table) => {
-				return new SelectQuery(
-					table as string,
-					() => this.#db,
-					this.#readyPromise,
-					transaction
-				);
+				return new SelectQuery(table, () => this.#db, this.#readyPromise, transaction);
 			},
 
 			insert: (table) => {
 				return new InsertQuery(
-					table as string,
+					table,
 					() => this.#db,
 					this.#readyPromise,
 					this.#schema[table].columns,
@@ -381,7 +387,7 @@ export class Locality<
 
 			update: (table) => {
 				return new UpdateQuery(
-					table as string,
+					table,
 					() => this.#db,
 					this.#readyPromise,
 					this.#schema[table].columns,
@@ -392,7 +398,7 @@ export class Locality<
 
 			delete: (table) => {
 				return new DeleteQuery(
-					table as string,
+					table,
 					() => this.#db,
 					this.#readyPromise,
 					this.#extractTablePk(table),
@@ -469,7 +475,7 @@ export class Locality<
 
 		for (const table of tablesToExport as TName[]) {
 			const data = await this.from(table).findAll();
-			exportData[table as string] = data;
+			exportData[table] = data;
 		}
 
 		// Build export object
@@ -508,5 +514,17 @@ export class Locality<
 		// Clean up
 		document.body.removeChild(link);
 		URL.revokeObjectURL(url);
+	}
+
+	/** @static Get the list of existing `IndexedDB` databases. */
+	static getDatabaseList() {
+		_ensureIndexedDB();
+
+		return _getDBList();
+	}
+
+	/** @static Delete an `IndexedDB` database by name. */
+	static async deleteDatabase(name: string): Promise<void> {
+		await deleteDB(name);
 	}
 }

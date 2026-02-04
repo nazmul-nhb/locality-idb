@@ -22,3 +22,24 @@ export function _formatUUID<V extends UUIDVersion>(h: string, v: number, up: boo
 export function _abortTransaction(error: DOMException | null, reject: RejectFn) {
 	reject(error || new Error('IndexedDB transaction was aborted!'));
 }
+
+/** Ensure IndexedDB is supported in the current environment */
+export function _ensureIndexedDB() {
+	if (!window.indexedDB) {
+		throw new Error('IndexedDB is not supported in this environment or browser!');
+	}
+}
+
+/** Get the list of existing `IndexedDB` databases */
+export function _getDBList() {
+	let list: IDBDatabaseInfo[] = [];
+
+	if ('databases' in window.indexedDB) {
+		window.indexedDB
+			.databases()
+			.then((dbs) => (list = dbs))
+			.catch(() => (list = []));
+	}
+
+	return list;
+}

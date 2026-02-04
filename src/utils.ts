@@ -1,5 +1,5 @@
 import { isNonEmptyString, isValidEmail, isValidURL, isUUID as isValidUUID } from 'nhb-toolbox';
-import { _formatUUID } from './helpers';
+import { _ensureIndexedDB, _formatUUID, _getDBList } from './helpers';
 import type { Email, Timestamp, URLString, UUID, UUIDVersion } from './types';
 
 /**
@@ -63,24 +63,16 @@ export function isTimestamp(value: unknown): value is Timestamp {
  * @throws Error if `IndexedDB` is not supported or if the database does not exist
  */
 export function deleteDB(name: string): Promise<void> {
+	_ensureIndexedDB();
+
 	return new Promise((resolve, reject) => {
-		if (!window.indexedDB) {
-			throw new Error('IndexedDB is not supported in this environment or browser!');
-		}
+		const dbList = _getDBList();
 
-		if ('databases' in window.indexedDB) {
-			const idbInfo = window.indexedDB.databases();
+		const dbExists = dbList.some((db) => db.name === name);
 
-			idbInfo
-				.then((dbs) => {
-					const dbExists = dbs.some((db) => db.name === name);
-
-					if (!dbExists) {
-						reject(new Error(`Database '${name}' does not exist in this system!`));
-						return;
-					}
-				})
-				.catch(reject);
+		if (!dbExists) {
+			reject(new Error(`Database '${name}' does not exist in this system!`));
+			return;
 		}
 
 		const request = window.indexedDB.deleteDatabase(name);

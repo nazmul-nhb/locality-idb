@@ -223,8 +223,43 @@ const clearStoreBtn = document.getElementById('clearStoreBtn') as HTMLButtonElem
 const clearDBBtn = document.getElementById('clearDBBtn') as HTMLButtonElement;
 const clearThisDBBtn = document.getElementById('clearThisDBBtn') as HTMLButtonElement;
 
+const exportDBBtn = document.getElementById('exportDBBtn') as HTMLButtonElement;
+const tableNameSelect = document.getElementById('tableNameSelect') as HTMLSelectElement;
+const prettyPrintInput = document.getElementById('prettyPrint') as HTMLInputElement;
+const includeMetaInput = document.getElementById('includeMeta') as HTMLInputElement;
+
+const populateExportTables = async () => {
+	await db.ready();
+
+	const existing = new Set([...tableNameSelect.options].map((opt) => opt.value.trim()));
+
+	for (const tableName of db.tableList) {
+		if (existing.has(tableName)) continue;
+
+		const option = document.createElement('option');
+
+		option.value = tableName;
+		option.textContent = tableName;
+
+		tableNameSelect.appendChild(option);
+	}
+};
+
+exportDBBtn.addEventListener('click', async () => {
+	const selected = tableNameSelect.value;
+	const tables = selected === '__all__' ? undefined : [selected as keyof SchemaType];
+
+	await db.export({
+		tables,
+		pretty: prettyPrintInput.checked,
+		includeMetadata: includeMetaInput.checked,
+	});
+});
+
 // Initialize on page load
 window.addEventListener('load', async () => {
+	await populateExportTables();
+
 	clearDBBtn.addEventListener('click', async () => {
 		const storeNameInput = document.getElementById('dbNameInput') as HTMLInputElement;
 

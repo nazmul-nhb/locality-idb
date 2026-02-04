@@ -1,4 +1,5 @@
-import { _abortTransaction } from './helpers';
+import { isNumber } from 'nhb-toolbox';
+import { _abortTransaction, _ensureIndexedDB } from './helpers';
 import type { StoreConfig } from './types';
 
 /**
@@ -14,14 +15,9 @@ export function openDBWithStores(
 	version?: number
 ): Promise<IDBDatabase> {
 	return new Promise((resolve, reject) => {
-		if (!window.indexedDB) {
-			throw new Error('IndexedDB is not supported in this environment or browser!');
-		}
+		_ensureIndexedDB();
 
-		const request =
-			isNaN(Number(version)) ?
-				window.indexedDB.open(name)
-			:	window.indexedDB.open(name, version);
+		const request = window.indexedDB.open(name, isNumber(version) ? version : undefined);
 
 		request.onupgradeneeded = (event) => {
 			const $request = event.target as IDBOpenDBRequest;
