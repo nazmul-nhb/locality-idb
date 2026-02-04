@@ -148,6 +148,9 @@ await db
   .run();
 ```
 
+>Check out the demo in the [demo](demo/) directory for selective examples with basic CRUD, transactions and database export.
+>You can also try the live demo here: [locality-idb-demo.vercel.app](https://locality-idb-demo.vercel.app/)
+
 ---
 
 ## 🧩 Core Concepts
