@@ -30,9 +30,7 @@ const IsArray = Symbol('IsArray');
 
 type IDBGetter = () => IDBDatabase;
 
-/**
- * @class Select query builder.
- */
+/** @class Select query builder. */
 export class SelectQuery<
 	T extends GenericObject,
 	S extends Partial<Record<string, boolean>> | null = null,
@@ -368,10 +366,8 @@ export class SelectQuery<
 				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
 
 				request.onsuccess = () => {
-					const results = request.result;
-
-					// Apply projection (select)
-					resolve(results.length > 0 ? this.#projectRow(results[0]) : null);
+					const results = this.#applyPipeline(request.result);
+					resolve(results.length > 0 ? results[0] : null);
 				};
 
 				request.onerror = () => reject(request.error);
@@ -388,8 +384,8 @@ export class SelectQuery<
 					results = results.filter(this.#whereCondition);
 				}
 
-				// Apply projection (select)
-				resolve(results.length > 0 ? this.#projectRow(results[0]) : null);
+				const processed = this.#applyPipeline(results);
+				resolve(processed.length > 0 ? processed[0] : null);
 			};
 
 			request.onerror = () => reject(request.error);
@@ -602,6 +598,13 @@ export class InsertQuery<
 	 */
 	async run(): Promise<Return> {
 		await this.#readyPromise;
+
+		const toBeInserted = this.#dataToInsert;
+
+		if (toBeInserted.length === 0) {
+			return (this[IsArray] ? [] : {}) as Return;
+		}
+
 		return new Promise((resolve, reject) => {
 			const transaction =
 				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
@@ -612,7 +615,7 @@ export class InsertQuery<
 			let insertCompleted = 0;
 
 			// Start all insert operations
-			for (const data of this.#dataToInsert) {
+			for (const data of toBeInserted) {
 				const request = store.add(
 					validateAndPrepareData(data, this.#columns, this.#keyPath, this.#table)
 				);
@@ -622,7 +625,7 @@ export class InsertQuery<
 					insertCompleted++;
 
 					// When all inserts complete, read the data back
-					if (insertCompleted === this.#dataToInsert.length) {
+					if (insertCompleted === toBeInserted.length) {
 						if (this.#transaction) {
 							// In transaction context: read from same transaction
 							let readCompleted = 0;

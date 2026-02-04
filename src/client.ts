@@ -70,7 +70,7 @@ export class Locality<
 
 	readonly #keyPaths: Record<TName, Maybe<string>>;
 
-	readonly version: Version;
+	readonly #configVersion: Version;
 
 	#db!: IDBDatabase;
 	#version!: Version;
@@ -79,7 +79,7 @@ export class Locality<
 	constructor(config: LocalityConfig<DBName, Version, Schema>) {
 		this.#name = config.dbName;
 		this.#schema = config.schema;
-		// this.version = config.version || 1 as Version;
+		this.#configVersion = (config.version ?? 1) as Version;
 
 		const store = this.#buildStoresConfig();
 
@@ -99,8 +99,10 @@ export class Locality<
 			.finally(() => {
 				this.#version = this.#db?.version as Version;
 			});
+	}
 
-		this.version = this.#version ?? config.version ?? 1;
+	get version(): Version {
+		return (this.#db?.version ?? this.#version ?? this.#configVersion) as Version;
 	}
 
 	/** Build store configurations from schema. */

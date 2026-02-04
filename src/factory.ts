@@ -11,14 +11,17 @@ import type { StoreConfig } from './types';
 export function openDBWithStores(
 	name: string,
 	stores: StoreConfig[],
-	version = 1
+	version?: number
 ): Promise<IDBDatabase> {
 	return new Promise((resolve, reject) => {
 		if (!window.indexedDB) {
 			throw new Error('IndexedDB is not supported in this environment or browser!');
 		}
 
-		const request = window.indexedDB.open(name, version);
+		const request =
+			isNaN(Number(version)) ?
+				window.indexedDB.open(name)
+			:	window.indexedDB.open(name, version);
 
 		request.onupgradeneeded = (event) => {
 			const $request = event.target as IDBOpenDBRequest;

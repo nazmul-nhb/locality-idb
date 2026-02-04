@@ -68,18 +68,20 @@ export function deleteDB(name: string): Promise<void> {
 			throw new Error('IndexedDB is not supported in this environment or browser!');
 		}
 
-		const idbInfo = window.indexedDB.databases();
+		if ('databases' in window.indexedDB) {
+			const idbInfo = window.indexedDB.databases();
 
-		idbInfo
-			.then((dbs) => {
-				const dbExists = dbs.some((db) => db.name === name);
+			idbInfo
+				.then((dbs) => {
+					const dbExists = dbs.some((db) => db.name === name);
 
-				if (!dbExists) {
-					reject(new Error(`Database '${name}' does not exist in this system!`));
-					return;
-				}
-			})
-			.catch(reject);
+					if (!dbExists) {
+						reject(new Error(`Database '${name}' does not exist in this system!`));
+						return;
+					}
+				})
+				.catch(reject);
+		}
 
 		const request = window.indexedDB.deleteDatabase(name);
 
@@ -87,9 +89,8 @@ export function deleteDB(name: string): Promise<void> {
 
 		request.onerror = () => reject(request.error);
 
-		request.onblocked = () => {
-			reject(new Error(`Delete blocked for database '${name}'`));
-		};
+		request.onblocked = () =>
+			reject(new Error(`Delete operation is blocked for database '${name}'`));
 	});
 }
 
