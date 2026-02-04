@@ -41,6 +41,8 @@
   - [Select/Query Records](#selectquery-records)
   - [Update Records](#update-records)
   - [Delete Records](#delete-records)
+  - [Transactions](#transactions)
+  - [Export Database](#export-database)
 - [API Reference](#-api-reference)
   - [Locality Class](#locality-class)
   - [Schema Functions](#schema-functions)
@@ -64,6 +66,8 @@
 - 🛠️ **Rich Column Types**: Support for various data types including custom types
 - ✅ **Built-in Validation**: Automatic data type validation for built-in column types during insert and update operations
 - 🔧 **Custom Validators**: Define custom validation logic for columns to enforce complex rules
+- 🔒 **Atomic Transactions**: Execute multiple operations across tables with automatic rollback on failure
+- 📤 **Database Export**: Export database data as JSON for backup, migration, or debugging
 
 ---
 
@@ -722,6 +726,163 @@ await db
   .run();
 ```
 
+### Transactions
+
+Transactions enable you to perform multiple operations across multiple tables atomically. All operations in a transaction either succeed together or fail together, ensuring data consistency.
+
+#### Basic Transaction
+
+```typescript
+// Create a user and their first post atomically
+await db.transaction(['users', 'posts'], async (ctx) => {
+  const newUser = await ctx
+    .insert('users')
+    .values({ name: 'John Doe', email: 'john@example.com' })
+    .run();
+
+  await ctx
+    .insert('posts')
+    .values({
+      userId: newUser.id,
+      title: 'My First Post',
+      content: 'Hello World!',
+    })
+    .run();
+});
+```
+
+#### Transaction with Multiple Operations
+
+```typescript
+// Transfer data between tables atomically
+await db.transaction(['users', 'posts', 'comments'], async (ctx) => {
+  // Update user
+  await ctx
+    .update('users')
+    .set({ isActive: true })
+    .where((user) => user.id === 1)
+    .run();
+
+  // Create post
+  const post = await ctx
+    .insert('posts')
+    .values({ userId: 1, title: 'New Post', content: 'Content' })
+    .run();
+
+  // Add comment
+  await ctx
+    .insert('comments')
+    .values({ postId: post.id, userId: 1, text: 'First comment!' })
+    .run();
+
+  // Query within transaction
+  const userPosts = await ctx
+    .from('posts')
+    .where((p) => p.userId === 1)
+    .findAll();
+
+  console.log(`User now has ${userPosts.length} posts`);
+});
+```
+
+#### Automatic Rollback
+
+```typescript
+try {
+  await db.transaction(['users', 'posts'], async (ctx) => {
+    const user = await ctx
+      .insert('users')
+      .values({ name: 'Alice', email: 'alice@example.com' })
+      .run();
+
+    // This will cause the entire transaction to rollback
+    throw new Error('Something went wrong!');
+
+    // This never executes
+    await ctx
+      .insert('posts')
+      .values({ userId: user.id, title: 'Post' })
+      .run();
+  });
+} catch (error) {
+  console.error('Transaction failed:', error);
+  // No data was inserted - transaction was rolled back
+}
+```
+
+> **Note:**
+>
+> - Transactions guarantee atomicity: all operations succeed or all fail.
+> - If any operation fails or an error is thrown, the entire transaction is automatically rolled back.
+> - Transaction context (`ctx`) provides `insert()`, `update()`, `delete()`, and `from()` methods.
+> - All operations must be performed on tables specified in the transaction.
+
+### Export Database
+
+Export your database data as JSON for backup, migration, or debugging purposes. The export includes metadata and table data, and automatically triggers a browser download.
+
+#### Export All Tables
+
+```typescript
+// Export entire database with pretty-printed JSON
+await db.export();
+// Downloads: my-database-2026-02-04T10-30-45-123Z.json
+```
+
+#### Export Specific Tables
+
+```typescript
+// Export only users and posts tables
+await db.export({
+  tables: ['users', 'posts'],
+  filename: 'users-posts-backup.json',
+});
+```
+
+#### Export with Custom Options
+
+```typescript
+// Export with custom configuration
+await db.export({
+  tables: ['users'], // Optional: specific tables
+  filename: 'users-export.json', // Optional: custom filename
+  pretty: false, // Optional: compact JSON (default: true)
+  includeMetadata: true, // Optional: include metadata (default: true)
+});
+```
+
+#### Export Data Structure
+
+The exported JSON file contains:
+
+```json
+{
+  "metadata": {
+    "dbName": "my-database",
+    "version": 1,
+    "exportedAt": "2026-02-04T10:30:45.123Z",
+    "tables": ["users", "posts"]
+  },
+  "data": {
+    "users": [
+      { "id": 1, "name": "Alice", "email": "alice@example.com" },
+      { "id": 2, "name": "Bob", "email": "bob@example.com" }
+    ],
+    "posts": [
+      { "id": 1, "userId": 1, "title": "First Post", "content": "..." }
+    ]
+  }
+}
+```
+
+> **Note:**
+>
+> - Exported files are automatically downloaded in the browser.
+> - Default filename format: `{dbName}-{timestamp}.json`
+> - Metadata is included by default but can be disabled.
+> - Use `pretty: true` (default) for human-readable JSON.
+> - Use `pretty: false` for compact JSON (smaller file size).
+
 ---
 
 ## 📚 API Reference
@@ -860,6 +1021,105 @@ const allUsers = await db.from('users').findAll();
 
 console.log(allUsers);
 ```
+
+#### `transaction<Tables>(tables: Tables[], callback: TransactionCallback): Promise<void>`
+
+Executes multiple database operations across multiple tables in a single atomic transaction.
+
+**Parameters:**
+
+- `tables`: Array of table names to include in the transaction
+- `callback`: Async function that receives a transaction context and performs operations
+
+**Returns:** Promise that resolves when the transaction completes successfully
+
+**Transaction Context Methods:**
+
+- `ctx.insert(table)`: Insert records within the transaction
+- `ctx.update(table)`: Update records within the transaction
+- `ctx.delete(table)`: Delete records within the transaction
+- `ctx.from(table)`: Query records within the transaction
+
+**Example:**
+
+```typescript
+// Create user and post atomically
+await db.transaction(['users', 'posts'], async (ctx) => {
+  const user = await ctx
+    .insert('users')
+    .values({ name: 'Alice', email: 'alice@example.com' })
+    .run();
+
+  await ctx
+    .insert('posts')
+    .values({ userId: user.id, title: 'First Post', content: 'Hello!' })
+    .run();
+});
+```
+
+> **Important:**
+>
+> - All operations succeed or all fail (atomicity).
+> - If any operation fails or an error is thrown, the entire transaction is rolled back.
+> - Only tables specified in the `tables` array can be accessed within the transaction.
+> - Transactions use IndexedDB's native transaction mechanism.
+
+#### `export(options?: ExportOptions): Promise<void>`
+
+Exports database data as a JSON file and triggers a browser download.
+
+**Parameters:**
+
+- `options`: Optional export configuration
+  - `options.tables`: Array of table names to export (default: all tables)
+  - `options.filename`: Custom filename (default: `{dbName}-{timestamp}.json`)
+  - `options.pretty`: Enable pretty-printed JSON (default: `true`)
+  - `options.includeMetadata`: Include export metadata (default: `true`)
+
+**Returns:** Promise that resolves when the export completes
+
+**Example:**
+
+```typescript
+// Export all tables with default settings
+await db.export();
+
+// Export specific tables with custom filename
+await db.export({
+  tables: ['users', 'posts'],
+  filename: 'backup-2026-02-04.json',
+  pretty: true,
+});
+
+// Export without metadata in compact format
+await db.export({
+  pretty: false,
+  includeMetadata: false,
+});
+```
+
+**Exported JSON Structure:**
+
+```typescript
+{
+  metadata?: {  // Optional (when includeMetadata = true)
+    dbName: string;
+    version: number;
+    exportedAt: string;  // ISO 8601 timestamp
+    tables: string[];
+  };
+  data: {
+    [tableName: string]: Array<Record<string, any>>;
+  };
+}
+```
+
+> **Note:**
+>
+> - Automatically triggers a file download in the browser.
+> - Exported data includes all records from specified tables.
+> - Use for backup, debugging, or data migration.
+> - File download works in browser environments only.
 
 ---
 
@@ -1085,6 +1345,16 @@ const schema = defineSchema({
 > - If multiple updaters are chained, only the last one is used.
 > - Should not be used with auto-generated indexed columns like primary keys.
 > - The updated value is validated according to the column's type and custom validators (if any).
+
+**Access the `OnUpdate` symbol (advanced):**
+
+```typescript
+import { OnUpdate } from 'locality-idb';
+
+// Access updater function programmatically
+const updatedAtColumn = column.timestamp().onUpdate(() => getTimestamp());
+const updaterFn = updatedAtColumn[OnUpdate]; // Function reference
+```
 
 ---
 
@@ -1666,6 +1936,48 @@ type Keys = NestedPrimitiveKey<{ user: { profile: { age: number } } }>;
 // SelectFields: Projects selected fields from a type
 type Selected = SelectFields<User, { name: true; email: true }>;
 // { name: string; email: string }
+```
+
+### Transaction & Export Types
+
+```typescript
+import type {
+  TransactionContext,
+  TransactionCallback,
+  ExportOptions,
+  ExportData,
+} from 'locality-idb';
+
+// TransactionContext: Context object provided to transaction callback
+type TxContext = TransactionContext<Schema, TableName, ['users', 'posts']>;
+
+// TransactionCallback: Function signature for transaction operations
+type TxCallback = TransactionCallback<Schema, TableName, ['users']>;
+
+// ExportOptions: Configuration options for database export
+type ExportOpts = ExportOptions<'users' | 'posts'>;
+/*
+{
+  tables?: ('users' | 'posts')[];
+  filename?: string;
+  pretty?: boolean;
+  includeMetadata?: boolean;
+}
+*/
+
+// ExportData: Structure of exported database data
+type Exported = ExportData;
+/*
+{
+  metadata?: {
+    dbName: string;
+    version: number;
+    exportedAt: Timestamp;
+    tables: string[];
+  };
+  data: Record<string, GenericObject[]>;
+}
+*/
 ```
 
 ---

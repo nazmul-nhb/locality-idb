@@ -552,7 +552,7 @@ export class InsertQuery<
 	Return extends Inserted extends Array<infer _> ? Data[] : Data,
 > {
 	#table: string;
-	#dbGetter: () => IDBDatabase;
+	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
 	#dataToInsert: Raw[] = [];
 	#columns?: ColumnDefinition;
@@ -565,7 +565,7 @@ export class InsertQuery<
 
 	constructor(
 		table: string,
-		dbGetter: () => IDBDatabase,
+		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
 		keyPath?: string,
@@ -695,7 +695,7 @@ export class InsertQuery<
 /** @class Update query builder. */
 export class UpdateQuery<T extends GenericObject, S extends Table> {
 	#table: string;
-	#dbGetter: () => IDBDatabase;
+	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
 	#dataToUpdate?: InferUpdateType<S>;
 	#whereCondition?: (row: T) => boolean;
@@ -707,7 +707,7 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 
 	constructor(
 		table: string,
-		dbGetter: () => IDBDatabase,
+		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
 		keyPath?: string,
@@ -802,7 +802,7 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 /** @class Delete query builder. */
 export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 	#table: string;
-	#dbGetter: () => IDBDatabase;
+	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
 	#keyField: Key;
 	#whereCondition?: (row: T) => boolean;
@@ -811,7 +811,7 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 
 	constructor(
 		table: string,
-		dbGetter: () => IDBDatabase,
+		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
 		keyField: Key,
 		transaction?: IDBTransaction

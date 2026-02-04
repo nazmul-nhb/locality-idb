@@ -561,7 +561,7 @@ export type StoreConfig = {
 };
 
 /** Export options for database `export` method */
-export type ExportOptions<T extends PropertyKey> = {
+export type ExportOptions<T extends string> = {
 	/** Optional array of table names to export (exports all if not specified) */
 	tables?: T[];
 	/** Optional custom filename (default: `{dbName}-export-{timestamp}.json`) */

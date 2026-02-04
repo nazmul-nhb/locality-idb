@@ -61,7 +61,7 @@ export class Locality<
 	DBName extends string = string,
 	Version extends number = 1,
 	Schema extends SchemaDefinition = SchemaDefinition,
-	TName extends keyof Schema = keyof Schema,
+	TName extends keyof Schema & string = keyof Schema & string,
 > {
 	readonly #name: DBName;
 	readonly #schema: Schema;
@@ -356,7 +356,7 @@ export class Locality<
 	) {
 		await this.#readyPromise;
 
-		const transaction = this.#db.transaction(tables as string[], 'readwrite');
+		const transaction = this.#db.transaction(tables, 'readwrite');
 
 		const txContext: TransactionContext<Schema, TName, Tables> = {
 			from: (table) => {
@@ -482,7 +482,7 @@ export class Locality<
 				dbName: this.#name,
 				version: this.version,
 				exportedAt: ts,
-				tables: tablesToExport as string[],
+				tables: tablesToExport,
 			};
 		}
 
