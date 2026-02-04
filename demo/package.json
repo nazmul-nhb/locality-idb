@@ -10,7 +10,6 @@
 		"preview": "vite preview"
 	},
 	"devDependencies": {
-		"nhb-toolbox": "^4.28.66",
 		"@eslint/js": "^9.39.2",
 		"@tailwindcss/vite": "^4.1.18",
 		"@typescript-eslint/eslint-plugin": "^8.54.0",
@@ -18,7 +17,8 @@
 		"eslint": "^9.39.2",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.5",
-		"globals": "^17.1.0",
+		"globals": "^17.3.0",
+		"nhb-toolbox": "^4.28.66",
 		"prettier": "^3.8.1",
 		"tailwindcss": "^4.1.18",
 		"typescript": "~5.9.3",
