@@ -638,7 +638,7 @@ export type TransactionContext<
 	/** Deletes a record from the specified table */
 	delete: <T extends Tables[number], Row extends $InferRow<Schema[T]['columns']>>(
 		table: T
-	) => DeleteQuery<Row, keyof Row>;
+	) => DeleteQuery<Row, keyof Row, Schema[T]>;
 
 	/** Retrieves a record by primary key from the specified table */
 	from: <T extends Tables[number], Row extends $InferRow<Schema[T]['columns']>>(

@@ -181,13 +181,13 @@ export class SelectQuery<
 	}
 
 	/**
-	 * @instance  Filter rows based on predicate function
+	 * @instance Filter rows based on predicate function
 	 * @param predicate Filtering function
 	 */
 	where(predicate: WherePredicate<T>): this;
 
 	/**
-	 * @instance  Filter rows based on index query
+	 * @instance Filter rows based on index query
 	 * @param indexName Name of the index/primary key to query
 	 * @param query Key value or {@link IDBKeyRange} to search for
 	 */
@@ -939,22 +939,32 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	 * @instance Filter rows to update
 	 * @param predicate Filtering function
 	 */
-	where(predicate: (row: T) => boolean) {
-		this.#whereCondition = predicate;
-		return this;
-	}
+	where(predicate: WherePredicate<T>): this;
 
 	/**
 	 * @instance Filter rows to update by index
 	 * @param indexName Index name to query
 	 * @param query Key value or {@link IDBKeyRange} to search for
 	 */
-	whereByIndex<IdxKey extends $InferIndex<S['columns']> & keyof T & string>(
+	where<IdxKey extends $InferPrimaryKey<S['columns']> | $InferIndex<S['columns']>>(
 		indexName: IdxKey,
-		query: T[IdxKey] | IDBKeyRange
-	) {
-		this.#whereIndexName = indexName;
-		this.#whereIndexQuery = query;
+		query: IDBKeyRange | T[IdxKey]
+	): this;
+
+	where<IdxKey extends $InferPrimaryKey<S['columns']> | $InferIndex<S['columns']>>(
+		condition: WherePredicate<T> | IdxKey,
+		query?: IDBKeyRange | T[IdxKey]
+	): this {
+		if (isFunction(condition)) {
+			this.#whereCondition = condition;
+			this.#whereIndexName = undefined;
+			this.#whereIndexQuery = undefined;
+		} else if (isNonEmptyString(condition) && !isUndefined(query)) {
+			this.#whereIndexName = condition;
+			this.#whereIndexQuery = query;
+			this.#whereCondition = undefined;
+		}
+
 		return this;
 	}
 
@@ -1036,7 +1046,7 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 }
 
 /** @class Delete query builder. */
-export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
+export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends Table> {
 	#table: string;
 	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
@@ -1065,22 +1075,32 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 	 * @instance Filter rows to delete
 	 * @param predicate Filtering function
 	 */
-	where(predicate: (row: T) => boolean) {
-		this.#whereCondition = predicate;
-		return this;
-	}
+	where(predicate: WherePredicate<T>): this;
 
 	/**
 	 * @instance Filter rows to delete by index
 	 * @param indexName Index name to query
 	 * @param query Key value or {@link IDBKeyRange} to search for
 	 */
-	whereByIndex<IdxKey extends keyof T & string>(
+	where<IdxKey extends $InferPrimaryKey<S['columns']> | $InferIndex<S['columns']>>(
 		indexName: IdxKey,
-		query: T[IdxKey] | IDBKeyRange
-	) {
-		this.#whereIndexName = indexName;
-		this.#whereIndexQuery = query;
+		query: IDBKeyRange | T[IdxKey]
+	): this;
+
+	where<IdxKey extends $InferPrimaryKey<S['columns']> | $InferIndex<S['columns']>>(
+		condition: WherePredicate<T> | IdxKey,
+		query?: IDBKeyRange | T[IdxKey]
+	): this {
+		if (isFunction(condition)) {
+			this.#whereCondition = condition;
+			this.#whereIndexName = undefined;
+			this.#whereIndexQuery = undefined;
+		} else if (isNonEmptyString(condition) && !isUndefined(query)) {
+			this.#whereIndexName = condition;
+			this.#whereIndexQuery = query;
+			this.#whereCondition = undefined;
+		}
+
 		return this;
 	}
 

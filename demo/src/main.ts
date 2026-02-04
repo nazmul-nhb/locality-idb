@@ -399,6 +399,16 @@ window.addEventListener('load', async () => {
 	console.info({ page1, page2 });
 	console.info(uuidV4());
 
+	await db
+		.from('experiments')
+		.sortByIndex('id')
+		.where('id', IDBKeyRange.lowerBound(8))
+		.stream(async (row, idx) => {
+			console.info(row.name, idx);
+		});
+
+	await db.delete('todos').where('task', 'ff').run();
+
 	// Add test button event listener
 	const runTestsBtn = document.getElementById('runTestsBtn') as HTMLButtonElement;
 	runTestsBtn.addEventListener('click', async () => {

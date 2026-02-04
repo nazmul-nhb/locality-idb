@@ -1803,14 +1803,14 @@ Filters rows to update.
 db.update('users').set({ isActive: false }).where((user) => user.id === 1)
 ```
 
-##### `whereByIndex(indexName: string, query: T[keyof T] | IDBKeyRange): UpdateQuery`
+##### `where(indexName: string, query: T[keyof T] | IDBKeyRange): UpdateQuery`
 
 Filters rows to update using an indexed field.
 
 ```typescript
 db.update('users')
   .set({ isActive: true })
-  .whereByIndex('email', 'alice@example.com')
+  .where('email', 'alice@example.com')
 ```
 
 ##### `run(): Promise<number>`
@@ -1833,12 +1833,12 @@ Filters rows to delete.
 db.delete('users').where((user) => user.id === 1)
 ```
 
-##### `whereByIndex(indexName: string, query: T[keyof T] | IDBKeyRange): DeleteQuery`
+##### `where(indexName: string, query: T[keyof T] | IDBKeyRange): DeleteQuery`
 
 Filters rows to delete using an indexed field.
 
 ```typescript
-db.delete('users').whereByIndex('email', 'alice@example.com')
+db.delete('users').where('email', 'alice@example.com')
 ```
 
 ##### `run(): Promise<number>`

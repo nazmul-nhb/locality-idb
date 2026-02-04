@@ -234,7 +234,7 @@ export class Locality<
 	 * @param table Table name.
 	 */
 	delete<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
-		return new DeleteQuery<Row, keyof Row>(
+		return new DeleteQuery<Row, keyof Row, Schema[T]>(
 			table,
 			() => this.#db,
 			this.#readyPromise,
