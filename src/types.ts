@@ -598,9 +598,9 @@ export type ExportOptions<T extends string> = {
 
 /** Import options for database `import` method */
 export type ImportOptions<T extends string> = {
-	/** Optional array of table names to import (imports all if not specified) */
+	/** Optional array of table names to import (imports all tables (store) if not specified) */
 	tables?: T[];
-	/** Import mode: replace, merge, or upsert (default: merge) */
+	/** Import mode: `'replace'`, `'merge'`, or `'upsert'` (default: `'merge'`) */
 	mode?: 'replace' | 'merge' | 'upsert';
 };
 

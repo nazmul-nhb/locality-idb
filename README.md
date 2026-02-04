@@ -957,7 +957,7 @@ await db.clearAll();
 
 ```typescript
 await db.dropTable('users');
-// Recreate a Locality instance with an updated schema after dropping.
+// You may need to recreate a Locality instance with an updated schema after dropping.
 ```
 
 ---

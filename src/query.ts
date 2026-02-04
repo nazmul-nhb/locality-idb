@@ -922,6 +922,38 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 		this.#transaction = transaction;
 	}
 
+	/** @internal Check if key is an index on the store for the `#whereIndexName` */
+	#isIndexKey(store: IDBObjectStore): boolean {
+		return (
+			isNonEmptyString(this.#whereIndexName) &&
+			store.indexNames.contains(this.#whereIndexName)
+		);
+	}
+
+	/** @internal Check if key is the primary key on the store for the `#whereIndexName` */
+	#isPrimaryKey(store: IDBObjectStore): boolean {
+		return isNonEmptyString(this.#whereIndexName) && store.keyPath === this.#whereIndexName;
+	}
+
+	/** @internal Build indexed store (primary key or index) for where queries */
+	#buildIndexedStore(store: IDBObjectStore, reject: RejectFn) {
+		const isPK = this.#isPrimaryKey(store);
+		const isIndex = this.#isIndexKey(store);
+
+		if (!isPK && !isIndex) {
+			reject(
+				new RangeError(
+					`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
+				)
+			);
+
+			return null;
+		}
+
+		// Primary keys use store directly, indexes use store.index()
+		return isPK ? store : store.index(this.#whereIndexName as string);
+	}
+
 	/**
 	 * @instance Sets the data to be updated
 	 * @param values Values to update
@@ -983,17 +1015,11 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 			let request: IDBRequest<T[]>;
 
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
-				if (!store.indexNames.contains(this.#whereIndexName)) {
-					reject(
-						new RangeError(
-							`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
-						)
-					);
-					return;
-				}
+				const source = this.#buildIndexedStore(store, reject);
 
-				const index = store.index(this.#whereIndexName);
-				request = index.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+				if (!source) return;
+
+				request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
 			} else {
 				request = store.getAll() as IDBRequest<T[]>;
 			}
@@ -1067,6 +1093,38 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends
 		this.#transaction = transaction;
 	}
 
+	/** @internal Check if key is an index on the store for the `#whereIndexName` */
+	#isIndexKey(store: IDBObjectStore): boolean {
+		return (
+			isNonEmptyString(this.#whereIndexName) &&
+			store.indexNames.contains(this.#whereIndexName)
+		);
+	}
+
+	/** @internal Check if key is the primary key on the store for the `#whereIndexName` */
+	#isPrimaryKey(store: IDBObjectStore): boolean {
+		return isNonEmptyString(this.#whereIndexName) && store.keyPath === this.#whereIndexName;
+	}
+
+	/** @internal Build indexed store (primary key or index) for where queries */
+	#buildIndexedStore(store: IDBObjectStore, reject: RejectFn) {
+		const isPK = this.#isPrimaryKey(store);
+		const isIndex = this.#isIndexKey(store);
+
+		if (!isPK && !isIndex) {
+			reject(
+				new RangeError(
+					`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
+				)
+			);
+
+			return null;
+		}
+
+		// Primary keys use store directly, indexes use store.index()
+		return isPK ? store : store.index(this.#whereIndexName as string);
+	}
+
 	/**
 	 * @instance Filter rows to delete
 	 * @param predicate Filtering function
@@ -1114,22 +1172,15 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends
 			let useKeysOnly = false;
 
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
-				if (!store.indexNames.contains(this.#whereIndexName)) {
-					reject(
-						new RangeError(
-							`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
-						)
-					);
-					return;
-				}
+				const source = this.#buildIndexedStore(store, reject);
 
-				const index = store.index(this.#whereIndexName);
+				if (!source) return;
 
 				if (this.#whereCondition) {
-					request = index.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+					request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
 				} else {
 					useKeysOnly = true;
-					request = index.getAllKeys(this.#whereIndexQuery);
+					request = source.getAllKeys(this.#whereIndexQuery);
 				}
 			} else {
 				request = store.getAll() as IDBRequest<T[]>;
@@ -1150,7 +1201,7 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends
 						rows = rows.filter(this.#whereCondition);
 					}
 
-					keys = rows.map((row) => row[this.#keyField]) as IDBValidKey[];
+					keys = rows.map((row) => row[this.#keyField]);
 				}
 
 				const deletePromises = keys.map((key) => {
