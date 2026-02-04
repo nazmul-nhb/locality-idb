@@ -8,8 +8,13 @@ import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 import { Stylog } from 'nhb-toolbox/stylog';
 
-import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
-import { column, defineSchema, deleteDB, getTimestamp, Locality } from 'locality';
+import type {
+	InferInsertType,
+	InferSelectType,
+	InferUpdateType,
+	Timestamp,
+} from 'locality-idb';
+import { column, defineSchema, deleteDB, getTimestamp, Locality } from 'locality-idb';
 import { runAllTests } from './transaction-export';
 
 Chronos.register(timeZonePlugin);

@@ -1,4 +1,4 @@
-import { validateColumnType } from 'locality';
+import { validateColumnType } from 'locality-idb';
 
 // console.info(
 // 	Object.values(column).map((col) => {

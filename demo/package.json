@@ -29,5 +29,8 @@
 		"overrides": {
 			"vite": "npm:rolldown-vite@7.3.1"
 		}
+	},
+	"dependencies": {
+		"locality-idb": "^1.4.0"
 	}
 }
