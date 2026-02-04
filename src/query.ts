@@ -12,10 +12,13 @@ import type {
 	$InferPrimaryKey,
 	ColumnDefinition,
 	FirstOverloadParams,
+	ForcedAny,
 	GenericObject,
 	InferUpdateType,
 	Maybe,
 	NestedPrimitiveKey,
+	PageOptions,
+	PageResult,
 	RejectFn,
 	SelectFields,
 	SortDirection,
@@ -341,6 +344,206 @@ export class SelectQuery<
 
 				request.onerror = () => reject(request.error);
 			}
+		});
+	}
+
+	/** Fetch records with cursor-based pagination */
+	async page(this: SelectQuery<T, null>, options?: PageOptions): Promise<PageResult<T, null>>;
+
+	/** Fetch records with cursor-based pagination and selected fields */
+	async page<Selection extends Partial<Record<keyof T, boolean>>>(
+		this: SelectQuery<T, Selection>,
+		options?: PageOptions
+	): Promise<PageResult<T, Selection>>;
+
+	async page<Selection extends Partial<Record<keyof T, boolean>>>(
+		this: SelectQuery<T, Selection | null>,
+		options: PageOptions = {}
+	) {
+		await this.#readyPromise;
+		return new Promise((resolve, reject) => {
+			const { store } = this.#getStore();
+
+			if (this.#orderByKey && !this.#useIndexCursor) {
+				reject(
+					new Error(
+						'page() does not support in-memory orderBy. Use sortByIndex() instead.'
+					)
+				);
+				return;
+			}
+
+			if (!isUndefined(options.cursor) && !isUndefined(this.#whereIndexQuery)) {
+				reject(
+					new Error(
+						'page() does not support cursor pagination with index where queries.'
+					)
+				);
+				return;
+			}
+
+			const limit = options.limit ?? this.#limitCount;
+			if (limit !== undefined && limit < 0) {
+				reject(new RangeError('page() limit must be a non-negative number.'));
+				return;
+			}
+
+			if (limit === 0) {
+				resolve({ items: [] as T[], nextCursor: options.cursor ?? null } as PageResult<
+					T,
+					Selection
+				>);
+				return;
+			}
+
+			const useIdxCursor =
+				this.#useIndexCursor &&
+				this.#orderByKey &&
+				isNonEmptyString(this.#orderByKey) &&
+				store.indexNames.contains(this.#orderByKey);
+
+			let source: IDBObjectStore | IDBIndex | null = null;
+			let range: IDBKeyRange | IDBValidKey | null = null;
+
+			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+				source = this.#buildIndexedStore(store, reject);
+				if (!source) return;
+				range = this.#whereIndexQuery;
+			} else if (useIdxCursor) {
+				source = store.index(this.#orderByKey as string);
+			} else {
+				source = store;
+			}
+
+			const direction = this.#orderByDir === 'desc' ? 'prev' : 'next';
+
+			if (!isUndefined(options.cursor)) {
+				range =
+					direction === 'prev' ?
+						IDBKeyRange.upperBound(options.cursor, true)
+					:	IDBKeyRange.lowerBound(options.cursor, true);
+			}
+
+			const request = source.openCursor(range ?? null, direction);
+			const items: Partial<T>[] = [];
+			let count = 0;
+
+			request.onsuccess = () => {
+				const cursor = request.result;
+
+				if (!cursor) {
+					resolve({
+						items: items as PageResult<T, Selection>['items'],
+						nextCursor: undefined,
+					});
+					return;
+				}
+
+				const row = cursor.value as T;
+
+				if (this.#whereCondition && !this.#whereCondition(row)) {
+					cursor.continue();
+					return;
+				}
+
+				items.push(this.#projectRow(row));
+				count++;
+
+				if (limit && count >= limit) {
+					resolve({
+						items: items as PageResult<T, Selection>['items'],
+						nextCursor: cursor.key,
+					});
+					return;
+				}
+
+				cursor.continue();
+			};
+
+			request.onerror = () => reject(request.error);
+		});
+	}
+
+	/** Stream records with a cursor */
+	async stream(
+		this: SelectQuery<T, null>,
+		callback: (row: T, index: number) => void | Promise<void>
+	): Promise<void>;
+
+	/** Stream records with a cursor and selected fields */
+	async stream<Selection extends Partial<Record<keyof T, boolean>>>(
+		this: SelectQuery<T, Selection>,
+		callback: (row: SelectFields<T, Selection>, index: number) => void | Promise<void>
+	): Promise<void>;
+
+	async stream<Selection extends Partial<Record<keyof T, boolean>>>(
+		this: SelectQuery<T, Selection>,
+		callback:
+			| ((row: T, index: number) => void | Promise<void>)
+			| ((row: SelectFields<T, Selection>, index: number) => void | Promise<void>)
+	) {
+		await this.#readyPromise;
+		return new Promise((resolve, reject) => {
+			const { store } = this.#getStore();
+
+			if (this.#orderByKey && !this.#useIndexCursor) {
+				reject(
+					new Error(
+						'stream() does not support in-memory orderBy. Use sortByIndex() instead.'
+					)
+				);
+				return;
+			}
+
+			const useIdxCursor =
+				this.#useIndexCursor &&
+				this.#orderByKey &&
+				isNonEmptyString(this.#orderByKey) &&
+				store.indexNames.contains(this.#orderByKey);
+
+			let source: IDBObjectStore | IDBIndex | null = null;
+			let range: IDBKeyRange | IDBValidKey | null = null;
+
+			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+				source = this.#buildIndexedStore(store, reject);
+				if (!source) return;
+				range = this.#whereIndexQuery;
+			} else if (useIdxCursor) {
+				source = store.index(this.#orderByKey as string);
+			} else {
+				source = store;
+			}
+
+			const direction = this.#orderByDir === 'desc' ? 'prev' : 'next';
+			const request = source.openCursor(range ?? null, direction);
+			let index = 0;
+
+			request.onsuccess = () => {
+				const cursor = request.result;
+
+				if (!cursor) {
+					resolve(void 0);
+					return;
+				}
+
+				const row = cursor.value as T;
+
+				if (this.#whereCondition && !this.#whereCondition(row)) {
+					cursor.continue();
+					return;
+				}
+
+				const projectedRow = this.#projectRow(row) as ForcedAny;
+
+				Promise.resolve(callback(projectedRow, index))
+					.then(() => {
+						index++;
+						cursor.continue();
+					})
+					.catch((err) => reject(err));
+			};
+
+			request.onerror = () => reject(request.error);
 		});
 	}
 
@@ -698,7 +901,9 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
 	#dataToUpdate?: InferUpdateType<S>;
-	#whereCondition?: (row: T) => boolean;
+	#whereCondition?: WherePredicate<T>;
+	#whereIndexName?: string;
+	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
 	#columns?: ColumnDefinition;
 	// TODO: Handle multiple primary keys later
 	#keyPath?: string;
@@ -740,6 +945,20 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	}
 
 	/**
+	 * @instance Filter rows to update by index
+	 * @param indexName Index name to query
+	 * @param query Key value or {@link IDBKeyRange} to search for
+	 */
+	whereByIndex<IdxKey extends $InferIndex<S['columns']> & keyof T & string>(
+		indexName: IdxKey,
+		query: T[IdxKey] | IDBKeyRange
+	) {
+		this.#whereIndexName = indexName;
+		this.#whereIndexQuery = query;
+		return this;
+	}
+
+	/**
 	 * @instance Executes the update query
 	 * @returns Number of records updated
 	 */
@@ -754,7 +973,24 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 			const transaction =
 				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
-			const request = store.getAll() as IDBRequest<T[]>;
+
+			let request: IDBRequest<T[]>;
+
+			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+				if (!store.indexNames.contains(this.#whereIndexName)) {
+					reject(
+						new RangeError(
+							`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
+						)
+					);
+					return;
+				}
+
+				const index = store.index(this.#whereIndexName);
+				request = index.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+			} else {
+				request = store.getAll() as IDBRequest<T[]>;
+			}
 
 			let updateCount = 0;
 
@@ -805,7 +1041,9 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
 	#keyField: Key;
-	#whereCondition?: (row: T) => boolean;
+	#whereCondition?: WherePredicate<T>;
+	#whereIndexName?: string;
+	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
 
 	#transaction?: IDBTransaction;
 
@@ -833,6 +1071,20 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 	}
 
 	/**
+	 * @instance Filter rows to delete by index
+	 * @param indexName Index name to query
+	 * @param query Key value or {@link IDBKeyRange} to search for
+	 */
+	whereByIndex<IdxKey extends keyof T & string>(
+		indexName: IdxKey,
+		query: T[IdxKey] | IDBKeyRange
+	) {
+		this.#whereIndexName = indexName;
+		this.#whereIndexQuery = query;
+		return this;
+	}
+
+	/**
 	 * @instance Executes the delete query
 	 * @returns Number of records deleted
 	 */
@@ -842,20 +1094,51 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T> {
 			const transaction =
 				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
-			const request = store.getAll() as IDBRequest<T[]>;
+			let request: IDBRequest<T[]> | IDBRequest<IDBValidKey[]>;
+			let useKeysOnly = false;
+
+			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+				if (!store.indexNames.contains(this.#whereIndexName)) {
+					reject(
+						new RangeError(
+							`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
+						)
+					);
+					return;
+				}
+
+				const index = store.index(this.#whereIndexName);
+
+				if (this.#whereCondition) {
+					request = index.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+				} else {
+					useKeysOnly = true;
+					request = index.getAllKeys(this.#whereIndexQuery);
+				}
+			} else {
+				request = store.getAll() as IDBRequest<T[]>;
+			}
 
 			let deleteCount = 0;
 
 			request.onsuccess = () => {
-				let rows: T[] = request.result;
+				const results = request.result;
+				let keys: IDBValidKey[] = [];
 
-				if (this.#whereCondition) {
-					rows = rows.filter(this.#whereCondition);
+				if (useKeysOnly) {
+					keys = results as IDBValidKey[];
+				} else {
+					let rows = results as T[];
+
+					if (this.#whereCondition) {
+						rows = rows.filter(this.#whereCondition);
+					}
+
+					keys = rows.map((row) => row[this.#keyField]) as IDBValidKey[];
 				}
 
-				const deletePromises = rows.map((row) => {
+				const deletePromises = keys.map((key) => {
 					return new Promise<void>((res, rej) => {
-						const key = row[this.#keyField];
 						const delRequest = store.delete(key);
 
 						delRequest.onsuccess = () => {

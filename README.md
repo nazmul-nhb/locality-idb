@@ -43,6 +43,11 @@
   - [Delete Records](#delete-records)
   - [Transactions](#transactions)
   - [Export Database](#export-database)
+  - [Import Database](#import-database)
+  - [Cursor Pagination](#cursor-pagination)
+  - [Streaming](#streaming)
+  - [Clear All Tables](#clear-all-tables)
+  - [Drop Table](#drop-table)
 - [API Reference](#-api-reference)
   - [Locality Class](#locality-class)
   - [Schema Functions](#schema-functions)
@@ -68,6 +73,7 @@
 - 🔧 **Custom Validators**: Define custom validation logic for columns to enforce complex rules
 - 🔒 **Atomic Transactions**: Execute multiple operations across tables with automatic rollback on failure
 - 📤 **Database Export**: Export database data as JSON for backup, migration, or debugging
+- 📥 **Database Import**: Import exported data with merge, replace, or upsert modes
 
 ---
 
@@ -885,6 +891,74 @@ The exported JSON file contains:
 > - Metadata is included by default but can be disabled.
 > - Use `pretty: true` (default) for human-readable JSON.
 > - Use `pretty: false` for compact JSON (smaller file size).
+> - Export uses a single readonly transaction for a consistent snapshot.
+
+### Import Database
+
+Import previously exported data or raw table data. Supports `merge`, `replace`, and `upsert` modes.
+
+#### Import Exported Data
+
+```typescript
+const exported = await db.exportToObject();
+
+// Merge into existing tables (default)
+await db.import(exported);
+```
+
+#### Replace Existing Data
+
+```typescript
+await db.import(exported, { mode: 'replace' });
+```
+
+#### Upsert Records
+
+```typescript
+await db.import(exported, { mode: 'upsert' });
+```
+
+### Cursor Pagination
+
+Use cursor-based pagination for efficient scrolling through large tables.
+
+```typescript
+const page1 = await db.from('users').sortByIndex('id').page({ limit: 20 });
+const page2 = await db.from('users').sortByIndex('id').page({
+  limit: 20,
+  cursor: page1.nextCursor,
+});
+```
+
+> **Note:**
+>
+> - `page()` requires `sortByIndex()` when ordering is needed.
+> - `page()` does not support combining `cursor` with `where(indexName, query)` at the moment.
+
+### Streaming
+
+Stream rows with a cursor to avoid loading everything into memory.
+
+```typescript
+await db.from('users').sortByIndex('id').stream(async (row) => {
+  console.log(row.email);
+});
+```
+
+> **Note:** `stream()` does not support in-memory `orderBy()`. Use `sortByIndex()` instead.
+
+### Clear All Tables
+
+```typescript
+await db.clearAll();
+```
+
+### Drop Table
+
+```typescript
+await db.dropTable('users');
+// Recreate a Locality instance with an updated schema after dropping.
+```
 
 ---
 
@@ -1167,6 +1241,54 @@ await db.export({
     [tableName: string]: Array<Record<string, any>>;
   };
 }
+```
+
+#### `exportToObject(options?: ExportOptions): Promise<ExportData>`
+
+Exports database data as an object without triggering a download.
+
+**Parameters:** Same as `export()`, except `filename` and `pretty` are ignored.
+
+**Returns:** Promise that resolves to an `ExportData` object.
+
+**Example:**
+
+```typescript
+const exported = await db.exportToObject();
+```
+
+#### `import(data: ExportData | Record<string, any[]>, options?: ImportOptions): Promise<void>`
+
+Imports database data using merge, replace, or upsert modes.
+
+**Parameters:**
+
+- `data`: Exported data or raw table data object
+- `options.mode`: `'merge' | 'replace' | 'upsert'` (default: `merge`)
+- `options.tables`: Optional list of table names to import
+
+**Example:**
+
+```typescript
+await db.import(exported, { mode: 'replace' });
+```
+
+#### `clearAll(): Promise<void>`
+
+Clears all records from all tables in a single transaction.
+
+```typescript
+await db.clearAll();
+```
+
+#### `dropTable(table: string): Promise<void>`
+
+Drops an object store by name and bumps the database version internally.
+
+> You should re-instantiate `Locality` with an updated schema after dropping.
+
+```typescript
+await db.dropTable('users');
 ```
 
 > **Note:**
@@ -1547,6 +1669,28 @@ Limits the number of results.
 db.from('users').limit(10)
 ```
 
+##### `page(options?: PageOptions): Promise<PageResult>`
+
+Fetches records using cursor-based pagination.
+
+```typescript
+const page1 = await db.from('users').sortByIndex('id').page({ limit: 20 });
+const page2 = await db.from('users').sortByIndex('id').page({
+  limit: 20,
+  cursor: page1.nextCursor,
+});
+```
+
+##### `stream(callback: (row, index) => void | Promise<void>): Promise<void>`
+
+Streams records using a cursor for low-memory iteration.
+
+```typescript
+await db.from('users').sortByIndex('id').stream((row) => {
+  console.log(row.email);
+});
+```
+
 ##### `findAll(): Promise<T[]>`
 
 Fetches all matching records.
@@ -1659,6 +1803,16 @@ Filters rows to update.
 db.update('users').set({ isActive: false }).where((user) => user.id === 1)
 ```
 
+##### `whereByIndex(indexName: string, query: T[keyof T] | IDBKeyRange): UpdateQuery`
+
+Filters rows to update using an indexed field.
+
+```typescript
+db.update('users')
+  .set({ isActive: true })
+  .whereByIndex('email', 'alice@example.com')
+```
+
 ##### `run(): Promise<number>`
 
 Executes the update query and returns the number of updated records.
@@ -1679,6 +1833,14 @@ Filters rows to delete.
 db.delete('users').where((user) => user.id === 1)
 ```
 
+##### `whereByIndex(indexName: string, query: T[keyof T] | IDBKeyRange): DeleteQuery`
+
+Filters rows to delete using an indexed field.
+
+```typescript
+db.delete('users').whereByIndex('email', 'alice@example.com')
+```
+
 ##### `run(): Promise<number>`
 
 Executes the delete query and returns the number of deleted records.
@@ -1694,6 +1856,8 @@ const count = await db.delete('users').where((user) => user.id === 1).run()
 #### `uuidV4(uppercase?: boolean): UUID<'v4'>`
 
 Generates a random UUID v4 string.
+
+> Uses Web Crypto (`crypto.randomUUID` or `crypto.getRandomValues`) when available, and falls back to `Math.random()` when not.
 
 **Parameters:**
 
@@ -2050,7 +2214,7 @@ type Selected = SelectFields<User, { name: true; email: true }>;
 // { name: string; email: string }
 ```
 
-### Transaction & Export Types
+### Transaction & Import/Export Types
 
 ```typescript
 import type {
@@ -2058,6 +2222,9 @@ import type {
   TransactionCallback,
   ExportOptions,
   ExportData,
+  ImportOptions,
+  PageOptions,
+  PageResult,
 } from 'locality-idb';
 
 // TransactionContext: Context object provided to transaction callback
@@ -2088,6 +2255,33 @@ type Exported = ExportData;
     tables: string[];
   };
   data: Record<string, GenericObject[]>;
+}
+*/
+
+// ImportOptions: Configuration options for database import
+type ImportOpts = ImportOptions<'users' | 'posts'>;
+/*
+{
+  tables?: ('users' | 'posts')[];
+  mode?: 'replace' | 'merge' | 'upsert';
+}
+*/
+
+// PageOptions: Cursor pagination options
+type PagedOpts = PageOptions;
+/*
+{
+  cursor?: IDBValidKey;
+  limit?: number;
+}
+*/
+
+// PageResult: Cursor pagination result
+type PagedResult = PageResult<User, null>;
+/*
+{
+  items: User[];
+  nextCursor: IDBValidKey | null;
 }
 */
 ```

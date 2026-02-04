@@ -6,12 +6,21 @@ import type { Email, Timestamp, URLString, UUID, UUIDVersion } from './types';
  * * Generate a random UUID v4 string
  * @param uppercase Whether to return the UUID in uppercase format. Default is `false`.
  * @returns UUID v4 string
+ * @remarks Uses Web Crypto (`crypto.randomUUID` or `crypto.getRandomValues`) when available, falls back to `Math.random()`.
  */
 export function uuidV4(uppercase = false): UUID<'v4'> {
+	if (crypto.randomUUID) {
+		return crypto.randomUUID() as UUID<'v4'>;
+	}
+
 	const bytes = new Uint8Array(16);
 
-	for (let i = 0; i < 16; i++) {
-		bytes[i] = Math.floor(Math.random() * 256);
+	if (crypto.getRandomValues) {
+		crypto.getRandomValues(bytes);
+	} else {
+		for (let i = 0; i < 16; i++) {
+			bytes[i] = Math.floor(Math.random() * 256);
+		}
 	}
 
 	let hex = '';
@@ -66,15 +75,13 @@ export async function deleteDB(name: string): Promise<void> {
 	_ensureIndexedDB();
 
 	const dbList = await _getDBList();
+	const dbExists = dbList.some((db) => db.name === name);
+
+	if (!dbExists) {
+		throw new Error(`Database '${name}' does not exist in this system!`);
+	}
 
 	return new Promise((resolve, reject) => {
-		const dbExists = dbList.some((db) => db.name === name);
-
-		if (!dbExists) {
-			reject(new Error(`Database '${name}' does not exist in this system!`));
-			return;
-		}
-
 		const request = window.indexedDB.deleteDatabase(name);
 
 		request.onsuccess = () => resolve();

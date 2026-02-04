@@ -9,7 +9,7 @@ import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 import { Stylog } from 'nhb-toolbox/stylog';
 
 import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
-import { column, defineSchema, deleteDB, getTimestamp, Locality } from 'locality';
+import { column, defineSchema, deleteDB, getTimestamp, Locality, uuidV4 } from 'locality';
 import { runAllTests } from './transaction-export';
 
 Chronos.register(timeZonePlugin);
@@ -380,6 +380,24 @@ window.addEventListener('load', async () => {
 
 	console.info(await db.dbList);
 	console.info(await Locality.getDatabaseList());
+
+	const page1 = await db
+		.from('experiments')
+		.select({ id: true, name: true })
+		.sortByIndex('id')
+		.page({ limit: 7 });
+
+	const page2 = await db
+		.from('experiments')
+		.select({ id: true, name: true })
+		.sortByIndex('id')
+		.page({
+			limit: 5,
+			cursor: page1.nextCursor,
+		});
+
+	console.info({ page1, page2 });
+	console.info(uuidV4());
 
 	// Add test button event listener
 	const runTestsBtn = document.getElementById('runTestsBtn') as HTMLButtonElement;

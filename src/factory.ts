@@ -25,6 +25,8 @@ export function openDBWithStores(
 			const transaction = $request.transaction;
 
 			if (transaction) {
+				const schemaStoreNames = new Set(stores.map((store) => store.name));
+
 				for (const store of stores) {
 					let objectStore: IDBObjectStore;
 
@@ -39,27 +41,34 @@ export function openDBWithStores(
 						objectStore = transaction.objectStore(store.name);
 					}
 
-					// Create indexes if defined
-					if (store.indexes) {
-						for (const index of store.indexes) {
-							// Skip if index already exists
-							if (!objectStore.indexNames.contains(index.name)) {
-								objectStore.createIndex(index.name, index.keyPath, {
-									unique: index.unique ?? false,
-								});
-							}
+					const schemaIndexNames = new Set(
+						store.indexes ? store.indexes.map((idx) => idx.name) : []
+					);
+
+					// Create or update indexes
+					for (const index of store.indexes ?? []) {
+						// Skip if index already exists
+						if (!objectStore.indexNames.contains(index.name)) {
+							objectStore.createIndex(index.name, index.keyPath, {
+								unique: index.unique ?? false,
+							});
 						}
+					}
 
-						// Remove indexes that are no longer in schema
-						const schemaIndexNames = new Set(store.indexes.map((idx) => idx.name));
+					// Remove indexes that are no longer in schema
+					for (let i = 0; i < objectStore.indexNames.length; i++) {
+						const existingIndexName = objectStore.indexNames.item(i);
 
-						for (let i = 0; i < objectStore.indexNames.length; i++) {
-							const existingIndexName = objectStore.indexNames.item(i);
-
-							if (existingIndexName && !schemaIndexNames.has(existingIndexName)) {
-								objectStore.deleteIndex(existingIndexName);
-							}
+						if (existingIndexName && !schemaIndexNames.has(existingIndexName)) {
+							objectStore.deleteIndex(existingIndexName);
 						}
+					}
+				}
+
+				// Remove object stores that are no longer in schema
+				for (const existingStore of Array.from(db.objectStoreNames)) {
+					if (!schemaStoreNames.has(existingStore)) {
+						db.deleteObjectStore(existingStore);
 					}
 				}
 

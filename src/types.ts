@@ -59,6 +59,8 @@ export type LooseLiteral<T extends string | number> =
 	| T
 	| (T extends string ? string & {} : number & {});
 
+export type ForcedAny = any;
+
 /** Union of `number` and numeric string */
 export type Numeric = number | `${number}`;
 
@@ -285,6 +287,20 @@ export type SelectFields<
 			:	K]: T[K];
 		}
 >;
+
+/** Pagination options for cursor-based queries */
+export type PageOptions = {
+	/** Cursor key returned from a previous page */
+	cursor?: IDBValidKey;
+	/** Maximum number of records to return */
+	limit?: number;
+};
+
+/** Cursor-based pagination result */
+export type PageResult<T, Selection extends Partial<Record<keyof T, boolean>> | null> = {
+	items: Selection extends null ? T[] : SelectFields<T, Extract<Selection, object>>[];
+	nextCursor: Maybe<IDBValidKey>;
+};
 
 /** - Extract only primitive keys from an object, including nested dot-notation keys. */
 export type NestedPrimitiveKey<T> =
@@ -570,6 +586,14 @@ export type ExportOptions<T extends string> = {
 	pretty?: boolean;
 	/** Optional flag to include export metadata (default: `true`) */
 	includeMetadata?: boolean;
+};
+
+/** Import options for database `import` method */
+export type ImportOptions<T extends string> = {
+	/** Optional array of table names to import (imports all if not specified) */
+	tables?: T[];
+	/** Import mode: replace, merge, or upsert (default: merge) */
+	mode?: 'replace' | 'merge' | 'upsert';
 };
 
 /** Exported database data structure */
