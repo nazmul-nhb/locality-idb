@@ -26,13 +26,7 @@ const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 const schema = defineSchema({
 	todos: {
 		serial: column.int().pk().auto(),
-		task: column
-			.text()
-			// .validate((val) => {
-			// 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) ? null : 'Invalid email format';
-			// })
-			.unique()
-			.onUpdate((old) => (old?.startsWith('pello ') ? 'pello' : (old ?? 'No Task'))),
+		task: column.text().unique(),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
@@ -418,7 +412,7 @@ window.addEventListener('load', async () => {
 
 	console.info(exported);
 
-	await db.import(exported, { mode: 'replace', tables: ['experiments'] });
+	// await db.import(exported.data, { mode: 'replace', tables: ['experiments'] });
 
 	// await db.dropTable('experiments');
 
