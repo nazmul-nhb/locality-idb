@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      nhb-toolbox:
+        specifier: ^4.28.66
+        version: 4.28.66
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.2
@@ -35,9 +39,6 @@ importers:
       nhb-scripts:
         specifier: ^1.9.2
         version: 1.9.2
-      nhb-toolbox:
-        specifier: ^4.28.66
-        version: 4.28.66
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
