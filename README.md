@@ -28,7 +28,7 @@
 
 ## Why Not Raw IndexedDB?
 
-If you’re weighing using `Locality IDB` vs. the raw `IndexedDB` API:
+If you're weighing using `Locality IDB` vs. the raw `IndexedDB` API:
 
 - **Type safety**: schema-driven types reduce runtime errors.
 - **Query ergonomics**: SQL-like query builder replaces verbose cursor boilerplate.
@@ -74,16 +74,16 @@ If you’re weighing using `Locality IDB` vs. the raw `IndexedDB` API:
 
 - 🎯 **Type-Safe**: Full TypeScript support with automatic type inference
 - 🔍 **SQL-like Queries**: Familiar query syntax inspired by Drizzle ORM
-- 🚀 **Modern API**: Clean and intuitive interface for IndexedDB operations
+- 🚀 **Modern API**: Clean and intuitive interface for `IndexedDB` operations
 - 📦 **Zero Dependencies**: Lightweight with only development dependencies
 - 🔄 **Auto-Generation**: Automatic UUID and timestamp generation
 - 🎨 **Schema-First**: Define your database schema with a simple, declarative API
 - 🛠️ **Rich Column Types**: Support for various data types including custom types
-- ✅ **Built-in Validation**: Automatic data type validation for built-in column types during insert and update operations
+- ✅ **Built-in Validation**: Validation for built-in column types during insert and update operations
 - 🔧 **Custom Validators**: Define custom validation logic for columns to enforce complex rules
-- 🔒 **Atomic Transactions**: Execute multiple operations across tables with automatic rollback on failure
+- 🔒 **Transactions**: Execute multiple operations across tables with automatic rollback on failure
 - 📤 **Database Export**: Export database data as JSON for backup, migration, or debugging
-- 📥 **Database Import**: Import exported data with merge, replace, or upsert modes
+- 📥 **Database Import**: Import exported data with `'merge'`, `'replace'`, or `'upsert'` modes
 
 ---
 
@@ -332,6 +332,7 @@ const schema = defineSchema({
 > - Auto-generated values can be overridden by providing explicit values during insert.
 > - Use the `default()` modifier to set custom default values instead of auto-generated ones.
 > - Auto-generated values are generated at runtime during insert operations.
+> - `onUpdate()` modifier can be used to auto-update values on update operations (e.g. `updatedAt` timestamp).
 > - Type extensions for `uuid` and `timestamp` are not applicable since they are already typed.
 > - For custom UUID versions, use [`uuid`](https://toolbox.nazmul-nhb.dev/docs/utilities/hash/uuid) utility from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox).
 > - For custom timestamp formats, use date libraries like [`Chronos`](https://toolbox.nazmul-nhb.dev/docs/classes/Chronos) (from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox)) or [`date-fns`](https://www.npmjs.com/package/date-fns) to generate ISO 8601 strings.

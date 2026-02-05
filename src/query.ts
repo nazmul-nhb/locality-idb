@@ -215,7 +215,7 @@ export class SelectQuery<
 	}
 
 	/**
-	 * @instance  Order results by specified key and direction
+	 * @instance Order results by specified key and direction
 	 * @param key Key to order by
 	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
 	 *

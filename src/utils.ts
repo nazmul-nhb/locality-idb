@@ -35,7 +35,7 @@ export function uuidV4(uppercase = false): UUID<'v4'> {
  * * Get current timestamp in ISO 8601 format
  * @param value Optional date input (string, number, or Date object). Defaults to {@link Date new Date()}
  * @remarks If the provided value is invalid, the current date and time will be used.
- * @return Timestamp string in ISO 8601 format
+ * @returns Timestamp string in ISO 8601 format
  */
 export function getTimestamp(value?: string | number | Date): Timestamp {
 	let date =

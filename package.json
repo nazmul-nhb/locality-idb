@@ -1,102 +1,102 @@
 {
-	"name": "locality-idb",
-	"version": "1.5.4",
-	"description": "SQL-like query builder for IndexedDB with Drizzle-style API",
-	"type": "module",
-	"sideEffects": false,
-	"types": "./dist/index.d.cts",
-	"exports": {
-		".": {
-			"require": "./dist/index.cjs",
-			"import": "./dist/index.mjs"
-		},
-		"./package.json": "./package.json"
-	},
-	"author": {
-		"name": "Nazmul Hassan",
-		"email": "nazmulnhb@gmail.com",
-		"url": "https://nazmul-nhb.dev"
-	},
-	"contributors": [
-		{
-			"name": "Nazmul Hassan",
-			"email": "nazmulnhb007@yahoo.com",
-			"url": "https://github.com/nazmul-nhb"
-		},
-		{
-			"name": "Nazmul Hassan",
-			"email": "nazmulnhb@gmail.com",
-			"url": "https://github.com/nhb-nazmul"
-		}
-	],
-	"license": "MIT",
-	"homepage": "https://github.com/nazmul-nhb/locality-idb#readme",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/nazmul-nhb/locality-idb.git"
-	},
-	"bugs": {
-		"url": "https://github.com/nazmul-nhb/locality-idb/issues"
-	},
-	"publishConfig": {
-		"access": "public"
-	},
-	"files": [
-		"dist",
-		"README.md",
-		"package.json"
-	],
-	"keywords": [
-		"indexeddb",
-		"indexed-db",
-		"indexeddb-orm",
-		"indexed-db-orm",
-		"sql",
-		"db",
-		"orm",
-		"idb",
-		"idb-orm",
-		"typescript",
-		"typescript-orm",
-		"typescript-idb",
-		"typescript-indexeddb",
-		"typescript-indexed-db",
-		"locality-idb",
-		"locality",
-		"drizzle",
-		"database"
-	],
-	"scripts": {
-		"build": "tsdown",
-		"dev:pkg": "tsdown --watch",
-		"dev": "pnpm --dir demo run dev",
-		"install:demo": "pnpm --dir demo install",
-		"build:demo": "pnpm --dir demo run build",
-		"preview": "pnpm --dir demo run preview",
-		"typecheck": "tsc --noEmit",
-		"prepublishOnly": "pnpm run build",
-		"commit": "nhb-commit",
-		"count": "nhb-count",
-		"delete": "nhb-delete",
-		"format": "nhb-format",
-		"lint": "nhb-lint"
-	},
-	"devDependencies": {
-		"@eslint/js": "^9.39.2",
-		"@types/node": "^25.2.0",
-		"@typescript-eslint/eslint-plugin": "^8.54.0",
-		"@typescript-eslint/parser": "^8.54.0",
-		"eslint": "^9.39.2",
-		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-prettier": "^5.5.5",
-		"globals": "^17.3.0",
-		"nhb-scripts": "^1.9.2",
-		"nhb-toolbox": "^4.28.66",
-		"prettier": "^3.8.1",
-		"tsdown": "^0.20.3",
-		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.54.0"
-	},
-	"main": "./dist/index.cjs",
-	"module": "./dist/index.mjs"
+  "name": "locality-idb",
+  "version": "1.5.6",
+  "description": "SQL-like query builder for IndexedDB with Drizzle-style API",
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "author": {
+    "name": "Nazmul Hassan",
+    "email": "nazmulnhb@gmail.com",
+    "url": "https://nazmul-nhb.dev"
+  },
+  "contributors": [
+    {
+      "name": "Nazmul Hassan",
+      "email": "nazmulnhb007@yahoo.com",
+      "url": "https://github.com/nazmul-nhb"
+    },
+    {
+      "name": "Nazmul Hassan",
+      "email": "nazmulnhb@gmail.com",
+      "url": "https://github.com/nhb-nazmul"
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/nazmul-nhb/locality-idb#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nazmul-nhb/locality-idb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nazmul-nhb/locality-idb/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "keywords": [
+    "indexeddb",
+    "indexed-db",
+    "indexeddb-orm",
+    "indexed-db-orm",
+    "sql",
+    "db",
+    "orm",
+    "idb",
+    "idb-orm",
+    "typescript",
+    "typescript-orm",
+    "typescript-idb",
+    "typescript-indexeddb",
+    "typescript-indexed-db",
+    "locality-idb",
+    "locality",
+    "drizzle",
+    "database"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev:pkg": "tsdown --watch",
+    "dev": "pnpm --dir demo run dev",
+    "install:demo": "pnpm --dir demo install",
+    "build:demo": "pnpm --dir demo run build",
+    "preview": "pnpm --dir demo run preview",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build",
+    "commit": "nhb-commit",
+    "count": "nhb-count",
+    "delete": "nhb-delete",
+    "format": "nhb-format",
+    "lint": "nhb-lint"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^25.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.3.0",
+    "nhb-scripts": "^1.9.2",
+    "nhb-toolbox": "^4.28.66",
+    "prettier": "^3.8.1",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs"
 }

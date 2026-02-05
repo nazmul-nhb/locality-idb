@@ -19,9 +19,9 @@ type $Brand<B> = {
 /**
  * * Creates a branded version of a base type by intersecting it with a unique compile-time marker.
  *
- * @param T - Base type to brand.
- * @param B - Brand identifier used to distinguish this type from structurally similar types.
- 
+ * @typeParam T - Base type to brand.
+ * @typeParam B - Brand identifier used to distinguish this type from structurally similar types.
+ *
  * @remarks Useful for preventing accidental mixing of structurally identical types, while keeping the runtime value unchanged.
  *
  * @example
@@ -33,7 +33,10 @@ export type Branded<T, B> = T & $Brand<B>;
 /**
  * * Broadens a literal union (typically `string` or `number`) to also accept any other value of the base type, without losing IntelliSense autocomplete for the provided literals.
  *
- * *This is especially useful in API design where you want to provide suggestions for common options but still allow flexibility for custom user-defined values.*
+ * @remarks
+ * This is especially useful in API design where you want to provide suggestions for common options but still allow flexibility for custom user-defined values.
+ *
+ * Technically, this uses intersection with primitive base types (`string & {}` or `number & {}`) to retain IntelliSense while avoiding type narrowing.
  *
  * @example
  * // ✅ String literal usage
@@ -52,8 +55,6 @@ export type Branded<T, B> = T & $Brand<B>;
  * const m2: Mixed = 2;            // ✅
  * const m3: Mixed = 'anything';   // ✅
  * const m4: Mixed = 123;          // ✅
- *
- * @note Technically, this uses intersection with primitive base types (`string & {}` or `number & {}`) to retain IntelliSense while avoiding type narrowing.
  */
 export type LooseLiteral<T extends string | number> =
 	| T
@@ -97,7 +98,7 @@ type $UnionToTuple<T, L = $LastOf<T>> =
  * - If `T` is a single type, it produces a one-element tuple `[T]`.
  * - If `T` is `never`, it produces an empty tuple `[]`.
  *
- * @param T - The type to convert into a tuple.
+ * @typeParam T - The type to convert into a tuple.
  * @returns A tuple type containing the elements of `T`.
  *
  * @example
@@ -116,7 +117,7 @@ export type Tuple<T> = [T] extends [never] ? [] : $UnionToTuple<T>;
  * - Useful when you want to preserve all possible union members as a tuple literal instead of an array.
  * - For converting any type to tuple use {@link Tuple}.
  *
- * @param T - An array type whose element type is a union.
+ * @typeParam T - An array type whose element type is a union.
  * @returns A tuple type containing each member of the union in order.
  *
  * @example
@@ -209,7 +210,7 @@ export type AdvancedTypes =
 /**
  * * Extracts the parameters of the first overload of a function type `T`.
  *
- * @template T - The function type to extract parameters from.
+ * @typeParam T - The function type to extract parameters from.
  *
  * @returns A tuple type representing the parameters of the first overload of `T`.
  *
@@ -242,8 +243,8 @@ export type FirstOverloadParams<T> =
 /**
  * * Maps all values of object `T` to a fixed type `R`, keeping original keys.
  *
- * @template T - The source object type.
- * @template R - The replacement value type.
+ * @typeParam T - The source object type.
+ * @typeParam R - The replacement value type.
  *
  * @example
  * type T = { name: string; age: number };
@@ -310,7 +311,7 @@ export type PageResult<T, Selection extends Partial<Record<keyof T, boolean>> | 
 	nextCursor: Maybe<IDBValidKey>;
 };
 
-/** - Extract only primitive keys from an object, including nested dot-notation keys. */
+/** Extract only primitive keys from an object, including nested dot-notation keys. */
 export type NestedPrimitiveKey<T> =
 	T extends AdvancedTypes ? never
 	: T extends GenericObject ?
@@ -322,12 +323,14 @@ export type NestedPrimitiveKey<T> =
 		}[keyof T & string]
 	:	never;
 
-/** - Generic object but with `any` value */
+/** Generic object but with `any` value */
 export type GenericObject = Record<string, any>;
+
 /**
  * * Forces TypeScript to simplify a complex or inferred type into a more readable flat object.
  *
- * *Useful when working with utility types like `Merge`, `Omit`, etc., that produce deeply nested or unresolved intersections.*
+ * @remarks
+ * Useful when working with utility types like `Merge`, `Omit`, etc., that produce deeply nested or unresolved intersections.
  *
  * @example
  * type A = { a: number };

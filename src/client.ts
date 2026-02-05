@@ -192,7 +192,7 @@ export class Locality<
 	/**
 	 * @instance Select records from a table.
 	 * @param table Table name.
-	 * @returns
+	 * @returns Select query builder for the table.
 	 */
 	from<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new SelectQuery<Row, null, Schema[T]>(
@@ -463,7 +463,7 @@ export class Locality<
 	 * 	}),
 	 * });
 	 *
-	 * // Export all tables pretty-printed pretty-printed with default filename
+	 * // Export all tables pretty-printed with default filename
 	 * await db.export();
 	 *
 	 * // Export specific tables pretty-printed with custom filename

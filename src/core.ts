@@ -1,7 +1,7 @@
 import { isNonEmptyString } from 'nhb-toolbox';
 import type { ColumnDefinition, TypeName, UpdaterFn, ValidatorFn } from './types';
 
-/** Symbol key for column column data type */
+/** Symbol key for column data type */
 export const ColumnType = Symbol('ColumnType');
 /** Symbol key for primary key marker */
 export const IsPrimaryKey = Symbol('IsPrimaryKey');
