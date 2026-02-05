@@ -990,6 +990,25 @@ const db = new Locality({
 
 #### Properties
 
+##### `dbName: string` (getter)
+
+Gets the current database name.
+
+**Returns:** The database name
+
+**Example:**
+
+```typescript
+const db = new Locality({
+  dbName: 'my-database',
+  version: 1,
+  schema: mySchema,
+});
+
+await db.ready(); // (optional) for extra safety
+console.log(db.dbName); // 'my-database'
+```
+
 ##### `version: number` (getter)
 
 Gets the current database version.
@@ -1230,24 +1249,34 @@ await db.export({
 **Exported JSON Structure:**
 
 ```typescript
-{
-  metadata?: {  // Optional (when includeMetadata = true)
-    dbName: string;
-    version: number;
-    exportedAt: string;  // ISO 8601 timestamp
-    tables: string[];
-  };
-  data: {
-    [tableName: string]: Array<Record<string, any>>;
-  };
-}
+/** Exported table data structure */
+type ExportedTableData<T extends string, S extends SchemaDefinition> = {
+ [K in T]: InferSelectType<S[K]>[];
+};
+
+/** Exported database data structure */
+type ExportData<T extends string, S extends SchemaDefinition> = {
+ /** Optional metadata about the export */
+ metadata?: {
+  /** Database name */
+  dbName: string;
+  /** Database version */
+  version: number;
+  /** Export creation time */
+  exportedAt: Timestamp;
+  /** List of exported table names */
+  tables: T[];
+ };
+ /** Actual exported data, mapping table names to arrays of records */
+ data: ExportedTableData<T, S>;
+};
 ```
 
 #### `exportToObject(options?: ExportObjectOptions): Promise<ExportData>`
 
 Exports database data as an object without triggering a download.
 
-**Parameters:** Same as `export()`, except `filename` and `pretty` are ignored.
+**Parameters:** Same as [`export()`](#exportoptions-exportoptions-promisevoid), except `filename` and `pretty` are omitted.
 
 **Returns:** Promise that resolves to an `ExportData` object.
 
@@ -1257,7 +1286,7 @@ Exports database data as an object without triggering a download.
 const exported = await db.exportToObject();
 ```
 
-#### `import(data: ExportData | Record<string, any[]>, options?: ImportOptions): Promise<void>`
+#### `import(data: ExportData | ExportedTableData, options?: ImportOptions): Promise<void>`
 
 Imports database data using merge, replace, or upsert modes.
 
