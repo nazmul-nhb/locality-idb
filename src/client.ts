@@ -5,8 +5,9 @@ import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
 	$InferRow,
 	ExportData,
+	ExportedTableData,
+	ExportObjectOptions,
 	ExportOptions,
-	GenericObject,
 	ImportOptions,
 	IndexConfig,
 	InferInsertType,
@@ -162,8 +163,15 @@ export class Locality<
 		return column?.[0] as keyof R;
 	}
 
-	get version(): Version {
-		return (this.#db?.version ?? this.#version ?? this.#configVersion) as Version;
+	/** @instance Get the current database name. */
+	get dbName(): DBName {
+		return this.#name;
+	}
+
+	get version(): LooseLiteral<Version> {
+		return (this.#db?.version ??
+			this.#version ??
+			this.#configVersion) as LooseLiteral<Version>;
 	}
 
 	/** @instance Get all table (store) names in the current database. */
@@ -498,7 +506,9 @@ export class Locality<
 	 * - Exports all tables by default, or only specified tables if provided.
 	 * - Returns a JSON-serializable object with schema metadata and table data.
 	 */
-	async exportToObject(options?: ExportOptions<TName>): Promise<ExportData> {
+	async exportToObject(
+		options?: ExportObjectOptions<TName>
+	): Promise<ExportData<TName, Schema>> {
 		await this.#readyPromise;
 
 		const { tables, includeMetadata = true } = options || {};
@@ -506,7 +516,7 @@ export class Locality<
 
 		for (const table of tablesToExport) {
 			if (!(table in this.#schema)) {
-				throw new RangeError(`Table '${String(table)}' does not exist in schema.`);
+				throw new RangeError(`Table '${table}' does not exist in schema.`);
 			}
 		}
 
@@ -521,43 +531,43 @@ export class Locality<
 							tables: [],
 						}
 					:	undefined,
-				data: {},
+				data: {} as ExportedTableData<TName, Schema>,
 			};
 		}
 
-		const exportData: Record<string, GenericObject[]> = {};
-		const transaction = this.#db.transaction(tablesToExport as string[], 'readonly');
+		const exportData = {} as ExportedTableData<TName, Schema>;
+		const transaction = this.#db.transaction(tablesToExport, 'readonly');
 
 		return new Promise((resolve, reject) => {
 			transaction.onabort = () => _abortTransaction(transaction.error, reject);
 			transaction.onerror = () => reject(transaction.error);
 
-			const readPromises = tablesToExport.map(
-				(table) =>
-					new Promise<void>((res, rej) => {
-						const store = transaction.objectStore(table as string);
-						const request = store.getAll() as IDBRequest<GenericObject[]>;
+			const readPromises = tablesToExport.map((table) => {
+				return new Promise<void>((res, rej) => {
+					const store = transaction.objectStore(table);
+					const request = store.getAll() as IDBRequest<
+						InferSelectType<Schema[TName]>[]
+					>;
 
-						request.onsuccess = () => {
-							exportData[table as string] = request.result;
-							res();
-						};
+					request.onsuccess = () => {
+						exportData[table] = request.result;
+						res();
+					};
 
-						request.onerror = () => rej(request.error);
-					})
-			);
+					request.onerror = () => rej(request.error);
+				});
+			});
 
 			Promise.all(readPromises)
 				.then(() => {
-					const exportObj = {} as ExportData;
-					const ts = getTimestamp();
+					const exportObj = {} as ExportData<TName, Schema>;
 
 					if (includeMetadata) {
 						exportObj.metadata = {
 							dbName: this.#name,
 							version: this.version,
-							exportedAt: ts,
-							tables: tablesToExport as string[],
+							exportedAt: getTimestamp(),
+							tables: tablesToExport,
 						};
 					}
 
@@ -572,28 +582,45 @@ export class Locality<
 	 * @instance Import data into the database.
 	 *
 	 * @remarks
-	 * - Accepts either raw table data or an {@link ExportData} object.
+	 * - Accepts either an {@link ExportData} object or raw table data {@link ExportedTableData}.
 	 * - Supports merge, replace, and upsert modes.
 	 */
 	async import(
-		data: ExportData | Record<string, GenericObject[]>,
+		data: ExportData<TName, Schema>,
+		options?: ImportOptions<TName>
+	): Promise<void>;
+
+	/**
+	 * @instance Import data into the database.
+	 *
+	 * @remarks
+	 * - Accepts either raw table data {@link ExportedTableData} or an {@link ExportData} object.
+	 * - Supports merge, replace, and upsert modes.
+	 */
+	async import(
+		data: ExportedTableData<TName, Schema>,
+		options?: ImportOptions<TName>
+	): Promise<void>;
+
+	async import(
+		data: ExportData<TName, Schema> | ExportedTableData<TName, Schema>,
 		options?: ImportOptions<TName>
 	) {
 		await this.#readyPromise;
 
 		const { mode = 'merge', tables } = options || {};
-		const dataMap = ('data' in data ? data.data : data) as Record<string, GenericObject[]>;
+		const dataMap = ('data' in data ? data.data : data) as ExportedTableData<TName, Schema>;
 		const tablesToImport = (tables ?? Object.keys(dataMap)) as TName[];
 
 		for (const table of tablesToImport) {
 			if (!(table in this.#schema)) {
-				throw new RangeError(`Table '${String(table)}' does not exist in schema.`);
+				throw new RangeError(`Table '${table}' does not exist in schema.`);
 			}
 		}
 
 		if (tablesToImport.length === 0) return;
 
-		const transaction = this.#db.transaction(tablesToImport as string[], 'readwrite');
+		const transaction = this.#db.transaction(tablesToImport, 'readwrite');
 
 		return new Promise<void>((resolve, reject) => {
 			transaction.onabort = () => _abortTransaction(transaction.error, reject);
@@ -601,7 +628,7 @@ export class Locality<
 
 			const tablePromises = tablesToImport.map(async (table) => {
 				const store = transaction.objectStore(table);
-				const rows = (dataMap[table] ?? []) as GenericObject[];
+				const rows = (dataMap[table] ?? []) as InferSelectType<Schema[TName]>[];
 
 				if (mode === 'replace') {
 					await new Promise<void>((res, rej) => {
@@ -619,7 +646,7 @@ export class Locality<
 							row,
 							this.#schema[table].columns,
 							this.#keyPaths[table],
-							String(table)
+							table
 						);
 
 						const request =
@@ -649,21 +676,20 @@ export class Locality<
 		const tables = Object.keys(this.#schema) as TName[];
 		if (tables.length === 0) return;
 
-		const transaction = this.#db.transaction(tables as string[], 'readwrite');
+		const transaction = this.#db.transaction(tables, 'readwrite');
 
 		return new Promise<void>((resolve, reject) => {
 			transaction.onabort = () => _abortTransaction(transaction.error, reject);
 			transaction.onerror = () => reject(transaction.error);
 
-			const clearPromises = tables.map(
-				(table) =>
-					new Promise<void>((res, rej) => {
-						const store = transaction.objectStore(table as string);
-						const request = store.clear();
-						request.onsuccess = () => res();
-						request.onerror = () => rej(request.error);
-					})
-			);
+			const clearPromises = tables.map((table) => {
+				return new Promise<void>((res, rej) => {
+					const store = transaction.objectStore(table);
+					const request = store.clear();
+					request.onsuccess = () => res();
+					request.onerror = () => rej(request.error);
+				});
+			});
 
 			Promise.all(clearPromises)
 				.then(() => resolve())
@@ -685,7 +711,7 @@ export class Locality<
 		await this.#readyPromise;
 
 		if (!(table in this.#schema)) {
-			throw new RangeError(`Table '${String(table)}' does not exist in schema.`);
+			throw new RangeError(`Table '${table}' does not exist in schema.`);
 		}
 
 		const nextStores = this.#buildStoresConfig().filter((store) => store.name !== table);
@@ -697,7 +723,7 @@ export class Locality<
 			.then((db) => {
 				this.#db = db;
 				const keyPaths = this.#keyPaths as Record<string, Maybe<string>>;
-				delete keyPaths[String(table)];
+				delete keyPaths[table];
 			})
 			.finally(() => {
 				this.#version = this.#db?.version as Version;
@@ -707,10 +733,10 @@ export class Locality<
 	}
 
 	/** @static Get the list of existing `IndexedDB` databases. */
-	static getDatabaseList() {
+	static async getDatabaseList() {
 		_ensureIndexedDB();
 
-		return _getDBList();
+		return await _getDBList();
 	}
 
 	/** @static Delete an `IndexedDB` database by name. */

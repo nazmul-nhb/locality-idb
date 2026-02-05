@@ -1243,7 +1243,7 @@ await db.export({
 }
 ```
 
-#### `exportToObject(options?: ExportOptions): Promise<ExportData>`
+#### `exportToObject(options?: ExportObjectOptions): Promise<ExportData>`
 
 Exports database data as an object without triggering a download.
 

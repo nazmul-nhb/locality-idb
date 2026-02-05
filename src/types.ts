@@ -596,6 +596,11 @@ export type ExportOptions<T extends string> = {
 	includeMetadata?: boolean;
 };
 
+export type ExportObjectOptions<T extends string> = Omit<
+	ExportOptions<T>,
+	'filename' | 'pretty'
+>;
+
 /** Import options for database `import` method */
 export type ImportOptions<T extends string> = {
 	/** Optional array of table names to import (imports all tables (store) if not specified) */
@@ -604,8 +609,13 @@ export type ImportOptions<T extends string> = {
 	mode?: 'replace' | 'merge' | 'upsert';
 };
 
+/** Exported table data structure */
+export type ExportedTableData<T extends string, S extends SchemaDefinition> = Prettify<{
+	[K in T]: InferSelectType<S[K]>[];
+}>;
+
 /** Exported database data structure */
-export type ExportData = {
+export type ExportData<T extends string, S extends SchemaDefinition> = Prettify<{
 	/** Optional metadata about the export */
 	metadata?: {
 		/** Database name */
@@ -615,11 +625,11 @@ export type ExportData = {
 		/** Export creation time */
 		exportedAt: Timestamp;
 		/** List of exported table names */
-		tables: string[];
+		tables: T[];
 	};
 	/** Actual exported data, mapping table names to arrays of records */
-	data: Record<string, GenericObject[]>;
-};
+	data: ExportedTableData<T, S>;
+}>;
 
 /** Transaction context type providing methods for database operations within a transaction */
 export type TransactionContext<

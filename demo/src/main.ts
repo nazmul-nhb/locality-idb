@@ -65,7 +65,7 @@ type UpdateTodo = InferUpdateType<SchemaType['todos']>;
 
 const db = new Locality({
 	dbName: 'todo-db',
-	version: 37,
+	version: 42,
 	schema,
 });
 
@@ -413,13 +413,14 @@ window.addEventListener('load', async () => {
 	await db.delete('todos').where('task', 'ff').run();
 
 	const exported = await db.exportToObject({
-		pretty: true,
 		includeMetadata: true,
 	});
 
 	console.info(exported);
 
-	// await db.import(exported, { mode: 'replace', tables: ['experiments'] });
+	await db.import(exported, { mode: 'replace', tables: ['experiments'] });
+
+	// await db.dropTable('experiments');
 
 	// Add test button event listener
 	const runTestsBtn = document.getElementById('runTestsBtn') as HTMLButtonElement;
