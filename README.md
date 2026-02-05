@@ -26,6 +26,15 @@
 
 ---
 
+## Why Not Raw IndexedDB?
+
+If you’re weighing using `Locality IDB` vs. the raw `IndexedDB` API:
+
+- **Type safety**: schema-driven types reduce runtime errors.
+- **Query ergonomics**: SQL-like query builder replaces verbose cursor boilerplate.
+- **Validation built-in**: column type checks and custom validators run automatically.
+- **Consistency**: reusable schema + shared helpers keep data access uniform.
+
 ## 📋 Table of Contents
 
 - [Features](#-features)
@@ -56,6 +65,7 @@
   - [Utility Functions](#utility-functions)
   - [Validation](#validation)
 - [Type System](#-type-system)
+- [FAQ / Common Pitfalls](#-faq--common-pitfalls)
 - [License](#-license)
 
 ---
@@ -2322,6 +2332,15 @@ type PagedResult = PageResult<User, null>;
 }
 */
 ```
+
+---
+
+## ❓ FAQ / Common Pitfalls
+
+- **Schema changes aren’t automatic**: any schema change should bump the database `version` so the upgrade path runs.
+- **Index queries require indexes**: `where('field', value)` only works for primary keys or fields defined with `.index()` or `.unique()`.
+- **Predicate filters are in-memory**: `where((row) => ...)` filters client-side after fetching rows, so prefer indexes for large datasets.
+- **IndexedDB is browser-only**: calls will fail in SSR/Node environments without a shim.
 
 ---
 
