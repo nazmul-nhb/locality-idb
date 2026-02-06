@@ -36,8 +36,8 @@ importers:
         specifier: ^17.3.0
         version: 17.3.0
       nhb-toolbox:
-        specifier: ^4.28.66
-        version: 4.28.66
+        specifier: ^4.28.70
+        version: 4.28.70
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
@@ -819,8 +819,8 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  nhb-toolbox@4.28.66:
-    resolution: {integrity: sha512-lqXsfMr1XpJa49MhziRdIvk83upNdur0HfVXa6sdnVE3Tqqns1XFvlupUA+KTJJmks3kycQ+7ZQFDS9A00kcxQ==}
+  nhb-toolbox@4.28.70:
+    resolution: {integrity: sha512-/YAsVEwMhzK4Q8Zl3t0B033ojuQEx4yVYv90gWvrF+ZkZbRw1WcRxd2IxzpwWD/xSsmgIqIDSGbXE87rquoQVQ==}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -923,8 +923,8 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  semver@7.7.3:
-    resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
+  semver@7.7.4:
+    resolution: {integrity: sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -1299,7 +1299,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.54.0
       debug: 4.4.3
       minimatch: 9.0.5
-      semver: 7.7.3
+      semver: 7.7.4
       tinyglobby: 0.2.15
       ts-api-utils: 2.4.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -1674,7 +1674,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  nhb-toolbox@4.28.66: {}
+  nhb-toolbox@4.28.70: {}
 
   optionator@0.9.4:
     dependencies:
@@ -1755,7 +1755,7 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.0.0-beta.53
       '@rolldown/binding-win32-x64-msvc': 1.0.0-beta.53
 
-  semver@7.7.3: {}
+  semver@7.7.4: {}
 
   shebang-command@2.0.0:
     dependencies:
