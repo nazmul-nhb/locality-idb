@@ -335,7 +335,7 @@ const schema = defineSchema({
 > - `onUpdate()` modifier can be used to auto-update values on update operations (e.g. `updatedAt` timestamp).
 > - Type extensions for `uuid` and `timestamp` are not applicable since they are already typed.
 > - For custom UUID versions, use [`uuid`](https://toolbox.nazmul-nhb.dev/docs/utilities/hash/uuid) utility from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox).
-> - For custom timestamp formats, use date libraries like [`Chronos`](https://toolbox.nazmul-nhb.dev/docs/classes/Chronos) (from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox)) or [`date-fns`](https://www.npmjs.com/package/date-fns) to generate ISO 8601 strings.
+> - For custom timestamp formats, use date libraries like [`Chronos`](https://toolbox.nazmul-nhb.dev/docs/classes/Chronos) or [`getTimestamp`](https://toolbox.nazmul-nhb.dev/docs/utilities/date/getTimestamp) (from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox)); or [`date-fns`](https://www.npmjs.com/package/date-fns) to generate ISO 8601 strings.
 
 ##### Boolean Types (`bool`, `boolean`)
 
@@ -2225,16 +2225,13 @@ type UserRow = $InferRow<typeof schema.users.columns>;
 
 ### Branded Types
 
-Locality IDB uses branded types for better type safety:
+Locality IDB uses branded type for UUIDv4 for better type safety:
 
 ```typescript
-import type { UUID, Timestamp } from 'locality-idb';
+import type { UUID } from 'locality-idb';
 
 // UUID types are branded with their version
 type UserId = UUID<'v4'>; // Branded UUID v4
-
-// Timestamps are branded ISO 8601 strings
-type CreatedAt = Timestamp; // Branded timestamp string
 ```
 
 ### Helper Types

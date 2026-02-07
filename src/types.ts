@@ -478,7 +478,8 @@ export type $InferTimestamp<T extends ColumnDefinition> = {
 }[keyof T];
 
 /** Timestamp string type in ISO 8601 format */
-export type Timestamp = Branded<string, 'Timestamp'>;
+export type Timestamp =
+	`${number}-${number}-${number}T${number}:${number}:${number}.${number}${'Z' | `${'+' | '-'}${number}:${number}`}`;
 
 /** Sort direction type for ordering queries */
 export type SortDirection = 'asc' | 'desc';

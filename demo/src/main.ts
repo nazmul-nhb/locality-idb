@@ -2,14 +2,22 @@ import './style.css';
 
 import './test';
 
-import { isValidArray } from 'nhb-toolbox';
+import { getTimestamp, isValidArray } from 'nhb-toolbox';
 import { Chronos } from 'nhb-toolbox/chronos';
 import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 import { Stylog } from 'nhb-toolbox/stylog';
 
-import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
-import { column, defineSchema, deleteDB, getTimestamp, Locality, uuidV4 } from 'locality';
+import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
+import {
+	column,
+	defineSchema,
+	deleteDB,
+	// getTimestamp,
+	Locality,
+	table,
+	uuidV4,
+} from 'locality';
 import { runAllTests } from './transaction-export';
 
 Chronos.register(timeZonePlugin);
@@ -23,6 +31,17 @@ const clearCompletedBtn = document.getElementById('clearCompleted') as HTMLButto
 const statsCompleted = document.getElementById('statsCompleted') as HTMLSpanElement;
 const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 
+const customSchema = {
+	test: table('test', {
+		serial: column.int().pk().auto(),
+		task: column.text().unique(),
+		completed: column.bool().default(false),
+		uuid: column.uuid().default(uuid({ version: 'v6' })),
+		timestamp: column.timestamp().optional(),
+		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
+	}),
+};
+
 const schema = defineSchema({
 	todos: {
 		serial: column.int().pk().auto(),
@@ -30,8 +49,8 @@ const schema = defineSchema({
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
-		// .default(new Chronos().toLocalISOString() as Timestamp)
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
+		// .default(new Chronos().toLocalISOString())
+		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
 		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
 		url: column.url().optional(),
 	},
@@ -45,6 +64,8 @@ const schema = defineSchema({
 		email: column.email().optional(),
 		url: column.url().optional(),
 	},
+
+	test: customSchema.test.columns,
 });
 
 type SchemaType = typeof schema;
@@ -100,7 +121,7 @@ const renderTodos = () => {
 		checkbox.addEventListener('change', () =>
 			toggleTodo(todo.serial!, {
 				completed: !todo.completed,
-				// updatedAt: new Chronos().toLocalISOString() as Timestamp,
+				// updatedAt: new Chronos().toLocalISOString(),
 			})
 		);
 

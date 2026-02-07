@@ -1,6 +1,6 @@
 {
   "name": "locality-idb",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "description": "SQL-like query builder for IndexedDB with Drizzle-style API",
   "type": "module",
   "sideEffects": false,
@@ -91,7 +91,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.3.0",
     "nhb-scripts": "^1.9.2",
-    "nhb-toolbox": "^4.28.71",
+    "nhb-toolbox": "^4.28.80",
     "prettier": "^3.8.1",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
