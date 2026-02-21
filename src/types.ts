@@ -528,9 +528,9 @@ export type PrimaryKeyType<S extends Table> = InferSelectType<S>[$InferPrimaryKe
 	S['columns']
 >];
 
-export type IndexKeyType<S extends Table> = InferSelectType<S>[$InferUnique<S['columns']>];
+export type IndexKeyType<S extends Table> = InferSelectType<S>[$InferIndex<S['columns']>];
 
-export type UniqueKeyType<S extends Table> = InferSelectType<S>[$InferIndex<S['columns']>];
+export type UniqueKeyType<S extends Table> = InferSelectType<S>[$InferUnique<S['columns']>];
 
 /** Column type strings used in {@link Column} definitions */
 export type TypeName = LooseLiteral<
