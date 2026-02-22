@@ -1257,6 +1257,13 @@ await db.export({
 });
 ```
 
+> **Note:**
+>
+> - Automatically triggers a file download in the browser.
+> - Exported data includes all records from specified tables.
+> - Use for backup, debugging, or data migration.
+> - File download works in browser environments only.
+
 **Exported JSON Structure:**
 
 ```typescript
@@ -1332,13 +1339,6 @@ Drops an object store by name and bumps the database version internally.
 ```typescript
 await db.dropTable('users');
 ```
-
-> **Note:**
->
-> - Automatically triggers a file download in the browser.
-> - Exported data includes all records from specified tables.
-> - Use for backup, debugging, or data migration.
-> - File download works in browser environments only.
 
 ---
 
