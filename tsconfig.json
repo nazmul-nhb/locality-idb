@@ -15,6 +15,9 @@
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,
 		"skipLibCheck": true,
+		"paths": {
+			"*/": ["./src/*"]
+		},
 		"pretty": true,
 		"checkJs": true,
 		"useUnknownInCatchVariables": true

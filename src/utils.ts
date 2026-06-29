@@ -39,13 +39,13 @@ export function uuidV4(uppercase = false): UUID<'v4'> {
  */
 export function getTimestamp(value?: string | number | Date): Timestamp {
 	let date =
-		value instanceof Date ? value : (
-			new Date(
-				isNonEmptyString(value) ? value.replace(/['"]/g, '') : (value ?? Date.now())
-			)
-		);
+		value instanceof Date
+			? value
+			: new Date(
+					isNonEmptyString(value) ? value.replace(/['"]/g, '') : (value ?? Date.now())
+				);
 
-	if (isNaN(date.getTime())) {
+	if (Number.isNaN(date.getTime())) {
 		date = new Date();
 	}
 

@@ -522,15 +522,14 @@ export class Locality<
 
 		if (tablesToExport.length === 0) {
 			return {
-				metadata:
-					includeMetadata ?
-						{
+				metadata: includeMetadata
+					? {
 							dbName: this.#name,
 							version: this.version,
 							exportedAt: getTimestamp(),
 							tables: [],
 						}
-					:	undefined,
+					: undefined,
 				data: {} as ExportedTableData<TName, Schema>,
 			};
 		}

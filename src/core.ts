@@ -49,11 +49,13 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		this[IsPrimaryKey] = true;
 		// return this as this & { [IsPrimaryKey]: true };
 
-		return new PKColumn<T, TName>(this[ColumnType], this) as TName extends (
-			'int' | 'integer' | 'float' | 'number'
-		) ?
-			this & PKColumn<T, TName> & { [IsPrimaryKey]: true }
-		:	this & Omit<PKColumn<T, TName>, 'auto'> & { [IsPrimaryKey]: true };
+		return new PKColumn<T, TName>(this[ColumnType], this) as TName extends
+			| 'int'
+			| 'integer'
+			| 'float'
+			| 'number'
+			? this & PKColumn<T, TName> & { [IsPrimaryKey]: true }
+			: this & Omit<PKColumn<T, TName>, 'auto'> & { [IsPrimaryKey]: true };
 	}
 
 	/**

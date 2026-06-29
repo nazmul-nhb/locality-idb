@@ -6,7 +6,6 @@ export default defineConfig({
 	dts: true,
 	exports: true,
 	unbundle: false,
-	noExternal: ['nhb-toolbox', 'nhb-toolbox/hash'],
+	deps: { onlyBundle: ['nhb-toolbox'] },
 	treeshake: true,
-	inlineOnly: false,
 });

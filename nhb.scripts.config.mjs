@@ -1,20 +1,10 @@
+// @ts-check
+
 import { defineScriptConfig } from 'nhb-scripts';
 
 export default defineScriptConfig({
-	format: {
-		args: ['--write'],
-		files: [
-			'src',
-			'eslint.config.mjs',
-			'nhb.scripts.config.mjs',
-			'demo/src',
-			'demo/eslint.config.mjs',
-		],
-		ignorePath: '.prettierignore',
-	},
-	lint: { folders: ['src', 'demo/src'] },
 	commit: {
-		runFormatter: true,
+		runFormatter: false,
 		emojiBeforePrefix: true,
 		wrapPrefixWith: '`',
 		commitTypes: {

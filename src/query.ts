@@ -5,7 +5,7 @@ import {
 	isUndefined,
 	sortAnArray,
 } from 'nhb-toolbox';
-import { type Table } from './core';
+import type { Table } from './core';
 import { _abortTransaction } from './helpers';
 import type {
 	$InferIndex,
@@ -390,10 +390,10 @@ export class SelectQuery<
 			}
 
 			if (limit === 0) {
-				resolve({ items: [] as T[], nextCursor: options.cursor ?? null } as PageResult<
-					T,
-					Selection
-				>);
+				resolve({
+					items: [] as T[],
+					nextCursor: options.cursor ?? null,
+				} as PageResult<T, Selection>);
 				return;
 			}
 
@@ -420,9 +420,9 @@ export class SelectQuery<
 
 			if (!isUndefined(options.cursor)) {
 				range =
-					direction === 'prev' ?
-						IDBKeyRange.upperBound(options.cursor, true)
-					:	IDBKeyRange.lowerBound(options.cursor, true);
+					direction === 'prev'
+						? IDBKeyRange.upperBound(options.cursor, true)
+						: IDBKeyRange.lowerBound(options.cursor, true);
 			}
 
 			const request = source.openCursor(range ?? null, direction);
@@ -601,23 +601,26 @@ export class SelectQuery<
 	 * - To find by index, use {@link findByIndex} instead.
 	 */
 	async findByPk(
-		key: $InferPrimaryKey<Tbl['columns']> extends keyof T ?
-			T[$InferPrimaryKey<Tbl['columns']>]
-		:	T[keyof T]
+		key: $InferPrimaryKey<Tbl['columns']> extends keyof T
+			? T[$InferPrimaryKey<Tbl['columns']>]
+			: T[keyof T]
 	): Promise<
-		S extends null ? T | null
-		: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S> | null
-		: never
+		S extends null
+			? T | null
+			: S extends Partial<Record<keyof T, boolean>>
+				? SelectFields<T, S> | null
+				: never
 	> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
 			const request = store.get(key) as IDBRequest<T>;
 
-			type ResolvedData =
-				S extends null ? T | null
-				: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S> | null
-				: never;
+			type ResolvedData = S extends null
+				? T | null
+				: S extends Partial<Record<keyof T, boolean>>
+					? SelectFields<T, S> | null
+					: never;
 
 			request.onsuccess = () => {
 				const result = request.result as Maybe<T>;
@@ -655,9 +658,11 @@ export class SelectQuery<
 		indexName: IdxKey,
 		query: T[IdxKey] | IDBKeyRange
 	): Promise<
-		S extends null ? T[]
-		: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S>[]
-		: never
+		S extends null
+			? T[]
+			: S extends Partial<Record<keyof T, boolean>>
+				? SelectFields<T, S>[]
+				: never
 	> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
@@ -685,9 +690,11 @@ export class SelectQuery<
 				}
 
 				resolve(
-					this.#applyPipeline(results) as S extends null ? T[]
-					: S extends Partial<Record<keyof T, boolean>> ? SelectFields<T, S>[]
-					: never
+					this.#applyPipeline(results) as S extends null
+						? T[]
+						: S extends Partial<Record<keyof T, boolean>>
+							? SelectFields<T, S>[]
+							: never
 				);
 			};
 
@@ -720,7 +727,10 @@ export class SelectQuery<
 				const request = store.getAll() as IDBRequest<T[]>;
 
 				request.onsuccess = () => {
-					const filtered = request.result.filter(this.#whereCondition!);
+					const filtered = request.result.filter(
+						this.#whereCondition as WherePredicate<T>
+					);
+
 					resolve(filtered.length);
 				};
 
@@ -838,9 +848,9 @@ export class InsertQuery<
 
 									if (readCompleted === insertedKeys.length) {
 										resolve(
-											(this[IsArray] ? insertedDocs : (
-												insertedDocs[0]
-											)) as Return
+											(this[IsArray]
+												? insertedDocs
+												: insertedDocs[0]) as Return
 										);
 									}
 								};

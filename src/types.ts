@@ -79,16 +79,20 @@ export type Numeric = number | `${number}`;
 export type List<T = any> = ReadonlyArray<T>;
 
 /** Turns a union into an intersection */
-export type $UnionToIntersection<U> =
-	(U extends any ? (arg: U) => void : never) extends (arg: infer I) => void ? I : never;
+export type $UnionToIntersection<U> = (U extends any ? (arg: U) => void : never) extends (
+	arg: infer I
+) => void
+	? I
+	: never;
 
 /** Gets the "last" item of a union */
 type $LastOf<T> =
 	$UnionToIntersection<T extends any ? () => T : never> extends () => infer R ? R : never;
 
 /** Converts a union to a tuple */
-type $UnionToTuple<T, L = $LastOf<T>> =
-	[T] extends [never] ? [] : [...$UnionToTuple<Exclude<T, L>>, L];
+type $UnionToTuple<T, L = $LastOf<T>> = [T] extends [never]
+	? []
+	: [...$UnionToTuple<Exclude<T, L>>, L];
 
 /**
  * * Converts a type into a tuple form.
@@ -125,8 +129,9 @@ export type Tuple<T> = [T] extends [never] ? [] : $UnionToTuple<T>;
  * type T1 = ArrayToTuple<(1 | 2 | 3)[]>; // [1, 2, 3]
  * type T2 = ArrayToTuple<never[]>; // []
  */
-export type ArrayToTuple<T extends readonly unknown[]> =
-	T[number] extends infer U ? $UnionToTuple<U> : never;
+export type ArrayToTuple<T extends readonly unknown[]> = T[number] extends infer U
+	? $UnionToTuple<U>
+	: never;
 
 /** Represents a value that may or may not be present. */
 export type Maybe<T> = T | undefined;
@@ -222,23 +227,19 @@ export type AdvancedTypes =
  *
  * type Params = FirstOverloadParams<Fn>; // [a: number, b: string]
  */
-export type FirstOverloadParams<T> =
-	T extends (
-		{
-			(a1: infer P1, ...args: infer P2): any;
-			(...args: any[]): any;
-		}
-	) ?
-		[P1, ...P2]
-	: T extends (
-		{
-			(...args: infer P): any;
-			(...args: any[]): any;
-		}
-	) ?
-		P
-	: T extends (...args: infer P) => any ? P
-	: never;
+export type FirstOverloadParams<T> = T extends {
+	(a1: infer P1, ...args: infer P2): any;
+	(...args: any[]): any;
+}
+	? [P1, ...P2]
+	: T extends {
+				(...args: infer P): any;
+				(...args: any[]): any;
+			}
+		? P
+		: T extends (...args: infer P) => any
+			? P
+			: never;
 
 /**
  * * Maps all values of object `T` to a fixed type `R`, keeping original keys.
@@ -257,12 +258,11 @@ export type MapObjectValues<T, R> = {
 /**
  * Determines if a selection object has any true values
  */
-type HasTrueValues<Selection extends Partial<Record<any, boolean>>> =
-	{
-		[K in keyof Selection]: Selection[K] extends true ? true : never;
-	}[keyof Selection] extends never ?
-		false
-	:	true;
+type HasTrueValues<Selection extends Partial<Record<any, boolean>>> = {
+	[K in keyof Selection]: Selection[K] extends true ? true : never;
+}[keyof Selection] extends never
+	? false
+	: true;
 
 /**
  * Extracts only the selected fields from an object.
@@ -274,19 +274,19 @@ export type SelectFields<
 	T,
 	Selection extends Partial<Record<keyof T, boolean>> = Record<keyof T, true>,
 > = Prettify<
-	HasTrueValues<Selection> extends true ?
-		{
-			[K in keyof Selection as Selection[K] extends true ? K : never]: K extends keyof T ?
-				T[K]
-			:	never;
-		}
-	:	{
-			[K in keyof T as K extends keyof Selection ?
-				Selection[K] extends false ?
-					never
-				:	K
-			:	K]: T[K];
-		}
+	HasTrueValues<Selection> extends true
+		? {
+				[K in keyof Selection as Selection[K] extends true
+					? K
+					: never]: K extends keyof T ? T[K] : never;
+			}
+		: {
+				[K in keyof T as K extends keyof Selection
+					? Selection[K] extends false
+						? never
+						: K
+					: K]: T[K];
+			}
 >;
 
 /** Callback function type for cursor-based queries */
@@ -312,16 +312,19 @@ export type PageResult<T, Selection extends Partial<Record<keyof T, boolean>> | 
 };
 
 /** Extract only primitive keys from an object, including nested dot-notation keys. */
-export type NestedPrimitiveKey<T> =
-	T extends AdvancedTypes ? never
-	: T extends GenericObject ?
-		{
-			[K in keyof T & string]: T[K] extends Function ? never
-			: T[K] extends NormalPrimitive ? K
-			: T[K] extends GenericObject ? `${K}.${NestedPrimitiveKey<T[K]>}`
-			: never;
-		}[keyof T & string]
-	:	never;
+export type NestedPrimitiveKey<T> = T extends AdvancedTypes
+	? never
+	: T extends GenericObject
+		? {
+				[K in keyof T & string]: T[K] extends Function
+					? never
+					: T[K] extends NormalPrimitive
+						? K
+						: T[K] extends GenericObject
+							? `${K}.${NestedPrimitiveKey<T[K]>}`
+							: never;
+			}[keyof T & string]
+		: never;
 
 /** Generic object but with `any` value */
 export type GenericObject = Record<string, any>;
@@ -419,23 +422,25 @@ export type $InferPrimaryKey<T extends ColumnDefinition> = {
 }[keyof T];
 
 /** Counts the number of primary keys in a column definition. */
-type $CountPrimaryKeys<T extends ColumnDefinition> =
-	{
-		[K in keyof T]: T[K] extends { [IsPrimaryKey]: true } ? K : never;
-	}[keyof T] extends infer U ?
-		U extends never ? 0
-		: [U] extends [infer Single] ?
-			Single extends keyof T ?
-				1
-			:	never
-		:	2
-	:	never;
+type $CountPrimaryKeys<T extends ColumnDefinition> = {
+	[K in keyof T]: T[K] extends { [IsPrimaryKey]: true } ? K : never;
+}[keyof T] extends infer U
+	? U extends never
+		? 0
+		: [U] extends [infer Single]
+			? Single extends keyof T
+				? 1
+				: never
+			: 2
+	: never;
 
 /** Validates that a column definition has exactly one primary key. */
 export type $ValidateSinglePK<T extends ColumnDefinition> =
-	$CountPrimaryKeys<T> extends 1 ? T
-	: $CountPrimaryKeys<T> extends 0 ? 'Error: Schema must have exactly one primary key'
-	: 'Error: Schema can only have one primary key';
+	$CountPrimaryKeys<T> extends 1
+		? T
+		: $CountPrimaryKeys<T> extends 0
+			? 'Error: Schema must have exactly one primary key'
+			: 'Error: Schema can only have one primary key';
 
 /** Finds the field name with partial key. */
 export type $InferOptional<T extends ColumnDefinition> = {
@@ -461,20 +466,20 @@ export type $InferIndex<T extends ColumnDefinition> = {
  * Finds the field name with {@link UUID} type.
  */
 export type $InferUUID<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends Column<infer C, TypeName> ?
-		C extends $UUID ?
-			K
-		:	never
-	:	never;
+	[K in keyof T]: T[K] extends Column<infer C, TypeName>
+		? C extends $UUID
+			? K
+			: never
+		: never;
 }[keyof T];
 
 /** Finds the field name with {@link Timestamp} type. */
 export type $InferTimestamp<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends Column<infer C, TypeName> ?
-		C extends Timestamp ?
-			K
-		:	never
-	:	never;
+	[K in keyof T]: T[K] extends Column<infer C, TypeName>
+		? C extends Timestamp
+			? K
+			: never
+		: never;
 }[keyof T];
 
 /** Timestamp string type in ISO 8601 format */
@@ -496,17 +501,17 @@ export type InferInsertType<T extends Table> = Prettify<
 		| $InferTimestamp<T['columns']>
 		| $InferUUID<T['columns']>
 	> & {
-		[K in $InferNullable<T['columns']>]: K extends keyof $InferRow<T['columns']> ?
-			$InferRow<T['columns']>[K] | null
-		:	never;
+		[K in $InferNullable<T['columns']>]: K extends keyof $InferRow<T['columns']>
+			? $InferRow<T['columns']>[K] | null
+			: never;
 	} & {
 		[K in
 			| $InferAutoInc<T['columns']>
 			| $InferDefault<T['columns']>
 			| $InferTimestamp<T['columns']>
-			| $InferUUID<T['columns']>]?: K extends keyof $InferRow<T['columns']> ?
-			$InferRow<T['columns']>[K]
-		:	never;
+			| $InferUUID<T['columns']>]?: K extends keyof $InferRow<T['columns']>
+			? $InferRow<T['columns']>[K]
+			: never;
 	}
 >;
 
@@ -517,11 +522,7 @@ export type InferUpdateType<T extends Table> = Prettify<
 
 /** Creates a type for select operations. */
 export type InferSelectType<S extends Table> = Prettify<
-	S extends infer T ?
-		T extends Table<infer C> ?
-			$InferRow<C>
-		:	never
-	:	never
+	S extends infer T ? (T extends Table<infer C> ? $InferRow<C> : never) : never
 >;
 
 export type PrimaryKeyType<S extends Table> = InferSelectType<S>[$InferPrimaryKey<

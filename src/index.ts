@@ -1,14 +1,7 @@
-export type * from './types';
+export { Locality } from './client';
 
 // ! Export only class types to avoid unexpected side effects
 export type { Column, PKColumn, Table } from './core';
-
-export { Locality } from './client';
-export { openDBWithStores } from './factory';
-export { column, defineSchema, table } from './schema';
-export { deleteDB, getTimestamp, isEmail, isTimestamp, isURL, isUUID, uuidV4 } from './utils';
-export { validateColumnType } from './validators';
-
 // ! Export symbols for advanced usage
 export {
 	ColumnType,
@@ -22,3 +15,8 @@ export {
 	OnUpdate,
 	ValidateFn,
 } from './core';
+export { openDBWithStores } from './factory';
+export { column, defineSchema, table } from './schema';
+export type * from './types';
+export { deleteDB, getTimestamp, isEmail, isTimestamp, isURL, isUUID, uuidV4 } from './utils';
+export { validateColumnType } from './validators';
