@@ -1,4 +1,4 @@
-import { isNonEmptyString } from 'nhb-toolbox';
+import { isNonEmptyString } from 'toolbox-x/guards';
 import type { ColumnDefinition, TypeName, UpdaterFn, ValidatorFn } from './types';
 
 /** Symbol key for column data type */

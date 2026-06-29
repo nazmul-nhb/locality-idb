@@ -1,10 +1,5 @@
-import {
-	isFunction,
-	isNonEmptyString,
-	isNotEmptyObject,
-	isUndefined,
-	sortAnArray,
-} from 'nhb-toolbox';
+import { sortAnArray } from 'toolbox-x';
+import { isFunction, isNonEmptyString, isNotEmptyObject, isUndefined } from 'toolbox-x/guards';
 import type { Table } from './core';
 import { _abortTransaction } from './helpers';
 import type {

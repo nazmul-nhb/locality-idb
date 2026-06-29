@@ -34,7 +34,13 @@
 		"bracketSpacing": true,
 		"expand": "auto",
 		"useEditorconfig": true,
-		"includes": ["**", "!**/dist", "!**/node_modules", "!**/.estimator", "!**/*.md"]
+		"includes": [
+			"**",
+			"!**/dist",
+			"!**/node_modules",
+			"!**/.estimator",
+			"!**/*.md"
+		]
 	},
 	"linter": {
 		"enabled": true,
@@ -172,7 +178,10 @@
 	},
 	"overrides": [
 		{
-			"includes": ["**/*.mts", "**/*.cts"],
+			"includes": [
+				"**/*.mts",
+				"**/*.cts"
+			],
 			"linter": {
 				"rules": {
 					"complexity": {
@@ -208,7 +217,11 @@
 			}
 		},
 		{
-			"includes": ["src/**/*types.ts", "src/**/types/*.ts", "**/*.extensions.ts"],
+			"includes": [
+				"src/**/*types.ts",
+				"src/**/types/*.ts",
+				"**/*.extensions.ts"
+			],
 			"linter": {
 				"rules": {
 					"complexity": {
@@ -218,7 +231,11 @@
 			}
 		},
 		{
-			"includes": ["__ideas__/**/*.ts", "__*.ts", "src/**/*log.ts"],
+			"includes": [
+				"__ideas__/**/*.ts",
+				"__*.ts",
+				"src/**/*log.ts"
+			],
 			"linter": {
 				"rules": {
 					"correctness": {
@@ -231,7 +248,10 @@
 			}
 		},
 		{
-			"includes": ["src/**/*types.ts", "src/**/*interfaces.ts"],
+			"includes": [
+				"src/**/*types.ts",
+				"src/**/*interfaces.ts"
+			],
 			"linter": {
 				"rules": {
 					"correctness": {
@@ -241,17 +261,24 @@
 			}
 		},
 		{
-			"includes": ["src/**/*types.ts", "src/**/types/*.ts", "__ideas__/**/*.ts"],
+			"includes": [
+				"src/**/*types.ts",
+				"src/**/types/*.ts",
+				"__ideas__/**/*.ts"
+			],
 			"linter": {
 				"rules": {
 					"suspicious": {
-						"noExplicitAny": "info"
+						"noExplicitAny": "off"
 					}
 				}
 			}
 		},
 		{
-			"includes": ["**/*.js", "**/*.cjs"],
+			"includes": [
+				"**/*.js",
+				"**/*.cjs"
+			],
 			"linter": {
 				"rules": {
 					"style": {
@@ -261,7 +288,9 @@
 			}
 		},
 		{
-			"includes": ["**/*/plugins/*.ts"],
+			"includes": [
+				"**/*/plugins/*.ts"
+			],
 			"linter": {
 				"rules": {
 					"complexity": {
@@ -272,7 +301,9 @@
 		}
 	],
 	"assist": {
-		"includes": ["**"],
+		"includes": [
+			"**"
+		],
 		"enabled": true,
 		"actions": {
 			"source": {

@@ -1,6 +1,6 @@
 # Locality IDB
 
-> **SQL**-like query builder for `IndexedDB` with `Drizzle`-style API
+> **SQL**-like query builder for `IndexedDB` with chainable API.
 
 <!-- markdownlint-disable-file MD024 -->
 
@@ -10,9 +10,7 @@
 ![npm downloads](https://img.shields.io/npm/dm/locality-idb)
 ![bundle size](https://deno.bundlejs.com/badge?q=locality-idb)
 ![license](https://img.shields.io/npm/l/locality-idb)
-<!-- ![beta](https://img.shields.io/badge/status-beta-orange) -->
 <!-- ![bundle](https://img.shields.io/bundlephobia/minzip/locality-idb) -->
-<!-- ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) -->
 
 [API Reference](#-api-reference) • [Examples](#-usage) • [Contributing](CONTRIBUTING.md)
 
@@ -23,6 +21,12 @@
 [**IndexedDB**](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB) is a powerful browser-native database, but its low-level API can be cumbersome and complex to work with. `Locality IDB` simplifies `IndexedDB` interactions by providing a modern, type-safe, and SQL-like query builder inspired by [**Drizzle ORM**](https://github.com/drizzle-team/drizzle-orm).
 
 </div>
+
+> [!WARNING]
+>
+> **Breaking Changes in v2.0**
+>
+> - Renamed `export()` and `import()` methods to `$export()` and `$import()` to avoid conflicts with the built-in `export` and `import` keywords when using bundler and build tools like `Vite 8.x.x` and other potential tools.
 
 ---
 
@@ -334,8 +338,8 @@ const schema = defineSchema({
 > - Auto-generated values are generated at runtime during insert operations.
 > - `onUpdate()` modifier can be used to auto-update values on update operations (e.g. `updatedAt` timestamp).
 > - Type extensions for `uuid` and `timestamp` are not applicable since they are already typed.
-> - For custom UUID versions, use [`uuid`](https://toolbox.nazmul-nhb.dev/docs/utilities/hash/uuid) utility from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox).
-> - For custom timestamp formats, use date libraries like [`Chronos`](https://toolbox.nazmul-nhb.dev/docs/classes/Chronos) or [`getTimestamp`](https://toolbox.nazmul-nhb.dev/docs/utilities/date/getTimestamp) (from [`nhb-toolbox`](https://www.npmjs.com/package/nhb-toolbox)); or [`date-fns`](https://www.npmjs.com/package/date-fns) to generate ISO 8601 strings.
+> - For custom UUID versions, use [`uuid`](https://toolbox-x.nazmul-nhb.dev/docs/utils/hash/uuid#uuid) utility from [`toolbox-x`](https://www.npmjs.com/package/toolbox-x).
+> - For custom timestamp formats, use date utilities from libraries like [`chronos-date`](https://chronos.nazmul-nhb.dev/) (e.g. [`getTimestamp`](https://chronos.nazmul-nhb.dev/docs/utils/get-timestamp#gettimestamp)) to generate ISO 8601 strings.
 
 ##### Boolean Types (`bool`, `boolean`)
 
@@ -845,7 +849,7 @@ Export your database data as JSON for backup, migration, or debugging purposes. 
 
 ```typescript
 // Export entire database with pretty-printed JSON
-await db.export();
+await db.$export();
 // Downloads: my-database-2026-02-04T10-30-45-123Z.json
 ```
 
@@ -853,7 +857,7 @@ await db.export();
 
 ```typescript
 // Export only users and posts tables
-await db.export({
+await db.$export({
   tables: ['users', 'posts'],
   filename: 'users-posts-backup.json',
 });
@@ -863,7 +867,7 @@ await db.export({
 
 ```typescript
 // Export with custom configuration
-await db.export({
+await db.$export({
   tables: ['users'], // Optional: specific tables
   filename: 'users-export.json', // Optional: custom filename
   pretty: false, // Optional: compact JSON (default: true)
@@ -914,19 +918,19 @@ Import previously exported data or raw table data. Supports `merge`, `replace`, 
 const exported = await db.exportToObject();
 
 // Merge into existing tables (default)
-await db.import(exported);
+await db.$import(exported);
 ```
 
 #### Replace Existing Data
 
 ```typescript
-await db.import(exported, { mode: 'replace' });
+await db.$import(exported, { mode: 'replace' });
 ```
 
 #### Upsert Records
 
 ```typescript
-await db.import(exported, { mode: 'upsert' });
+await db.$import(exported, { mode: 'upsert' });
 ```
 
 ### Cursor Pagination
@@ -1223,7 +1227,7 @@ await db.transaction(['users', 'posts'], async (ctx) => {
 > - Only tables specified in the `tables` array can be accessed within the transaction.
 > - Transactions use IndexedDB's native transaction mechanism.
 
-#### `export(options?: ExportOptions): Promise<void>`
+#### `$export(options?: ExportOptions): Promise<void>`
 
 Exports database data as a JSON file and triggers a browser download.
 
@@ -1241,17 +1245,17 @@ Exports database data as a JSON file and triggers a browser download.
 
 ```typescript
 // Export all tables with default settings
-await db.export();
+await db.$export();
 
 // Export specific tables with custom filename
-await db.export({
+await db.$export({
   tables: ['users', 'posts'],
   filename: 'backup-2026-02-04.json',
   pretty: true,
 });
 
 // Export without metadata in compact format
-await db.export({
+await db.$export({
   pretty: false,
   includeMetadata: false,
 });
@@ -1294,7 +1298,7 @@ type ExportData<T extends string, S extends SchemaDefinition> = {
 
 Exports database data as an object without triggering a download.
 
-**Parameters:** Same as [`export()`](#exportoptions-exportoptions-promisevoid), except `filename` and `pretty` are omitted.
+**Parameters:** Same as [`$export()`](#exportoptions-exportoptions-promisevoid), except `filename` and `pretty` are omitted.
 
 **Returns:** Promise that resolves to an `ExportData` object.
 
@@ -1304,7 +1308,7 @@ Exports database data as an object without triggering a download.
 const exported = await db.exportToObject();
 ```
 
-#### `import(data: ExportData | ExportedTableData, options?: ImportOptions): Promise<void>`
+#### `$import(data: ExportData | ExportedTableData, options?: ImportOptions): Promise<void>`
 
 Imports database data using merge, replace, or upsert modes.
 
@@ -1317,7 +1321,7 @@ Imports database data using merge, replace, or upsert modes.
 **Example:**
 
 ```typescript
-await db.import(exported, { mode: 'replace' });
+await db.$import(exported, { mode: 'replace' });
 ```
 
 > **Note:** `merge` uses `add()` under the hood, so primary key or unique conflicts will abort the transaction.
@@ -2351,15 +2355,11 @@ type PagedResult = PageResult<User, null>;
 ## 🔗 Links
 
 - **GitHub**: [nazmul-nhb/locality-idb](https://github.com/nazmul-nhb/locality-idb)
-- **npm**: [locality-idb](https://www.npmjs.com/package/locality-idb)
+- **NPM Registry**: [locality-idb](https://www.npmjs.com/package/locality-idb)
 - **Author**: [Nazmul Hassan](https://nazmul-nhb.dev)
 
 ---
 
-<div align="center">
-
 **Made with ❤️ by [Nazmul Hassan](https://nazmul-nhb.dev)**
 
 If you find this package useful, please consider giving it a ⭐ on [GitHub](https://github.com/nazmul-nhb/locality-idb)!
-
-</div>

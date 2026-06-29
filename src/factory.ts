@@ -1,4 +1,4 @@
-import { isNumber } from 'nhb-toolbox';
+import { isNumber } from 'toolbox-x/guards';
 import { _abortTransaction, _ensureIndexedDB } from './helpers';
 import type { StoreConfig } from './types';
 

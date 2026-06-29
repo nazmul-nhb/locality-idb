@@ -464,15 +464,15 @@ export class Locality<
 	 * });
 	 *
 	 * // Export all tables pretty-printed with default filename
-	 * await db.export();
+	 * await db.$export();
 	 *
 	 * // Export specific tables pretty-printed with custom filename
-	 * await db.export({ tables: ['users'], filename: 'users-backup.json' });
+	 * await db.$export({ tables: ['users'], filename: 'users-backup.json' });
 	 *
 	 * // Export with raw JSON
-	 * await db.export({ pretty: false });
+	 * await db.$export({ pretty: false });
 	 */
-	async export(options?: ExportOptions<TName>): Promise<void> {
+	async $export(options?: ExportOptions<TName>): Promise<void> {
 		const { filename, pretty = true } = options || {};
 		const exportObj = await this.exportToObject(options);
 		const ts = exportObj.metadata?.exportedAt ?? getTimestamp();
@@ -584,7 +584,7 @@ export class Locality<
 	 * - Accepts either an {@link ExportData} object or raw table data {@link ExportedTableData}.
 	 * - Supports merge, replace, and upsert modes.
 	 */
-	async import(
+	async $import(
 		data: ExportData<TName, Schema>,
 		options?: ImportOptions<TName>
 	): Promise<void>;
@@ -596,12 +596,12 @@ export class Locality<
 	 * - Accepts either raw table data {@link ExportedTableData} or an {@link ExportData} object.
 	 * - Supports merge, replace, and upsert modes.
 	 */
-	async import(
+	async $import(
 		data: ExportedTableData<TName, Schema>,
 		options?: ImportOptions<TName>
 	): Promise<void>;
 
-	async import(
+	async $import(
 		data: ExportData<TName, Schema> | ExportedTableData<TName, Schema>,
 		options?: ImportOptions<TName>
 	) {

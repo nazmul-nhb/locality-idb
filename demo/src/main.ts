@@ -267,7 +267,7 @@ exportDBBtn.addEventListener('click', async () => {
 	const selected = tableNameSelect.value;
 	const tables = selected === '__all__' ? undefined : [selected as keyof SchemaType];
 
-	await db.export({
+	await db.$export({
 		tables,
 		pretty: prettyPrintInput.checked,
 		includeMetadata: includeMetaInput.checked,

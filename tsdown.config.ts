@@ -6,6 +6,11 @@ export default defineConfig({
 	dts: true,
 	exports: true,
 	unbundle: false,
-	deps: { onlyBundle: ['nhb-toolbox'] },
+	deps: {
+		onlyBundle: false,
+	},
 	treeshake: true,
+	checks: {
+		pluginTimings: false,
+	},
 });

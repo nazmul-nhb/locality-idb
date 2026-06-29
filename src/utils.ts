@@ -1,4 +1,9 @@
-import { isNonEmptyString, isValidEmail, isValidURL, isUUID as isValidUUID } from 'nhb-toolbox';
+import {
+	isNonEmptyString,
+	isValidEmail,
+	isValidURL,
+	isUUID as isValidUUID,
+} from 'toolbox-x/guards';
 import { _ensureIndexedDB, _formatUUID, _getDBList } from './helpers';
 import type { Email, Timestamp, URLString, UUID, UUIDVersion } from './types';
 

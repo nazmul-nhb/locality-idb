@@ -1,5 +1,5 @@
+import { extractNumbers } from 'toolbox-x';
 import {
-	extractNumbers,
 	isArray,
 	isBigInt,
 	isBoolean,
@@ -14,7 +14,7 @@ import {
 	isString,
 	isUndefined,
 	isUUID,
-} from 'nhb-toolbox';
+} from 'toolbox-x/guards';
 import {
 	type Column,
 	ColumnType,
