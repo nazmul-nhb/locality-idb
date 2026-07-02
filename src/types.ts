@@ -390,12 +390,15 @@ export type ExportObjectOptions<T extends string> = Omit<
 	'filename' | 'pretty'
 >;
 
+/** Import mode for `import` `'replace'`, `'merge'`, or `'upsert'` */
+export type ImportMode = 'replace' | 'merge' | 'upsert';
+
 /** Import options for database `import` method */
 export interface ImportOptions<T extends string> {
 	/** Optional array of table names to import (imports all tables (store) if not specified) */
 	tables?: T[];
 	/** Import mode: `'replace'`, `'merge'`, or `'upsert'` (default: `'merge'`) */
-	mode?: 'replace' | 'merge' | 'upsert';
+	mode?: ImportMode;
 }
 
 /** Exported table data structure */
