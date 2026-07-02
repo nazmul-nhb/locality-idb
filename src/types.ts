@@ -403,19 +403,22 @@ export type ExportedTableData<T extends string, S extends SchemaDefinition> = Pr
 	[K in T]: InferSelectType<S[K]>[];
 }>;
 
+/** Metadata about the export */
+export interface ExportMetaData<T extends string> {
+	/** Database name */
+	dbName: string;
+	/** Database version */
+	version: number;
+	/** Export creation time */
+	exportedAt: Timestamp;
+	/** List of exported table names */
+	tables: T[];
+}
+
 /** Exported database data structure */
 export interface ExportData<T extends string, S extends SchemaDefinition> {
 	/** Optional metadata about the export */
-	metadata?: {
-		/** Database name */
-		dbName: string;
-		/** Database version */
-		version: number;
-		/** Export creation time */
-		exportedAt: Timestamp;
-		/** List of exported table names */
-		tables: T[];
-	};
+	metadata?: ExportMetaData<T>;
 	/** Actual exported data, mapping table names to arrays of records */
 	data: ExportedTableData<T, S>;
 }
