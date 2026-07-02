@@ -1,3 +1,7 @@
+import type { Maybe } from 'toolbox-x/types';
+import type { $UUID } from 'toolbox-x/types/hash';
+import type { GenericObject } from 'toolbox-x/types/object';
+import type { LooseLiteral, Prettify } from 'toolbox-x/types/utils';
 import type {
 	Column,
 	DefaultValue,
@@ -11,148 +15,34 @@ import type {
 } from './core';
 import type { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 
-declare const __brand: unique symbol;
-type $Brand<B> = {
-	[__brand]: B;
-};
-
-/**
- * * Creates a branded version of a base type by intersecting it with a unique compile-time marker.
- *
- * @typeParam T - Base type to brand.
- * @typeParam B - Brand identifier used to distinguish this type from structurally similar types.
- *
- * @remarks Useful for preventing accidental mixing of structurally identical types, while keeping the runtime value unchanged.
- *
- * @example
- * type UserId = Branded<string, 'UserId'>;
- * const id = 'abc123' as UserId;
- */
-export type Branded<T, B> = T & $Brand<B>;
-
-/**
- * * Broadens a literal union (typically `string` or `number`) to also accept any other value of the base type, without losing IntelliSense autocomplete for the provided literals.
- *
- * @remarks
- * This is especially useful in API design where you want to provide suggestions for common options but still allow flexibility for custom user-defined values.
- *
- * Technically, this uses intersection with primitive base types (`string & {}` or `number & {}`) to retain IntelliSense while avoiding type narrowing.
- *
- * @example
- * // ✅ String literal usage
- * type Variant = LooseLiteral<'primary' | 'secondary'>;
- * const v1: Variant = 'primary';  // suggested
- * const v2: Variant = 'custom';   // also valid
- *
- * // ✅ Number literal usage
- * type StatusCode = LooseLiteral<200 | 404 | 500>;
- * const s1: StatusCode = 200;     // suggested
- * const s2: StatusCode = 999;     // also valid
- *
- * // ✅ Mixed literal
- * type Mixed = LooseLiteral<'one' | 2>;
- * const m1: Mixed = 'one';        // ✅
- * const m2: Mixed = 2;            // ✅
- * const m3: Mixed = 'anything';   // ✅
- * const m4: Mixed = 123;          // ✅
- */
-export type LooseLiteral<T extends string | number> =
-	| T
-	| (T extends string ? string & {} : number & {});
+export type {
+	AdvancedTypes,
+	AsyncFunction,
+	BasicPrimitive,
+	Branded,
+	Constructor,
+	GenericFn,
+	List,
+	Maybe,
+	NormalPrimitive,
+	Nullable,
+	Numeric,
+	Primitive,
+	Uncertain,
+	VoidFn,
+} from 'toolbox-x/types';
+export type { DateLike } from 'toolbox-x/types/date';
+export type { $UUID, $UUIDVersion, UUID, UUIDVersion } from 'toolbox-x/types/hash';
+export type { GenericObject, NestedPrimitiveKey } from 'toolbox-x/types/object';
+export type {
+	ArrayToTuple,
+	LooseLiteral,
+	MapObjectValues,
+	Prettify,
+	Tuple,
+} from 'toolbox-x/types/utils';
 
 export type ForcedAny = any;
-
-/** Union of `number` and numeric string */
-export type Numeric = number | `${number}`;
-
-/**
- * * A readonly array of elements of type `T`.
- *
- * @remarks
- * - Shorthand for `ReadonlyArray<T>`. Used to represent immutable lists.
- *
- * @example
- * type Numbers = List<number>;	// readonly number[]
- * const arr: Numbers = [1, 2, 3];	// ✅ OK
- * arr.push(4);                   	// ❌ Error (readonly)
- */
-export type List<T = any> = ReadonlyArray<T>;
-
-/** Turns a union into an intersection */
-export type $UnionToIntersection<U> = (U extends any ? (arg: U) => void : never) extends (
-	arg: infer I
-) => void
-	? I
-	: never;
-
-/** Gets the "last" item of a union */
-type $LastOf<T> =
-	$UnionToIntersection<T extends any ? () => T : never> extends () => infer R ? R : never;
-
-/** Converts a union to a tuple */
-type $UnionToTuple<T, L = $LastOf<T>> = [T] extends [never]
-	? []
-	: [...$UnionToTuple<Exclude<T, L>>, L];
-
-/**
- * * Converts a type into a tuple form.
- *
- * @remarks
- * - If `T` is a union, it produces a tuple containing each member of the union.
- * - If `T` is a single type, it produces a one-element tuple `[T]`.
- * - If `T` is `never`, it produces an empty tuple `[]`.
- *
- * @typeParam T - The type to convert into a tuple.
- * @returns A tuple type containing the elements of `T`.
- *
- * @example
- * type T0 = Tuple<"foo" | "bar">; // ["foo", "bar"]
- * type T1 = Tuple<number>; // [number]
- * type T2 = Tuple<1 | 2 | 3>; // [1, 2, 3]
- * type T3 = Tuple<never>; // []
- */
-export type Tuple<T> = [T] extends [never] ? [] : $UnionToTuple<T>;
-
-/**
- * * Converts an array type containing a union of literals into a tuple of those literals.
- *
- * @remarks
- * - Takes an array type `T` (e.g. `("foo" | "bar")[]`) and produces a tuple type (e.g. `["foo", "bar"]`).
- * - Useful when you want to preserve all possible union members as a tuple literal instead of an array.
- * - For converting any type to tuple use {@link Tuple}.
- *
- * @typeParam T - An array type whose element type is a union.
- * @returns A tuple type containing each member of the union in order.
- *
- * @example
- * type T0 = ArrayToTuple<("foo" | "bar")[]>; // ["foo", "bar"]
- * type T1 = ArrayToTuple<(1 | 2 | 3)[]>; // [1, 2, 3]
- * type T2 = ArrayToTuple<never[]>; // []
- */
-export type ArrayToTuple<T extends readonly unknown[]> = T[number] extends infer U
-	? $UnionToTuple<U>
-	: never;
-
-/** Represents a value that may or may not be present. */
-export type Maybe<T> = T | undefined;
-
-/** Union of Basic Primitive Types (i.e. `string | number | boolean`) */
-export type BasicPrimitive = string | number | boolean;
-
-/** Union of All Primitive Types (i.e. `string | number | boolean | symbol | bigint | null | undefined`) */
-export type Primitive = string | number | boolean | symbol | bigint | null | undefined;
-
-/** Union of Normal Primitive Types (i.e. `string | number | boolean | null | undefined`) */
-export type NormalPrimitive = string | number | boolean | null | undefined;
-
-/** A generic class constructor */
-export type Constructor = new (...args: any[]) => any;
-
-/** Generic function type */
-export type GenericFn = (...args: any[]) => any;
-
-/** Generic function type that returns `void` */
-export type VoidFn = (...args: any[]) => void;
 
 /** Type for reject function of a promise */
 export type RejectFn = (reason: unknown) => void;
@@ -162,55 +52,6 @@ export type ValidatorFn<T = any> = (value: T) => string | null | undefined;
 
 /** Updater function type for {@link Column.onUpdate()} */
 export type UpdaterFn<T = any> = (currentValue: T) => T;
-
-/** Asynchronous function type */
-export type AsyncFunction<T> = (...args: any[]) => Promise<T>;
-
-/** Interface representing a date-like object. */
-export interface DateLike {
-	toJSON?(): string;
-	toISOString?(): string;
-	toString?(): string;
-	format?(): string;
-	toISO?(): string;
-	toFormat?(format: string): string;
-	plus?(...args: unknown[]): unknown;
-	minus?(...args: unknown[]): unknown;
-	equals?(...args: unknown[]): boolean;
-	getClass?(): unknown;
-	constructor?: {
-		name: string;
-	};
-}
-
-/** Advanced types to exclude from counting as object key */
-export type AdvancedTypes =
-	| Array<unknown>
-	| File
-	| FileList
-	| Blob
-	| Date
-	| RegExp
-	| Constructor
-	| DateLike
-	| WeakMap<WeakKey, unknown>
-	| WeakSet<WeakKey>
-	| Map<unknown, unknown>
-	| Set<unknown>
-	| Function
-	| GenericFn
-	| VoidFn
-	| AsyncFunction<unknown>
-	| Promise<unknown>
-	| Error
-	| EvalError
-	| RangeError
-	| ReferenceError
-	| SyntaxError
-	| TypeError
-	| URIError
-	| bigint
-	| symbol;
 
 /**
  * * Extracts the parameters of the first overload of a function type `T`.
@@ -240,20 +81,6 @@ export type FirstOverloadParams<T> = T extends {
 		: T extends (...args: infer P) => any
 			? P
 			: never;
-
-/**
- * * Maps all values of object `T` to a fixed type `R`, keeping original keys.
- *
- * @typeParam T - The source object type.
- * @typeParam R - The replacement value type.
- *
- * @example
- * type T = { name: string; age: number };
- * type BooleanMapped = MapObjectValues<T, boolean>; // { name: boolean; age: boolean }
- */
-export type MapObjectValues<T, R> = {
-	[K in keyof T]: R;
-};
 
 /**
  * Determines if a selection object has any true values
@@ -296,77 +123,34 @@ export type CursorCallback<T extends GenericObject> = (
 ) => void | Promise<void>;
 
 /** Pagination options for cursor-based queries */
-export type PageOptions = {
+export interface PageOptions {
 	/** Cursor key returned from a previous page */
 	cursor?: IDBValidKey;
 	/** Maximum number of records to return */
 	limit?: number;
-};
+}
 
 /** Cursor-based pagination result */
-export type PageResult<T, Selection extends Partial<Record<keyof T, boolean>> | null> = {
+export interface PageResult<T, Selection extends Partial<Record<keyof T, boolean>> | null> {
 	/** Retrieved items for the current page */
 	items: Selection extends null ? T[] : SelectFields<T, Extract<Selection, object>>[];
 	/** Cursor key for the next page, if more results are available */
 	nextCursor: Maybe<IDBValidKey>;
-};
-
-/** Extract only primitive keys from an object, including nested dot-notation keys. */
-export type NestedPrimitiveKey<T> = T extends AdvancedTypes
-	? never
-	: T extends GenericObject
-		? {
-				[K in keyof T & string]: T[K] extends Function
-					? never
-					: T[K] extends NormalPrimitive
-						? K
-						: T[K] extends GenericObject
-							? `${K}.${NestedPrimitiveKey<T[K]>}`
-							: never;
-			}[keyof T & string]
-		: never;
-
-/** Generic object but with `any` value */
-export type GenericObject = Record<string, any>;
-
-/**
- * * Forces TypeScript to simplify a complex or inferred type into a more readable flat object.
- *
- * @remarks
- * Useful when working with utility types like `Merge`, `Omit`, etc., that produce deeply nested or unresolved intersections.
- *
- * @example
- * type A = { a: number };
- * type B = { b: string };
- * type Merged = A & B;
- * type Pretty = Prettify<Merged>;
- * // Type will now display as: { a: number; b: string }
- */
-export type Prettify<T> = {
-	[K in keyof T]: T[K];
-} & {};
-
-/** General 5 parts UUID string type */
-export type $UUID = `${string}-${string}-${string}-${string}-${string}`;
-
-/** UUID versions as number from `1-8` */
-export type $UUIDVersion = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-
-/** UUID versions as string from `v1-v8` */
-export type UUIDVersion = `v${$UUIDVersion}`;
-
-/** General 5 parts UUID string as {@link Branded} type */
-export type UUID<V extends UUIDVersion> = Branded<$UUID, V>;
+}
 
 /** Locality database configuration type */
-export type LocalityConfig<DB extends string, V extends number, S extends SchemaDefinition> = {
+export interface LocalityConfig<
+	DB extends string,
+	V extends number,
+	S extends SchemaDefinition,
+> {
 	/** Database name */
 	dbName: DB;
 	/** Database version */
 	version?: V;
 	/** Database schema */
 	schema: S;
-};
+}
 
 /** Column definition type - preserves both Column generics */
 export type ColumnDefinition = Record<string, Column<any, string>>;
@@ -567,17 +351,17 @@ export type Email = `${string}@${string}.${string}`;
 export type URLString = `${string}://${string}`;
 
 /** Index configuration type for `IndexedDB` */
-export type IndexConfig = {
+export interface IndexConfig {
 	/** Index name (typically the field name) */
 	name: string;
 	/** Key path for the index */
 	keyPath: string;
 	/** Whether the index enforces unique values */
 	unique?: boolean;
-};
+}
 
 /** Store configuration type for `IndexedDB` */
-export type StoreConfig = {
+export interface StoreConfig {
 	/** Store name */
 	name: string;
 	// TODO: Handle multiple primary keys later
@@ -587,10 +371,10 @@ export type StoreConfig = {
 	autoIncrement?: boolean;
 	/** Array of index configurations for this store */
 	indexes?: IndexConfig[];
-};
+}
 
 /** Export options for database `export` method */
-export type ExportOptions<T extends string> = {
+export interface ExportOptions<T extends string> {
 	/** Optional array of table names to export (exports all if not specified) */
 	tables?: T[];
 	/** Optional custom filename (default: `{dbName}-export-{timestamp}.json`) */
@@ -599,7 +383,7 @@ export type ExportOptions<T extends string> = {
 	pretty?: boolean;
 	/** Optional flag to include export metadata (default: `true`) */
 	includeMetadata?: boolean;
-};
+}
 
 export type ExportObjectOptions<T extends string> = Omit<
 	ExportOptions<T>,
@@ -607,12 +391,12 @@ export type ExportObjectOptions<T extends string> = Omit<
 >;
 
 /** Import options for database `import` method */
-export type ImportOptions<T extends string> = {
+export interface ImportOptions<T extends string> {
 	/** Optional array of table names to import (imports all tables (store) if not specified) */
 	tables?: T[];
 	/** Import mode: `'replace'`, `'merge'`, or `'upsert'` (default: `'merge'`) */
 	mode?: 'replace' | 'merge' | 'upsert';
-};
+}
 
 /** Exported table data structure */
 export type ExportedTableData<T extends string, S extends SchemaDefinition> = Prettify<{
@@ -620,7 +404,7 @@ export type ExportedTableData<T extends string, S extends SchemaDefinition> = Pr
 }>;
 
 /** Exported database data structure */
-export type ExportData<T extends string, S extends SchemaDefinition> = Prettify<{
+export interface ExportData<T extends string, S extends SchemaDefinition> {
 	/** Optional metadata about the export */
 	metadata?: {
 		/** Database name */
@@ -634,14 +418,14 @@ export type ExportData<T extends string, S extends SchemaDefinition> = Prettify<
 	};
 	/** Actual exported data, mapping table names to arrays of records */
 	data: ExportedTableData<T, S>;
-}>;
+}
 
 /** Transaction context type providing methods for database operations within a transaction */
-export type TransactionContext<
+export interface TransactionContext<
 	Schema extends SchemaDefinition,
 	TName extends keyof Schema,
 	Tables extends TName[],
-> = {
+> {
 	/** Inserts a new record into the specified table */
 	insert: <
 		T extends Tables[number],
@@ -667,7 +451,7 @@ export type TransactionContext<
 	from: <T extends Tables[number], Row extends $InferRow<Schema[T]['columns']>>(
 		table: T
 	) => SelectQuery<Row, null, Schema[T]>;
-};
+}
 
 /** Transaction callback function type */
 export type TransactionCallback<

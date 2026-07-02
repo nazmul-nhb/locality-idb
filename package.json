@@ -1,6 +1,6 @@
 {
   "name": "locality-idb",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "SQL-like query builder for IndexedDB with Drizzle-style API",
   "type": "module",
   "sideEffects": false,
@@ -83,16 +83,16 @@
     "format": "biome format --write --diagnostic-level=warn"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.1",
-    "@types/node": "^26.0.1",
+    "@biomejs/biome": "^2.5.2",
+    "@types/node": "^26.1.0",
     "nhb-scripts": "^1.9.2",
-    "toolbox-x": "^2.4.6",
+    "toolbox-x": "^2.4.7",
     "tsdown": "^0.22.3",
     "typescript": "^6.0.3"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "inlinedDependencies": {
-    "toolbox-x": "2.4.6"
+    "toolbox-x": "2.4.7"
   }
 }

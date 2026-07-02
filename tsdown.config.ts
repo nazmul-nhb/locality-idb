@@ -7,7 +7,7 @@ export default defineConfig({
 	exports: true,
 	unbundle: false,
 	deps: {
-		onlyBundle: false,
+		onlyBundle: ['toolbox-x'],
 	},
 	treeshake: true,
 	checks: {
