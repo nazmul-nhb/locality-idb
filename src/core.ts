@@ -177,10 +177,10 @@ export class PKColumn<T = any, TName extends TypeName = TypeName> extends Column
 	auto() {
 		const colType = this[ColumnType];
 
-		const allowedTypes = ['int', 'integer', 'float', 'number'] as TypeName[];
+		const allowedTypes = ['int', 'integer', 'float', 'number'];
 
 		if (!isNonEmptyString(colType) || !allowedTypes.includes(colType)) {
-			throw new Error(`auto() can only be used with number columns, got: ${colType}`);
+			throw new Error(`auto() can only be used with numeric columns, got: ${colType}`);
 		}
 
 		this[IsAutoInc] = true;

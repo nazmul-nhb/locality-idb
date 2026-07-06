@@ -129,7 +129,7 @@ export function validateColumnType<T extends TypeName>(type: T, value: unknown):
 			return null;
 
 		default: {
-			const length = extractNumbers(type)[0];
+			const [length] = extractNumbers(type);
 
 			if (type.startsWith('varchar(')) {
 				if (isString(value)) {

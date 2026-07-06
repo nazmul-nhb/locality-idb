@@ -326,8 +326,8 @@ export type TypeName = LooseLiteral<
 	| 'bigint'
 	| 'text'
 	| 'string'
-	| `char${number}`
-	| `varchar${number}`
+	| `char(${number})`
+	| `varchar(${number})`
 	| 'uuid'
 	| 'timestamp'
 	| 'email'
