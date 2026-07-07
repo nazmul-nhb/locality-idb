@@ -1,4 +1,4 @@
-import type { Maybe } from 'toolbox-x/types';
+import type { Maybe, Nullable, Uncertain } from 'toolbox-x/types';
 import type { $UUID } from 'toolbox-x/types/hash';
 import type { GenericObject } from 'toolbox-x/types/object';
 import type { LooseLiteral, Prettify } from 'toolbox-x/types/utils';
@@ -48,7 +48,7 @@ export type ForcedAny = any;
 export type RejectFn = (reason: unknown) => void;
 
 /** Validator function type for {@link Column.validate()} */
-export type ValidatorFn<T = any> = (value: T) => string | null | undefined;
+export type ValidatorFn<T = any> = (value: T) => Uncertain<string>;
 
 /** Updater function type for {@link Column.onUpdate()} */
 export type UpdaterFn<T = any> = (currentValue: T) => T;
@@ -131,7 +131,7 @@ export interface PageOptions {
 }
 
 /** Cursor-based pagination result */
-export interface PageResult<T, Selection extends Partial<Record<keyof T, boolean>> | null> {
+export interface PageResult<T, Selection extends Nullable<Partial<Record<keyof T, boolean>>>> {
 	/** Retrieved items for the current page */
 	items: Selection extends null ? T[] : SelectFields<T, Extract<Selection, object>>[];
 	/** Cursor key for the next page, if more results are available */
@@ -286,7 +286,7 @@ export type InferInsertType<T extends Table> = Prettify<
 		| $InferUUID<T['columns']>
 	> & {
 		[K in $InferNullable<T['columns']>]: K extends keyof $InferRow<T['columns']>
-			? $InferRow<T['columns']>[K] | null
+			? Nullable<$InferRow<T['columns']>[K]>
 			: never;
 	} & {
 		[K in

@@ -24,7 +24,14 @@ import {
 	OnUpdate,
 	ValidateFn,
 } from './core';
-import type { ColumnDefinition, GenericObject, Maybe, TypeName } from './types';
+import type {
+	ColumnDefinition,
+	GenericObject,
+	Maybe,
+	Nullable,
+	TypeName,
+	Uncertain,
+} from './types';
 import { getTimestamp, isEmail, isTimestamp, isURL, uuidV4 } from './utils';
 
 /**
@@ -33,7 +40,10 @@ import { getTimestamp, isEmail, isTimestamp, isURL, uuidV4 } from './utils';
  * @param value The value to validate
  * @returns `null` if valid, otherwise an error message string
  */
-export function validateColumnType<T extends TypeName>(type: T, value: unknown): string | null {
+export function validateColumnType<T extends TypeName>(
+	type: T,
+	value: unknown
+): Nullable<string> {
 	const strVal = isString(value) ? JSON.stringify(value) : `'${JSON.stringify(value)}'`;
 
 	switch (type) {
@@ -267,7 +277,7 @@ export function validateAndPrepareData<Data extends GenericObject>(
 
 			if (!shouldSkip) {
 				const customValidator = column[ValidateFn];
-				let errorMsg: string | null | undefined;
+				let errorMsg: Uncertain<string>;
 
 				// Use custom validator if provided, otherwise use built-in validation
 				if (isFunction(customValidator)) {

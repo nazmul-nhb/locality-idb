@@ -13,6 +13,7 @@ import type {
 	InferUpdateType,
 	Maybe,
 	NestedPrimitiveKey,
+	Nullable,
 	PageOptions,
 	PageResult,
 	RejectFn,
@@ -32,7 +33,7 @@ type IDBGetter = () => IDBDatabase;
 /** @class Select query builder. */
 export class SelectQuery<
 	T extends GenericObject,
-	S extends Partial<Record<string, boolean>> | null = null,
+	S extends Nullable<Partial<Record<string, boolean>>> = null,
 	Tbl extends Table = Table,
 > {
 	#table: string;
@@ -353,7 +354,7 @@ export class SelectQuery<
 	): Promise<PageResult<T, Selection>>;
 
 	async page<Selection extends Partial<Record<keyof T, boolean>>>(
-		this: SelectQuery<T, Selection | null>,
+		this: SelectQuery<T, Nullable<Selection>>,
 		options: PageOptions = {}
 	) {
 		await this.#readyPromise;
@@ -398,8 +399,8 @@ export class SelectQuery<
 				isNonEmptyString(this.#orderByKey) &&
 				store.indexNames.contains(this.#orderByKey);
 
-			let source: IDBObjectStore | IDBIndex | null = null;
-			let range: IDBKeyRange | IDBValidKey | null = null;
+			let source: Nullable<IDBObjectStore | IDBIndex> = null;
+			let range: Nullable<IDBKeyRange | IDBValidKey> = null;
 
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
 				source = this.#buildIndexedStore(store, reject);
@@ -492,8 +493,8 @@ export class SelectQuery<
 				isNonEmptyString(this.#orderByKey) &&
 				store.indexNames.contains(this.#orderByKey);
 
-			let source: IDBObjectStore | IDBIndex | null = null;
-			let range: IDBKeyRange | IDBValidKey | null = null;
+			let source: Nullable<IDBObjectStore | IDBIndex> = null;
+			let range: Nullable<IDBKeyRange | IDBValidKey> = null;
 
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
 				source = this.#buildIndexedStore(store, reject);
@@ -539,12 +540,12 @@ export class SelectQuery<
 	}
 
 	/** Fetch first matching record */
-	async findFirst(this: SelectQuery<T, null>): Promise<T | null>;
+	async findFirst(this: SelectQuery<T, null>): Promise<Nullable<T>>;
 
 	/** Fetch first matching record with selected fields */
 	async findFirst<Selection extends Partial<Record<keyof T, boolean>>>(
 		this: SelectQuery<T, Selection>
-	): Promise<SelectFields<T, Selection> | null>;
+	): Promise<Nullable<SelectFields<T, Selection>>>;
 
 	async findFirst() {
 		await this.#readyPromise;
@@ -601,9 +602,9 @@ export class SelectQuery<
 			: T[keyof T]
 	): Promise<
 		S extends null
-			? T | null
+			? Nullable<T>
 			: S extends Partial<Record<keyof T, boolean>>
-				? SelectFields<T, S> | null
+				? Nullable<SelectFields<T, S>>
 				: never
 	> {
 		await this.#readyPromise;
@@ -612,9 +613,9 @@ export class SelectQuery<
 			const request = store.get(key) as IDBRequest<T>;
 
 			type ResolvedData = S extends null
-				? T | null
+				? Nullable<T>
 				: S extends Partial<Record<keyof T, boolean>>
-					? SelectFields<T, S> | null
+					? Nullable<SelectFields<T, S>>
 					: never;
 
 			request.onsuccess = () => {

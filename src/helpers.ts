@@ -1,4 +1,4 @@
-import type { RejectFn, UUID, UUIDVersion } from './types';
+import type { Nullable, RejectFn, UUID, UUIDVersion } from './types';
 
 /** Ensure UUID variant is RFC4122 compliant */
 function _hexVariant(hex: string): string {
@@ -19,7 +19,7 @@ export function _formatUUID<V extends UUIDVersion>(h: string, v: number, up: boo
 }
 
 /** Handle transaction abort by rejecting the promise */
-export function _abortTransaction(error: DOMException | null, reject: RejectFn) {
+export function _abortTransaction(error: Nullable<DOMException>, reject: RejectFn) {
 	reject(error || new Error('IndexedDB transaction was aborted!'));
 }
 

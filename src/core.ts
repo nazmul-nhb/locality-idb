@@ -85,11 +85,17 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		return this as this & { [DefaultValue]: Default };
 	}
 
-	/** @instance Marks column as optional */
+	/** @instance Marks column as optional (`undefined`) */
 	optional() {
 		this[IsOptional] = true;
 		return this as this & { [IsOptional]: true };
 	}
+
+	// /** @instance Marks column as nullable (`null`) */
+	// nullable() {
+	// 	this[IsNullable] = true;
+	// 	return this as this & Omit<PKColumn<T, TName>, 'optional'> & { [IsNullable]: true };
+	// }
 
 	/**
 	 * @instance Sets a custom validation function for the column

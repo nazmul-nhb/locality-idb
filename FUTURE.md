@@ -6,13 +6,13 @@
 description: column.varchar(256).nullable();
 ```
 
-this would be different than:
+this would be different from:
 
 ```ts
 description: column.varchar(256).optional();
 ```
 
-## 1. References should be a first-class feature ⭐⭐⭐⭐⭐
+## 1. References ⭐⭐⭐⭐⭐
 
 This would be #1 priority.
 
@@ -276,37 +276,7 @@ Very ORM-like.
 
 ---
 
-## 12. Predicate optimization
-
-This is ambitious.
-
-If someone writes
-
-```ts
-.where(user => user.id === 5)
-```
-
-it should detect using index and thus
-
-```ts
-id === literal
-```
-
-and internally convert it into
-
-```ts
-where("id", 5)
-```
-
-Same API.
-
-Better performance.
-
-Probably difficult but amazing.
-
----
-
-## 13. Full text search
+## 12. Full text search
 
 Optional.
 
@@ -316,7 +286,7 @@ Optional.
 
 ---
 
-## 14. Hooks
+## 13. Hooks
 
 Instead of only validators
 
@@ -343,7 +313,7 @@ or
 
 ---
 
-## 15. Query cancellation
+## 14. Query cancellation
 
 ```ts
 const controller = new AbortController()
@@ -357,7 +327,7 @@ await db
 
 ---
 
-## 16. Async validation
+## 15. Async validation
 
 Current validation appears synchronous.
 
