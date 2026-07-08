@@ -2,6 +2,10 @@
 
 ## 0. Add Nullable Column Modifier ⭐⭐⭐⭐⭐
 
+### Status
+
+- [x] Done
+
 ```ts
 description: column.varchar(256).nullable();
 ```
@@ -43,11 +47,11 @@ userId: column
 
 Then Locality could
 
-* validate FK existence
-* cascade delete
-* set null
-* restrict deletion
-* no action
+- validate FK existence
+- cascade delete
+- set null
+- restrict deletion
+- no action
 
 ---
 

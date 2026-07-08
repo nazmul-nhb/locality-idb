@@ -156,7 +156,15 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 
 		return this as This & { [OnUpdate]: UpdaterFn<ColumnValue<This, T>> };
 	}
+
+	// ref<Ref extends PKColumn>(refCol: Ref, options?: RefOptions) {
+	// 	return this;
+	// }
 }
+
+// interface RefOptions {
+// 	onDelete?: 'cascade' | 'restrict';
+// }
 
 /** @class Extends {@link Column} and represents a primary key column. */
 export class PKColumn<T = any, TName extends TypeName = TypeName> extends Column<T, TName> {

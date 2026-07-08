@@ -7,6 +7,7 @@ import type {
 	GenericObject,
 	List,
 	Numeric,
+	Schema,
 	Timestamp,
 	Tuple,
 	URLString,
@@ -44,19 +45,14 @@ import type {
  * type InsertPost = InferInsertType<typeof schema.posts>;
  * type UpdatePost = InferUpdateType<typeof schema.posts>;
  */
-export function defineSchema<Schema>(schema: Schema): {
-	[K in keyof Schema]: Table<Extract<Schema[K], ColumnDefinition>>;
-} {
-	const result = {} as { [K in keyof Schema]: Table<Extract<Schema[K], ColumnDefinition>> };
+export function defineSchema<S extends ColumnRecord>(schema: S): Schema<S> {
+	const result: GenericObject = {};
 
-	for (const [tableName, columns] of Object.entries(schema as ColumnRecord)) {
-		result[tableName as keyof Schema] = new Table(
-			tableName,
-			columns as Extract<Schema[keyof Schema], ColumnDefinition>
-		);
+	for (const [tableName, columns] of Object.entries(schema)) {
+		result[tableName] = new Table(tableName, columns);
 	}
 
-	return result;
+	return result as Schema<S>;
 }
 
 /**
@@ -73,7 +69,7 @@ export function defineSchema<Schema>(schema: Schema): {
  *   isActive: column.bool().default(true),
  * });
  */
-export function table<T extends ColumnDefinition>(name: string, columns: T) {
+export function table<N extends string, Col extends ColumnDefinition>(name: N, columns: Col) {
 	return new Table(name, columns);
 }
 

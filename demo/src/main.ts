@@ -45,7 +45,7 @@ const customSchema = {
 const schema = defineSchema({
 	todos: {
 		serial: column.int().pk().auto(),
-		task: column.text().unique().pk(),
+		task: column.text().unique(),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
@@ -65,10 +65,13 @@ const schema = defineSchema({
 		url: column.url().optional(),
 	},
 
-	test: customSchema.test.columns,
+	test1: customSchema.test.columns,
 });
 
+// schema.todos.columns.serial
+
 type SchemaType = typeof schema;
+
 
 type Todo = InferSelectType<SchemaType['todos']>;
 type InsertTodo = InferInsertType<SchemaType['todos']>;
@@ -80,7 +83,7 @@ type UpdateTodo = InferUpdateType<SchemaType['todos']>;
 
 const db = new Locality({
 	dbName: 'todo-db',
-	version: 42,
+	version: 44,
 	schema,
 });
 
@@ -94,6 +97,10 @@ const loadTodos = async () => {
 	// as Todo[];
 
 	console.table(todos);
+
+	const test = await db.from('test1').findAll();
+
+	console.info({test})
 
 	renderTodos();
 	updateStats();

@@ -171,6 +171,11 @@ export type ValidatedColumnDefinition<T extends ColumnDefinition = ColumnDefinit
 /** Record of column definitions */
 export type ColumnRecord = Record<string, ColumnDefinition>;
 
+/** Schema definition from a {@link ColumnRecord column record} */
+export type Schema<S extends ColumnRecord> = {
+	[K in keyof S & string]: Table<Extract<S[K], ColumnDefinition>>;
+};
+
 /** Schema record type mapping table names to {@link Table} instances */
 export type SchemaRecord<T extends ColumnRecord, Keys extends keyof T> = {
 	[K in Keys]: Table<T[K]>;
