@@ -13,6 +13,8 @@ export const IsOptional = Symbol('IsOptional');
 export const IsNullable = Symbol('IsNullable');
 /** Symbol key for indexed marker */
 export const IsIndexed = Symbol('IsIndexed');
+// /** Symbol key for the flag if value is auto generated */
+// export const IsValueAutoGen = Symbol('IsValueAutoGen');
 /** Symbol key for unique marker */
 export const IsUnique = Symbol('IsUnique');
 /** Symbol key for default value */
@@ -31,6 +33,7 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	declare [IsNullable]?: boolean;
 	declare [IsIndexed]?: boolean;
 	declare [IsUnique]?: boolean;
+	// declare [IsValueAutoGen]?: boolean;
 	declare [DefaultValue]?: T;
 	declare [ValidateFn]?: ValidatorFn<any>;
 	declare [OnUpdate]?: UpdaterFn<any>;

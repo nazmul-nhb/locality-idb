@@ -8,7 +8,7 @@ import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 import { Stylog } from 'nhb-toolbox/stylog';
 
-import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
+import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
 import {
 	column,
 	defineSchema,
@@ -39,6 +39,7 @@ const customSchema = {
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
+		test: column.string<Timestamp>().nullable().optional()
 	}),
 };
 
@@ -69,6 +70,8 @@ const schema = defineSchema({
 });
 
 // schema.todos.columns.serial
+
+// type _Test = InferSelectType<typeof customSchema.test>['test']
 
 type SchemaType = typeof schema;
 

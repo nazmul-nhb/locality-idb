@@ -21,7 +21,7 @@ import type {
 	TransactionContext,
 } from './types';
 import { deleteDB, getTimestamp } from './utils';
-import { validateAndPrepareData } from './validators';
+import { _validateAndPrepareData } from './validators';
 
 /**
  * @class `Locality` class for `IndexedDB` interactions.
@@ -641,7 +641,7 @@ export class Locality<
 
 				const writePromises = rows.map((row) => {
 					return new Promise<void>((res, rej) => {
-						const prepared = validateAndPrepareData(
+						const prepared = _validateAndPrepareData(
 							row,
 							this.#schema[table].columns,
 							this.#keyPaths[table],

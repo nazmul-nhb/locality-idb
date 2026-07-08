@@ -181,7 +181,7 @@ export function validateColumnType<T extends TypeName>(
  * - A {@link TypeError} if any value does not match the expected column type
  * - A {@link RangeError} if any field is not defined in the table schema or required field is missing
  */
-export function validateAndPrepareData<Data extends GenericObject>(
+export function _validateAndPrepareData<Data extends GenericObject>(
 	data: Data,
 	columns: Maybe<ColumnDefinition>,
 	keyPath: Maybe<string>,

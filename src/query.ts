@@ -21,7 +21,7 @@ import type {
 	SortDirection,
 	WherePredicate,
 } from './types';
-import { validateAndPrepareData } from './validators';
+import { _validateAndPrepareData } from './validators';
 
 /** Symbol for type extraction (exists only in type system) */
 const Selected = Symbol('Selected');
@@ -822,7 +822,7 @@ export class InsertQuery<
 			// Start all insert operations
 			for (const data of toBeInserted) {
 				const request = store.add(
-					validateAndPrepareData(data, this.#columns, this.#keyPath, this.#table)
+					_validateAndPrepareData(data, this.#columns, this.#keyPath, this.#table)
 				);
 
 				request.onsuccess = () => {
@@ -1041,7 +1041,7 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 
 				const updatePromises = rows.map((row) => {
 					return new Promise<void>((res, rej) => {
-						const updatedRow = validateAndPrepareData<T>(
+						const updatedRow = _validateAndPrepareData<T>(
 							{ ...row, ...this.#dataToUpdate },
 							this.#columns,
 							this.#keyPath,

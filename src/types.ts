@@ -266,7 +266,7 @@ export type $InferIndex<T extends ColumnDefinition> = {
  * Finds the field name with {@link UUID} type.
  */
 export type $InferUUID<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends Column<infer C, TypeName>
+	[K in keyof T]: T[K] extends Column<infer C, 'uuid'>
 		? C extends $UUID
 			? K
 			: never
@@ -275,7 +275,7 @@ export type $InferUUID<T extends ColumnDefinition> = {
 
 /** Finds the field name with {@link Timestamp} type. */
 export type $InferTimestamp<T extends ColumnDefinition> = {
-	[K in keyof T]: T[K] extends Column<infer C, TypeName>
+	[K in keyof T]: T[K] extends Column<infer C, 'timestamp'>
 		? C extends Timestamp
 			? K
 			: never

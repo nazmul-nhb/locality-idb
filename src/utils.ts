@@ -14,13 +14,13 @@ import type { Email, Timestamp, URLString, UUID, UUIDVersion } from './types';
  * @remarks Uses Web Crypto (`crypto.randomUUID` or `crypto.getRandomValues`) when available, falls back to `Math.random()`.
  */
 export function uuidV4(uppercase = false): UUID<'v4'> {
-	if (crypto.randomUUID) {
+	if (crypto?.randomUUID) {
 		return crypto.randomUUID() as UUID<'v4'>;
 	}
 
 	const bytes = new Uint8Array(16);
 
-	if (crypto.getRandomValues) {
+	if (crypto?.getRandomValues) {
 		crypto.getRandomValues(bytes);
 	} else {
 		for (let i = 0; i < 16; i++) {

@@ -125,6 +125,7 @@ export const column = {
 	 * const userId = column.int<UserId>();
 	 */
 	int: <T extends number = number>() => new Column<T, 'int'>('int'),
+
 	/**
 	 * Creates a float column.
 	 * @returns A new {@link Column} instance for floating-point numbers.
@@ -142,6 +143,7 @@ export const column = {
 	 * const amount = column.float<USD>();
 	 */
 	float: <T extends number = number>() => new Column<T, 'float'>('float'),
+
 	/**
 	 * Creates a number column.
 	 * @returns A new {@link Column} instance for numbers.
@@ -160,6 +162,7 @@ export const column = {
 	 * const completion = column.number<Percentage>();
 	 */
 	number: <T extends number = number>() => new Column<T, 'number'>('number'),
+
 	/**
 	 * Creates a numeric (number or numeric string) column.
 	 * @returns A new {@link Column} instance for numeric.
@@ -178,6 +181,7 @@ export const column = {
 	 * const serial = column.numeric<SerialNumber>();
 	 */
 	numeric: <T extends Numeric = Numeric>() => new Column<T, 'numeric'>('numeric'),
+
 	/**
 	 * Creates a bigint column.
 	 * @returns A new {@link Column} instance for bigints.
@@ -196,6 +200,7 @@ export const column = {
 	 * const snowflake = column.bigint<SnowflakeId>();
 	 */
 	bigint: <T extends Numeric = Numeric>() => new Column<T, 'bigint'>('bigint'),
+
 	/**
 	 * Creates a text column.
 	 * @returns A new {@link Column} instance for text.
@@ -218,6 +223,7 @@ export const column = {
 	 * const content = column.text<HTML>();
 	 */
 	text: <T extends string = string>() => new Column<T, 'text'>('text'),
+
 	/**
 	 * Creates a string column.
 	 * @returns A new {@link Column} instance for strings.
@@ -240,6 +246,7 @@ export const column = {
 	 * const website = column.string<URL>();
 	 */
 	string: <T extends string = string>() => new Column<T, 'string'>('string'),
+
 	/**
 	 * Creates a char column with optional length.
 	 * @param length Optional length of the char column. Defaults to `8`.
@@ -264,6 +271,7 @@ export const column = {
 	 */
 	char: <T extends string = string>(length = 8) =>
 		new Column<T, `char(${number})`>(`char(${length})`),
+
 	/**
 	 * Creates a varchar column with optional length.
 	 * @param length Optional length of the varchar column. Defaults to `32`.
@@ -288,6 +296,7 @@ export const column = {
 	 */
 	varchar: <T extends string = string>(length = 32) =>
 		new Column<T, `varchar(${number})`>(`varchar(${length})`),
+
 	/**
 	 * Creates a UUID column.
 	 * @returns A new {@link Column} instance for UUIDs.
@@ -297,6 +306,7 @@ export const column = {
 	 * - Automatically generates UUID v4 values when no value is provided.
 	 */
 	uuid: () => new Column<$UUID, 'uuid'>('uuid'),
+
 	/**
 	 * Creates a timestamp column.
 	 * @returns A new {@link Column} instance for timestamps.
@@ -323,6 +333,7 @@ export const column = {
 	 * - Includes built-in validation to ensure the value is a valid URL format.
 	 */
 	url: () => new Column<URLString, 'url'>('url'),
+
 	/**
 	 * Creates a boolean column. Same as {@link column.boolean boolean}.
 	 * @returns A new {@link Column} instance for booleans.
@@ -341,6 +352,7 @@ export const column = {
 	 * const verified = column.bool<EmailVerified>();
 	 */
 	bool: <T extends boolean = boolean>() => new Column<T, 'bool'>('bool'),
+
 	/**
 	 * Creates a boolean column. Same as {@link column.bool bool}.
 	 * @returns A new {@link Column} instance for booleans.
@@ -359,12 +371,14 @@ export const column = {
 	 * const twoFactor = column.boolean<TwoFactorEnabled>();
 	 */
 	boolean: <T extends boolean = boolean>() => new Column<T, 'boolean'>('boolean'),
+
 	/**
 	 * Creates a date column.
 	 * @returns A new {@link Column} instance for dates.
 	 * @remarks This column type is used for storing date values.
 	 */
 	date: () => new Column<Date, 'date'>('date'),
+
 	/**
 	 * Creates an object column.
 	 * @returns A new {@link Column} instance for objects.
@@ -388,6 +402,7 @@ export const column = {
 	 * const settings = column.object<{ theme: 'light' | 'dark'; notifications: boolean }>();
 	 */
 	object: <Obj extends GenericObject>() => new Column<Obj, `object`>(`object`),
+
 	/**
 	 * Creates an array column.
 	 * @returns A new {@link Column} instance for arrays.
@@ -410,6 +425,7 @@ export const column = {
 	 * const mixedData = column.array<string | number>();
 	 */
 	array: <T = any>() => new Column<Array<T>, `array`>(`array`),
+
 	/**
 	 * Creates a list column.
 	 * @returns A new {@link Column} instance for lists.
@@ -429,6 +445,7 @@ export const column = {
 	 * const permissions = column.list<Permission>();
 	 */
 	list: <T = any>() => new Column<List<T>, `list`>(`list`),
+
 	/**
 	 * Creates a tuple column.
 	 * @returns A new {@link Column} instance for tuples.
@@ -450,6 +467,7 @@ export const column = {
 	 * const userInfo = column.tuple<string, number, boolean>();
 	 */
 	tuple: <T = any>() => new Column<Tuple<T>, `tuple`>(`tuple`),
+
 	/**
 	 * Creates a set column.
 	 * @returns A new {@link Column} instance for sets.
@@ -471,6 +489,7 @@ export const column = {
 	 * const permissions = column.set<'read' | 'write' | 'delete'>();
 	 */
 	set: <T = any>() => new Column<Set<T>, `set`>(`set`),
+
 	/**
 	 * Creates a map column.
 	 * @returns A new {@link Column} instance for maps.
@@ -493,6 +512,7 @@ export const column = {
 	 * const config = column.map<'theme' | 'lang', string | boolean>();
 	 */
 	map: <K = any, V = any>() => new Column<Map<K, V>, `map`>(`map`),
+
 	/**
 	 * Creates a custom column.
 	 * @returns A new {@link Column} instance for custom data types.
