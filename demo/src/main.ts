@@ -52,7 +52,7 @@ const schema = defineSchema({
 		// .default(new Chronos().toLocalISOString())
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
 		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
-		url: column.url().nullable().onUpdate((v)=> v? v : v),
+		url: column.url().nullable().onUpdate((v)=> v ? v : null),
 	},
 	experiments: {
 		id: column.float().pk().auto(),

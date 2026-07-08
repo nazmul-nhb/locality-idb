@@ -1,5 +1,5 @@
 import { isNonEmptyString } from 'toolbox-x/guards';
-import type { ColumnDefinition, TypeName, UpdaterFn, ValidatorFn } from './types';
+import type { ColumnDefinition, ColumnValue, TypeName, UpdaterFn, ValidatorFn } from './types';
 
 /** Symbol key for column data type */
 export const ColumnType = Symbol('ColumnType');
@@ -32,8 +32,8 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	declare [IsIndexed]?: boolean;
 	declare [IsUnique]?: boolean;
 	declare [DefaultValue]?: T;
-	declare [ValidateFn]?: ValidatorFn<T>;
-	declare [OnUpdate]?: UpdaterFn<T>;
+	declare [ValidateFn]?: ValidatorFn<any>;
+	declare [OnUpdate]?: UpdaterFn<any>;
 
 	constructor(type: TName) {
 		this[ColumnType] = type;
@@ -121,9 +121,10 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	 *   return val >= 0 && val <= 120 ? null : 'Age must be between 0 and 120';
 	 * })
 	 */
-	validate(validator: ValidatorFn<T>) {
+	validate<This extends this>(this: This, validator: ValidatorFn<ColumnValue<This, T>>) {
 		this[ValidateFn] = validator;
-		return this as this & { [ValidateFn]: ValidatorFn<T> };
+
+		return this as This & { [ValidateFn]: ValidatorFn<ColumnValue<This, T>> };
 	}
 
 	/**
@@ -150,9 +151,10 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	 *
 	 * // Note: Ensure the column is not marked as primary key or auto-increment when using onUpdate
 	 */
-	onUpdate(updater: UpdaterFn<T>) {
+	onUpdate<This extends this>(this: This, updater: UpdaterFn<ColumnValue<This, T>>) {
 		this[OnUpdate] = updater;
-		return this as this & { [OnUpdate]: UpdaterFn<T> };
+
+		return this as This & { [OnUpdate]: UpdaterFn<ColumnValue<This, T>> };
 	}
 }
 

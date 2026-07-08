@@ -47,6 +47,15 @@ export type ForcedAny = any;
 /** Type for reject function of a promise */
 export type RejectFn = (reason: unknown) => void;
 
+/** Resolves the actual column value type considering nullable and optional modifiers */
+export type ColumnValue<Col, T> = Col extends { [IsNullable]: true }
+	? Col extends { [IsOptional]: true }
+		? Uncertain<T>
+		: Nullable<T>
+	: Col extends { [IsOptional]: true }
+		? Maybe<T>
+		: T;
+
 /** Validator function type for {@link Column.validate()} */
 export type ValidatorFn<T = any> = (value: T) => Uncertain<string>;
 
