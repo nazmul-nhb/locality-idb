@@ -20,6 +20,7 @@ import {
 	ColumnType,
 	DefaultValue,
 	IsAutoInc,
+	IsNullable,
 	IsOptional,
 	OnUpdate,
 	ValidateFn,
@@ -208,6 +209,7 @@ export function validateAndPrepareData<Data extends GenericObject>(
 			const columnType = column[ColumnType];
 			const defaultValue = column[DefaultValue];
 			const isOptional = column[IsOptional] ?? false;
+			const isNullable = column[IsNullable] ?? false;
 			const onUpdate = column[OnUpdate];
 
 			let fieldNotPresent = !(fieldName in prepared);
@@ -242,26 +244,30 @@ export function validateAndPrepareData<Data extends GenericObject>(
 				fieldNotPresent = false; // Update flag after applying onUpdate
 			}
 
+			if (!forUpdate && fieldValue == null && isNullable) {
+				prepared[fieldName] = null as Data[Key];
+				return; // Set null for nullable fields
+			}
+
 			// ! Handle missing fields
 			if (fieldNotPresent) {
 				// For updates, missing fields are OK (partial update)
 				if (forUpdate && !isFunction(onUpdate)) return;
 
 				// For inserts, check if field is required
-				if (!isOptional && fieldName !== keyPath) {
+				if (!(isOptional || isNullable) && fieldName !== keyPath) {
 					throw new RangeError(
 						`Required field '${String(fieldName)}' is missing in table '${tableName}'!`
 					);
 				}
 
-				// Optional field can be omitted
-				return;
+				return; // Optional field can be omitted
 			}
 
 			// ! Handle undefined values
 			if (isUndefined(fieldValue)) {
 				// Undefined is only allowed for optional fields
-				if (!isOptional && fieldName !== keyPath) {
+				if (!(isOptional || isNullable) && fieldName !== keyPath) {
 					throw new TypeError(
 						`Field '${String(fieldName)}' in table '${tableName}' cannot be undefined. It is a required field.`
 					);
@@ -281,12 +287,12 @@ export function validateAndPrepareData<Data extends GenericObject>(
 
 				// Use custom validator if provided, otherwise use built-in validation
 				if (isFunction(customValidator)) {
-					errorMsg = customValidator(fieldValue);
+					errorMsg = customValidator(prepared[fieldName]);
 				} else {
-					errorMsg = validateColumnType(columnType, fieldValue);
+					errorMsg = validateColumnType(columnType, prepared[fieldName]);
 				}
 
-				if (errorMsg) {
+				if (isString(errorMsg)) {
 					throw new TypeError(
 						`Invalid value for field '${String(fieldName)}' in table '${tableName}': ${errorMsg}`
 					);

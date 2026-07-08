@@ -182,9 +182,11 @@ export type $InferRow<T extends ColumnDefinition> = Prettify<
 		{
 			[K in keyof T]: ExtractColumnType<T[K]>;
 		},
-		$InferOptional<T>
+		$InferOptional<T> | $InferNullable<T>
 	> & {
 		[K in $InferOptional<T>]?: ExtractColumnType<T[K]>;
+	} & {
+		[K in $InferNullable<T>]: Nullable<ExtractColumnType<T[K]>>;
 	} & {
 		[K in $InferDefault<T> | $InferUUID<T> | $InferTimestamp<T>]: ExtractColumnType<T[K]>;
 	}
@@ -284,10 +286,9 @@ export type InferInsertType<T extends Table> = Prettify<
 		| $InferDefault<T['columns']>
 		| $InferTimestamp<T['columns']>
 		| $InferUUID<T['columns']>
+		| $InferNullable<T['columns']>
 	> & {
-		[K in $InferNullable<T['columns']>]: K extends keyof $InferRow<T['columns']>
-			? Nullable<$InferRow<T['columns']>[K]>
-			: never;
+		[K in $InferNullable<T['columns']>]?: $InferRow<T['columns']>[K];
 	} & {
 		[K in
 			| $InferAutoInc<T['columns']>

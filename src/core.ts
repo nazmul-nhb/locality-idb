@@ -91,11 +91,11 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		return this as this & { [IsOptional]: true };
 	}
 
-	// /** @instance Marks column as nullable (`null`) */
-	// nullable() {
-	// 	this[IsNullable] = true;
-	// 	return this as this & Omit<PKColumn<T, TName>, 'optional'> & { [IsNullable]: true };
-	// }
+	/** @instance Marks column as nullable (`null`) */
+	nullable() {
+		this[IsNullable] = true;
+		return this as this & { [IsNullable]: true };
+	}
 
 	/**
 	 * @instance Sets a custom validation function for the column
@@ -154,12 +154,6 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		this[OnUpdate] = updater;
 		return this as this & { [OnUpdate]: UpdaterFn<T> };
 	}
-
-	// TODO: Implement nullable support in the future
-	// nullable() {
-	// 	this[IsNullable] = true;
-	// 	return this as this & { [IsNullable]: true };
-	// }
 }
 
 /** @class Extends {@link Column} and represents a primary key column. */
