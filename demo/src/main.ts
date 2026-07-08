@@ -45,14 +45,14 @@ const customSchema = {
 const schema = defineSchema({
 	todos: {
 		serial: column.int().pk().auto(),
-		task: column.text().unique(),
+		task: column.text().unique().pk(),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
 		// .default(new Chronos().toLocalISOString())
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
 		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
-		url: column.url().nullable().onUpdate(()=> 'https://hello.money'),
+		url: column.url().nullable().onUpdate((v)=> v? v : v),
 	},
 	experiments: {
 		id: column.float().pk().auto(),

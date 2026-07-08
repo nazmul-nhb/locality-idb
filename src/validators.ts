@@ -210,6 +210,7 @@ export function validateAndPrepareData<Data extends GenericObject>(
 			const defaultValue = column[DefaultValue];
 			const isOptional = column[IsOptional] ?? false;
 			const isNullable = column[IsNullable] ?? false;
+			const isAutoInc = column[IsAutoInc] ?? false;
 			const onUpdate = column[OnUpdate];
 
 			let fieldNotPresent = !(fieldName in prepared);
@@ -235,16 +236,14 @@ export function validateAndPrepareData<Data extends GenericObject>(
 				}
 			}
 
-			// Recalculate field value after potential auto-generation/default
-			const fieldValue = prepared[fieldName];
-
 			// ! Apply onUpdate function for updates
 			if (forUpdate && isFunction(onUpdate)) {
-				prepared[fieldName] = onUpdate(fieldValue);
+				prepared[fieldName] = onUpdate(prepared[fieldName]);
 				fieldNotPresent = false; // Update flag after applying onUpdate
 			}
 
-			if (!forUpdate && fieldValue == null && isNullable) {
+			// ! Set null for nullable fields if null (or undefined) is provided
+			if (prepared[fieldName] == null && isNullable) {
 				prepared[fieldName] = null as Data[Key];
 				return; // Set null for nullable fields
 			}
@@ -265,8 +264,8 @@ export function validateAndPrepareData<Data extends GenericObject>(
 			}
 
 			// ! Handle undefined values
-			if (isUndefined(fieldValue)) {
-				// Undefined is only allowed for optional fields
+			if (isUndefined(prepared[fieldName])) {
+				// Undefined is only allowed for optional and nullable fields
 				if (!(isOptional || isNullable) && fieldName !== keyPath) {
 					throw new TypeError(
 						`Field '${String(fieldName)}' in table '${tableName}' cannot be undefined. It is a required field.`
@@ -278,8 +277,7 @@ export function validateAndPrepareData<Data extends GenericObject>(
 
 			// ! Validate the value type
 			// Skip validation for primary key during inserts ONLY if auto-increment
-			const shouldSkip =
-				!forUpdate && fieldName === keyPath && (column[IsAutoInc] ?? false);
+			const shouldSkip = !forUpdate && fieldName === keyPath && isAutoInc;
 
 			if (!shouldSkip) {
 				const customValidator = column[ValidateFn];
