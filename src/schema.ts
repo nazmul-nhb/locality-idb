@@ -69,7 +69,7 @@ export function defineSchema<S extends ColumnRecord>(schema: S): Schema<S> {
  *   isActive: column.bool().default(true),
  * });
  */
-export function table<N extends string, Col extends ColumnDefinition>(name: N, columns: Col) {
+export function table<Col extends ColumnDefinition>(name: string, columns: Col) {
 	return new Table(name, columns);
 }
 

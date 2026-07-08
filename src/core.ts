@@ -183,14 +183,14 @@ export class PKColumn<T = any, TName extends TypeName = TypeName> extends Column
 		this[ValidateFn] = column[ValidateFn];
 	}
 
-	/** @instance Enables auto increment - only available for numeric columns */
+	/** @instance Enables auto increment - only available for `number` columns */
 	auto() {
 		const colType = this[ColumnType];
 
 		const allowedTypes = ['int', 'integer', 'float', 'number'];
 
 		if (!isNonEmptyString(colType) || !allowedTypes.includes(colType)) {
-			throw new Error(`auto() can only be used with numeric columns, got: ${colType}`);
+			throw new Error(`auto() can only be used with number columns, got: ${colType}`);
 		}
 
 		this[IsAutoInc] = true;

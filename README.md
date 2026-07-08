@@ -1405,7 +1405,7 @@ for (const db of databases) {
 
 ### Schema Functions
 
-#### `defineSchema<Schema extends ColumnRecord, Keys extends keyof Schema>(schema: Schema): SchemaRecord<Schema, Keys>`
+#### `function defineSchema<S extends ColumnRecord>(schema: S): Schema<S>`
 
 Defines a database schema from an object mapping table names to column definitions.
 
@@ -1430,7 +1430,7 @@ const schema = defineSchema({
 });
 ```
 
-#### `table<T>(name: string, columns: T): Table<T>`
+#### `function table<Col extends ColumnDefinition>(name: string, columns: Col): Table<Col>`
 
 Creates a single table definition (alternative to `defineSchema`).
 
@@ -1449,6 +1449,8 @@ const userTable = table('users', {
   name: column.text(),
 });
 ```
+
+> Avoid using `table` function. Instead use `defineSchema` for better readability and organization, as `table` may create confusion.
 
 ---
 
@@ -1490,11 +1492,23 @@ column.int().index()
 
 #### `optional(): Column`
 
-Makes the column optional (nullable).
+Makes the column optional (`undefined`).
 
 ```typescript
 column.text().optional()
 ```
+
+> Type inferred as `T | undefined`
+
+#### `nullable(): Column`
+
+Makes the column nullable (`null`).
+
+```typescript
+column.text().nullable()
+```
+
+> Type inferred as `T | null`
 
 #### `default<T>(value: T): Column`
 
