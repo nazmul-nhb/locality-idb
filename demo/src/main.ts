@@ -8,7 +8,7 @@ import { uuid } from 'nhb-toolbox/hash';
 import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 import { Stylog } from 'nhb-toolbox/stylog';
 
-import type { InferInsertType, InferSelectType, InferUpdateType, Timestamp } from 'locality';
+import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
 import {
 	column,
 	defineSchema,
@@ -34,14 +34,16 @@ const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 const customSchema = {
 	test: table('test', {
 		serial: column.int().pk().auto(),
-		task: column.text().unique(),
+		task: column.string(),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().optional(),
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
-		test: column.string<Timestamp>().nullable().optional()
+		test: column.tuple<0 | 9>()
 	}),
 };
+
+export type _Test = InferSelectType<typeof customSchema.test>;
 
 const schema = defineSchema({
 	todos: {
@@ -49,11 +51,11 @@ const schema = defineSchema({
 		task: column.text().unique(),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
-		timestamp: column.timestamp().optional(),
+		timestamp: column.timestamp().nullable(),
 		// .default(new Chronos().toLocalISOString())
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
 		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
-		url: column.url().nullable().onUpdate((v)=> v ? v : null),
+		url: column.url().nullable(),
 	},
 	experiments: {
 		id: column.float().pk().auto(),
@@ -70,8 +72,6 @@ const schema = defineSchema({
 });
 
 // schema.todos.columns.serial
-
-// type _Test = InferSelectType<typeof customSchema.test>['test']
 
 type SchemaType = typeof schema;
 

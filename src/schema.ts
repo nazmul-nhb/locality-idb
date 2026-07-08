@@ -124,7 +124,9 @@ export const column = {
 	 * type UserId = Branded<number, 'UserId'>;
 	 * const userId = column.int<UserId>();
 	 */
-	int: <T extends number = number>() => new Column<T, 'int'>('int'),
+	int: <T extends number = number>() => {
+		return new Column<NoInfer<T>, 'int'>('int');
+	},
 
 	/**
 	 * Creates a float column.
@@ -142,7 +144,9 @@ export const column = {
 	 * type USD = Branded<number, 'USD'>;
 	 * const amount = column.float<USD>();
 	 */
-	float: <T extends number = number>() => new Column<T, 'float'>('float'),
+	float: <T extends number = number>() => {
+		return new Column<NoInfer<T>, 'float'>('float');
+	},
 
 	/**
 	 * Creates a number column.
@@ -161,7 +165,9 @@ export const column = {
 	 * type Percentage = Branded<number, 'Percentage'>;
 	 * const completion = column.number<Percentage>();
 	 */
-	number: <T extends number = number>() => new Column<T, 'number'>('number'),
+	number: <T extends number = number>() => {
+		return new Column<NoInfer<T>, 'number'>('number');
+	},
 
 	/**
 	 * Creates a numeric (number or numeric string) column.
@@ -180,7 +186,9 @@ export const column = {
 	 * type SerialNumber = Branded<Numeric, 'SerialNumber'>;
 	 * const serial = column.numeric<SerialNumber>();
 	 */
-	numeric: <T extends Numeric = Numeric>() => new Column<T, 'numeric'>('numeric'),
+	numeric: <T extends Numeric = Numeric>() => {
+		return new Column<NoInfer<T>, 'numeric'>('numeric');
+	},
 
 	/**
 	 * Creates a bigint column.
@@ -199,7 +207,9 @@ export const column = {
 	 * type SnowflakeId = Branded<bigint, 'SnowflakeId'>;
 	 * const snowflake = column.bigint<SnowflakeId>();
 	 */
-	bigint: <T extends Numeric = Numeric>() => new Column<T, 'bigint'>('bigint'),
+	bigint: <T extends Numeric = Numeric>() => {
+		return new Column<NoInfer<T>, 'bigint'>('bigint');
+	},
 
 	/**
 	 * Creates a text column.
@@ -222,7 +232,9 @@ export const column = {
 	 * type HTML = Branded<string, 'HTML'>;
 	 * const content = column.text<HTML>();
 	 */
-	text: <T extends string = string>() => new Column<T, 'text'>('text'),
+	text: <T extends string = string>() => {
+		return new Column<NoInfer<T>, 'text'>('text');
+	},
 
 	/**
 	 * Creates a string column.
@@ -245,7 +257,9 @@ export const column = {
 	 * type URL = Branded<string, 'URL'>;
 	 * const website = column.string<URL>();
 	 */
-	string: <T extends string = string>() => new Column<T, 'string'>('string'),
+	string: <T extends string = string>() => {
+		return new Column<NoInfer<T>, 'string'>('string');
+	},
 
 	/**
 	 * Creates a char column with optional length.
@@ -269,8 +283,9 @@ export const column = {
 	 * type StateCode = Branded<string, 'StateCode'>;
 	 * const state = column.char<StateCode>(2);
 	 */
-	char: <T extends string = string>(length = 8) =>
-		new Column<T, `char(${number})`>(`char(${length})`),
+	char: <T extends string = string>(length = 8) => {
+		return new Column<NoInfer<T>, `char(${number})`>(`char(${length})`);
+	},
 
 	/**
 	 * Creates a varchar column with optional length.
@@ -294,8 +309,9 @@ export const column = {
 	 * type URL = Branded<string, 'URL'>;
 	 * const website = column.varchar<URL>(500);
 	 */
-	varchar: <T extends string = string>(length = 32) =>
-		new Column<T, `varchar(${number})`>(`varchar(${length})`),
+	varchar: <T extends string = string>(length = 32) => {
+		return new Column<NoInfer<T>, `varchar(${number})`>(`varchar(${length})`);
+	},
 
 	/**
 	 * Creates a UUID column.
@@ -305,7 +321,9 @@ export const column = {
 	 * - UUIDs are typically used as unique identifiers.
 	 * - Automatically generates UUID v4 values when no value is provided.
 	 */
-	uuid: () => new Column<$UUID, 'uuid'>('uuid'),
+	uuid: () => {
+		return new Column<$UUID, 'uuid'>('uuid');
+	},
 
 	/**
 	 * Creates a timestamp column.
@@ -314,7 +332,9 @@ export const column = {
 	 * - This column type is used for storing date and time information in ISO 8601 format.
 	 * - Automatically generates the current timestamp when no value is provided.
 	 */
-	timestamp: () => new Column<Timestamp, 'timestamp'>('timestamp'),
+	timestamp: () => {
+		return new Column<Timestamp, 'timestamp'>('timestamp');
+	},
 
 	/**
 	 * Creates an email column.
@@ -323,7 +343,9 @@ export const column = {
 	 * - This column type is used for storing email address strings.
 	 * - Includes built-in validation to ensure the value is a valid email format.
 	 */
-	email: () => new Column<Email, 'email'>('email'),
+	email: () => {
+		return new Column<Email, 'email'>('email');
+	},
 
 	/**
 	 * Creates a URL column.
@@ -332,7 +354,9 @@ export const column = {
 	 * - This column type is used for storing URL strings.
 	 * - Includes built-in validation to ensure the value is a valid URL format.
 	 */
-	url: () => new Column<URLString, 'url'>('url'),
+	url: () => {
+		return new Column<URLString, 'url'>('url');
+	},
 
 	/**
 	 * Creates a boolean column. Same as {@link column.boolean boolean}.
@@ -351,7 +375,9 @@ export const column = {
 	 * type EmailVerified = Branded<boolean, 'EmailVerified'>;
 	 * const verified = column.bool<EmailVerified>();
 	 */
-	bool: <T extends boolean = boolean>() => new Column<T, 'bool'>('bool'),
+	bool: <T extends boolean = boolean>() => {
+		return new Column<NoInfer<T>, 'bool'>('bool');
+	},
 
 	/**
 	 * Creates a boolean column. Same as {@link column.bool bool}.
@@ -370,14 +396,18 @@ export const column = {
 	 * type TwoFactorEnabled = Branded<boolean, 'TwoFactorEnabled'>;
 	 * const twoFactor = column.boolean<TwoFactorEnabled>();
 	 */
-	boolean: <T extends boolean = boolean>() => new Column<T, 'boolean'>('boolean'),
+	boolean: <T extends boolean = boolean>() => {
+		return new Column<NoInfer<T>, 'boolean'>('boolean');
+	},
 
 	/**
 	 * Creates a date column.
 	 * @returns A new {@link Column} instance for dates.
 	 * @remarks This column type is used for storing date values.
 	 */
-	date: () => new Column<Date, 'date'>('date'),
+	date: () => {
+		return new Column<Date, 'date'>('date');
+	},
 
 	/**
 	 * Creates an object column.
@@ -401,7 +431,9 @@ export const column = {
 	 * // With inline type
 	 * const settings = column.object<{ theme: 'light' | 'dark'; notifications: boolean }>();
 	 */
-	object: <Obj extends GenericObject>() => new Column<Obj, `object`>(`object`),
+	object: <Obj extends GenericObject = GenericObject>() => {
+		return new Column<NoInfer<Obj>, `object`>(`object`);
+	},
 
 	/**
 	 * Creates an array column.
@@ -424,7 +456,9 @@ export const column = {
 	 * // With union types
 	 * const mixedData = column.array<string | number>();
 	 */
-	array: <T = any>() => new Column<Array<T>, `array`>(`array`),
+	array: <T = any>() => {
+		return new Column<Array<NoInfer<T>>, `array`>(`array`);
+	},
 
 	/**
 	 * Creates a list column.
@@ -444,7 +478,9 @@ export const column = {
 	 * interface Permission { resource: string; actions: string[]; }
 	 * const permissions = column.list<Permission>();
 	 */
-	list: <T = any>() => new Column<List<T>, `list`>(`list`),
+	list: <T = any>() => {
+		return new Column<List<NoInfer<T>>, `list`>(`list`);
+	},
 
 	/**
 	 * Creates a tuple column.
@@ -466,7 +502,9 @@ export const column = {
 	 * // Mixed types [name, age, isActive]
 	 * const userInfo = column.tuple<string, number, boolean>();
 	 */
-	tuple: <T = any>() => new Column<Tuple<T>, `tuple`>(`tuple`),
+	tuple: <T = any>() => {
+		return new Column<Tuple<NoInfer<T>>, `tuple`>(`tuple`);
+	},
 
 	/**
 	 * Creates a set column.
@@ -488,7 +526,9 @@ export const column = {
 	 * // Unique literal values
 	 * const permissions = column.set<'read' | 'write' | 'delete'>();
 	 */
-	set: <T = any>() => new Column<Set<T>, `set`>(`set`),
+	set: <T = any>() => {
+		return new Column<Set<NoInfer<T>>, `set`>(`set`);
+	},
 
 	/**
 	 * Creates a map column.
@@ -511,7 +551,9 @@ export const column = {
 	 * // Literal keys to union values
 	 * const config = column.map<'theme' | 'lang', string | boolean>();
 	 */
-	map: <K = any, V = any>() => new Column<Map<K, V>, `map`>(`map`),
+	map: <K = any, V = any>() => {
+		return new Column<Map<NoInfer<K>, NoInfer<V>>, `map`>(`map`);
+	},
 
 	/**
 	 * Creates a custom column.
@@ -521,5 +563,7 @@ export const column = {
 	 * - You can specify the type when creating the column.
 	 * - No built-in serialization/deserialization is provided; you must handle it yourself.
 	 */
-	custom: <T = any>() => new Column<T, `custom`>(`custom`),
+	custom: <T = any>() => {
+		return new Column<NoInfer<T>, `custom`>(`custom`);
+	},
 };

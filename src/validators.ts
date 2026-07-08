@@ -213,18 +213,20 @@ export function _validateAndPrepareData<Data extends GenericObject>(
 			const isAutoInc = column[IsAutoInc] ?? false;
 			const onUpdate = column[OnUpdate];
 
+			const skipAutoGen = isNullable || isOptional;
+
 			let fieldNotPresent = !(fieldName in prepared);
 
 			// ! Auto-generate values for insert (not update)
 			if (!forUpdate && fieldNotPresent) {
 				// Auto-generate UUID
-				if (columnType === 'uuid' && isUndefined(defaultValue)) {
+				if (columnType === 'uuid' && isUndefined(defaultValue) && !skipAutoGen) {
 					prepared[fieldName] = uuidV4() as Data[Key];
 					return; // Skip validation for auto-generated
 				}
 
 				// Auto-generate timestamp
-				if (columnType === 'timestamp' && isUndefined(defaultValue)) {
+				if (columnType === 'timestamp' && isUndefined(defaultValue) && !skipAutoGen) {
 					prepared[fieldName] = getTimestamp() as Data[Key];
 					return; // Skip validation for auto-generated
 				}

@@ -336,6 +336,7 @@ const schema = defineSchema({
 > - Auto-generated values can be overridden by providing explicit values during insert.
 > - Use the `default()` modifier to set custom default values instead of auto-generated ones.
 > - Auto-generated values are generated at runtime during insert operations.
+> - If
 > - `onUpdate()` modifier can be used to auto-update values on update operations (e.g. `updatedAt` timestamp).
 > - Type extensions for `uuid` and `timestamp` are not applicable since they are already typed.
 > - For custom UUID versions, use [`uuid`](https://toolbox-x.nazmul-nhb.dev/docs/utils/hash/uuid#uuid) utility from [`toolbox-x`](https://www.npmjs.com/package/toolbox-x).
@@ -1498,7 +1499,7 @@ Makes the column optional (`undefined`).
 column.text().optional()
 ```
 
-> Type inferred as `T | undefined`
+> Type inferred as `string | undefined`
 
 #### `nullable(): Column`
 
@@ -1508,7 +1509,7 @@ Makes the column nullable (`null`).
 column.text().nullable()
 ```
 
-> Type inferred as `T | null`
+> Type inferred as `string | null`
 
 #### `default<T>(value: T): Column`
 

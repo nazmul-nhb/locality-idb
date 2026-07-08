@@ -173,7 +173,7 @@ export type ColumnRecord = Record<string, ColumnDefinition>;
 
 /** Schema definition from a {@link ColumnRecord column record} */
 export type Schema<S extends ColumnRecord> = {
-	[K in keyof S & string]: Table<Extract<S[K], ColumnDefinition>>;
+	[K in keyof S]: Table<Extract<S[K], ColumnDefinition>>;
 };
 
 /** Schema record type mapping table names to {@link Table} instances */
