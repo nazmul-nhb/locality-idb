@@ -190,19 +190,29 @@ export type SchemaDefinition<T extends ColumnDefinition = ColumnDefinition> = Re
 /** Helper to reliably extract the generic type parameter from a Column directly from its type parameters. */
 type ExtractColumnType<C> = C extends Column<infer T, TypeName> ? T : never;
 
+/** Resolves column value type from column, considering nullable and optional fields */
+type ResolveColumnType<T> = T extends { [IsNullable]: true }
+	? Nullable<ExtractColumnType<T>>
+	: T extends { [IsOptional]: true }
+		? Maybe<ExtractColumnType<T>>
+		: ExtractColumnType<T>;
+
 /** Extracts inferred row type from columns. */
 export type $InferRow<T extends ColumnDefinition> = Prettify<
-	Omit<
-		{
-			[K in keyof T]: ExtractColumnType<T[K]>;
-		},
-		$InferOptional<T> | $InferNullable<T>
-	> & {
-		[K in $InferOptional<T>]?: ExtractColumnType<T[K]>;
+	{
+		[K in keyof T as K extends Exclude<
+			$InferOptional<T>,
+			$InferDefault<T> | $InferUUID<T> | $InferTimestamp<T>
+		>
+			? K
+			: never]?: ResolveColumnType<T[K]>;
 	} & {
-		[K in $InferNullable<T>]: Nullable<ExtractColumnType<T[K]>>;
-	} & {
-		[K in $InferDefault<T> | $InferUUID<T> | $InferTimestamp<T>]: ExtractColumnType<T[K]>;
+		[K in keyof T as K extends Exclude<
+			$InferOptional<T>,
+			$InferDefault<T> | $InferUUID<T> | $InferTimestamp<T>
+		>
+			? never
+			: K]: ResolveColumnType<T[K]>;
 	}
 >;
 
@@ -262,9 +272,7 @@ export type $InferIndex<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends { [IsIndexed]: true } ? K : never;
 }[keyof T];
 
-/**
- * Finds the field name with {@link UUID} type.
- */
+/** Finds the field name with {@link UUID} type. */
 export type $InferUUID<T extends ColumnDefinition> = {
 	[K in keyof T]: T[K] extends Column<infer C, 'uuid'>
 		? C extends $UUID
@@ -302,7 +310,9 @@ export type InferInsertType<T extends Table> = Prettify<
 		| $InferUUID<T['columns']>
 		| $InferNullable<T['columns']>
 	> & {
-		[K in $InferNullable<T['columns']>]?: $InferRow<T['columns']>[K];
+		[K in $InferNullable<T['columns']>]?: K extends keyof $InferRow<T['columns']>
+			? $InferRow<T['columns']>[K]
+			: never;
 	} & {
 		[K in
 			| $InferAutoInc<T['columns']>

@@ -1,6 +1,6 @@
 {
   "name": "locality-idb",
-  "version": "2.2.4",
+  "version": "2.2.10",
   "description": "SQL-like query builder for IndexedDB with chainable API",
   "type": "module",
   "sideEffects": false,

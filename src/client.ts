@@ -246,7 +246,7 @@ export class Locality<
 			table,
 			() => this.#db,
 			this.#readyPromise,
-			this.#extractTablePk(table)
+			this.#extractTablePk<T, Row>(table)
 		);
 	}
 
@@ -406,12 +406,14 @@ export class Locality<
 				);
 			},
 
-			delete: (table) => {
-				return new DeleteQuery(
+			delete: <T extends Tables[number], Row extends $InferRow<Schema[T]['columns']>>(
+				table: T
+			) => {
+				return new DeleteQuery<Row, keyof Row, Schema[T]>(
 					table,
 					() => this.#db,
 					this.#readyPromise,
-					this.#extractTablePk(table),
+					this.#extractTablePk<T, Row>(table),
 					transaction
 				);
 			},

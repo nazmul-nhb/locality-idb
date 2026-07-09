@@ -37,13 +37,15 @@ const customSchema = {
 		task: column.string(),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
-		timestamp: column.timestamp().optional(),
+		timestamp: column.timestamp().optional().onUpdate(p=> p ? p : undefined).validate(v=> v),
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
 		test: column.tuple<0 | 9>()
 	}),
 };
 
-export type _Test = InferSelectType<typeof customSchema.test>;
+export type _Test1 = InferSelectType<typeof customSchema.test>;
+export type _Test2 = InferInsertType<typeof customSchema.test>;
+export type _Test3 = InferUpdateType<typeof customSchema.test>;
 
 const schema = defineSchema({
 	todos: {
@@ -165,6 +167,7 @@ const handleAddTodo = async () => {
 
 	const newTodo: InsertTodo = {
 		task,
+		timestamp: null
 	};
 
 	// await addTodo(newTodo);
