@@ -5,15 +5,15 @@ import { _validateAndPrepareData } from '../validators';
 
 /** @class Insert query builder. */
 export class InsertQuery<
-	Raw extends GenericObject,
-	Inserted extends Raw | Raw[],
+	Ins extends GenericObject,
+	Inserted extends Ins | Ins[],
 	Data extends GenericObject,
 	Return extends Inserted extends Array<infer _> ? Data[] : Data,
 > {
 	#table: string;
 	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
-	#dataToInsert: Raw[] = [];
+	#dataToInsert: Ins[] = [];
 	#columns?: ColumnDefinition;
 	// TODO: Handle multiple primary keys later
 	#keyPath?: string;
@@ -46,9 +46,9 @@ export class InsertQuery<
 	values<T extends Inserted>(data: T) {
 		this[IsArray] = Array.isArray(data);
 
-		this.#dataToInsert = (this[IsArray] ? data : [data]) as Raw[];
+		this.#dataToInsert = (this[IsArray] ? data : [data]) as Ins[];
 
-		return this as InsertQuery<Raw, T, Data, T extends Array<infer _> ? Data[] : Data>;
+		return this as InsertQuery<Ins, T, Data, T extends Array<infer _> ? Data[] : Data>;
 	}
 
 	/**

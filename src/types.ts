@@ -331,6 +331,11 @@ export type InferUpdateType<T extends Table> = Prettify<
 	Partial<Omit<$InferRow<T['columns']>, $InferPrimaryKey<T['columns']>>>
 >;
 
+/** Callback function that gets the current row and returns values to be updated */
+export type UpdateCallback<Row extends GenericObject, T extends Table> = (
+	row: Row
+) => InferUpdateType<T>;
+
 /** Creates a type for select operations. */
 export type InferSelectType<S extends Table> = Prettify<
 	S extends infer T ? (T extends Table<infer C> ? $InferRow<C> : never) : never

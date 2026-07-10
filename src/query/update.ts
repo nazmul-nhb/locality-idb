@@ -9,17 +9,19 @@ import type {
 	IDBGetter,
 	InferUpdateType,
 	RejectFn,
+	UpdateCallback,
 	WherePredicate,
 } from '../types';
 import { _validateAndPrepareData } from '../validators';
 
 /** @class Update query builder. */
-export class UpdateQuery<T extends GenericObject, S extends Table> {
+export class UpdateQuery<Row extends GenericObject, T extends Table> {
 	#table: string;
 	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
-	#dataToUpdate?: InferUpdateType<S>;
-	#whereCondition?: WherePredicate<T>;
+	#dataToUpdate?: InferUpdateType<T>;
+	#whereCondition?: WherePredicate<Row>;
+	#updateCallback?: UpdateCallback<Row, T>;
 	#whereIndexName?: string;
 	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
 	#columns?: ColumnDefinition;
@@ -80,8 +82,21 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	 * @instance Sets the data to be updated
 	 * @param values Values to update
 	 */
-	set(values: InferUpdateType<S>) {
-		this.#dataToUpdate = values;
+	set(values: InferUpdateType<T>): this;
+
+	/**
+	 * @instance Sets the computed data to be updated
+	 * @param cb Callback function that receives the current row and returns the values to update
+	 */
+	set(cb: UpdateCallback<Row, T>): this;
+
+	set(values: InferUpdateType<T> | UpdateCallback<Row, T>) {
+		if (isFunction(values)) {
+			this.#updateCallback = values;
+		} else {
+			this.#dataToUpdate = values;
+		}
+
 		return this;
 	}
 
@@ -89,21 +104,21 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	 * @instance Filter rows to update
 	 * @param predicate Filtering function
 	 */
-	where(predicate: WherePredicate<T>): this;
+	where(predicate: WherePredicate<Row>): this;
 
 	/**
 	 * @instance Filter rows to update by index
 	 * @param indexName Index name to query
 	 * @param query Key value or {@link IDBKeyRange} to search for
 	 */
-	where<IdxKey extends $InferPrimaryKey<S['columns']> | $InferIndex<S['columns']>>(
+	where<IdxKey extends $InferPrimaryKey<T['columns']> | $InferIndex<T['columns']>>(
 		indexName: IdxKey,
-		query: IDBKeyRange | T[IdxKey]
+		query: IDBKeyRange | Row[IdxKey]
 	): this;
 
-	where<IdxKey extends $InferPrimaryKey<S['columns']> | $InferIndex<S['columns']>>(
-		condition: WherePredicate<T> | IdxKey,
-		query?: IDBKeyRange | T[IdxKey]
+	where<IdxKey extends $InferPrimaryKey<T['columns']> | $InferIndex<T['columns']>>(
+		condition: WherePredicate<Row> | IdxKey,
+		query?: IDBKeyRange | Row[IdxKey]
 	): this {
 		if (isFunction(condition)) {
 			this.#whereCondition = condition;
@@ -125,25 +140,23 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 	async run(): Promise<number> {
 		await this.#readyPromise;
 
-		if (!isNotEmptyObject(this.#dataToUpdate)) {
-			throw new Error('No values set for update!');
-		}
+		let dataToUpdate = this.#dataToUpdate;
 
 		return new Promise((resolve, reject) => {
 			const transaction =
 				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
 
-			let request: IDBRequest<T[]>;
+			let request: IDBRequest<Row[]>;
 
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
 				const source = this.#buildIndexedStore(store, reject);
 
 				if (!source) return;
 
-				request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+				request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
 			} else {
-				request = store.getAll() as IDBRequest<T[]>;
+				request = store.getAll() as IDBRequest<Row[]>;
 			}
 
 			let updateCount = 0;
@@ -156,9 +169,17 @@ export class UpdateQuery<T extends GenericObject, S extends Table> {
 				}
 
 				const updatePromises = rows.map((row) => {
+					if (isFunction(this.#updateCallback)) {
+						dataToUpdate = this.#updateCallback(row);
+					}
+
+					if (!isNotEmptyObject(dataToUpdate)) {
+						throw new Error('No values set for update!');
+					}
+
 					return new Promise<void>((res, rej) => {
-						const updatedRow = _validateAndPrepareData<T>(
-							{ ...row, ...this.#dataToUpdate },
+						const updatedRow = _validateAndPrepareData<Row>(
+							{ ...row, ...dataToUpdate },
 							this.#columns,
 							this.#keyPath,
 							this.#table,

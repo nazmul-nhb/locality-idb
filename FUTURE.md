@@ -1,5 +1,7 @@
 # Future Considerations
 
+<!-- markdownlint-disable-file MD024 -->
+
 ## 0. Add Nullable Column Modifier ⭐⭐⭐⭐⭐
 
 ### Status
@@ -17,6 +19,9 @@ description: column.varchar(256).optional();
 ```
 
 ## 1. References ⭐⭐⭐⭐⭐
+
+> [!NOTE]
+> Will be implemented later
 
 This would be #1 priority.
 
@@ -56,6 +61,10 @@ Then Locality could
 ---
 
 ## 2. Computed Updates ⭐⭐⭐⭐⭐
+
+### Status
+
+- [x] Done
 
 Instead of only
 

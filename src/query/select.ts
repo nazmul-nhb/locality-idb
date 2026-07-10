@@ -21,28 +21,30 @@ import type {
 	WherePredicate,
 } from '../types';
 
+type BoolRecord = Partial<Record<string, boolean>>;
+
 /** @class Select query builder. */
 export class SelectQuery<
-	T extends GenericObject,
-	S extends Nullable<Partial<Record<string, boolean>>> = null,
+	Row extends GenericObject,
+	Sel extends Nullable<BoolRecord> = null,
 	Tbl extends Table = Table,
 > {
 	#table: string;
 	#readyPromise: Promise<void>;
 
 	#dbGetter: IDBGetter;
-	#whereCondition?: WherePredicate<T>;
+	#whereCondition?: WherePredicate<Row>;
 	#whereIndexName?: string;
 	#whereIndexQuery?: IDBKeyRange;
 
-	#orderByKey?: NestedPrimitiveKey<T>;
+	#orderByKey?: NestedPrimitiveKey<Row>;
 	#orderByDir: SortDirection = 'asc';
 	#limitCount?: number;
 	#useIndexCursor?: boolean;
 
 	#transaction?: IDBTransaction;
 
-	declare [Selected]?: S;
+	declare [Selected]?: Sel;
 
 	constructor(
 		table: string,
@@ -98,7 +100,7 @@ export class SelectQuery<
 	}
 
 	/** @internal Sort data in memory if needed */
-	#sort(data: T[]): T[] {
+	#sort(data: Row[]): Row[] {
 		if (this.#orderByKey) {
 			return sortAnArray(data, {
 				sortOrder: this.#orderByDir,
@@ -112,7 +114,7 @@ export class SelectQuery<
 	}
 
 	/** @internal Apply sort, limit, and projection pipeline to results */
-	#applyPipeline(results: T[]): Partial<T>[] {
+	#applyPipeline(results: Row[]): Partial<Row>[] {
 		// Apply orderBy
 		let processed = this.#sort(results);
 
@@ -126,12 +128,12 @@ export class SelectQuery<
 	}
 
 	/** Projects a row based on selected fields */
-	#projectRow(row: T): Partial<T> {
-		type Key = keyof T;
+	#projectRow(row: Row): Partial<Row> {
+		type Key = keyof Row;
 
 		if (!isNotEmptyObject(this?.[Selected])) return row;
 
-		const projected = {} as Partial<T>;
+		const projected = {} as Partial<Row>;
 
 		const selectionEntries = Object.entries(this[Selected]);
 		const selectionKeys = new Set(Object.keys(this[Selected]));
@@ -162,17 +164,17 @@ export class SelectQuery<
 	 * @instance Select or exclude specific columns
 	 * @param cols Columns to select or exclude
 	 */
-	select<Selection extends Partial<Record<keyof T, boolean>>>(cols: Selection) {
-		this[Selected] = cols as unknown as S;
+	select<Selection extends Partial<Record<keyof Row, boolean>>>(cols: Selection) {
+		this[Selected] = cols as unknown as Sel;
 
-		return this as unknown as SelectQuery<T, Selection, Tbl>;
+		return this as unknown as SelectQuery<Row, Selection, Tbl>;
 	}
 
 	/**
 	 * @instance Filter rows based on predicate function
 	 * @param predicate Filtering function
 	 */
-	where(predicate: WherePredicate<T>): this;
+	where(predicate: WherePredicate<Row>): this;
 
 	/**
 	 * @instance Filter rows based on index query
@@ -181,12 +183,12 @@ export class SelectQuery<
 	 */
 	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
 		indexName: IdxKey,
-		query: IDBKeyRange | T[IdxKey]
+		query: IDBKeyRange | Row[IdxKey]
 	): this;
 
 	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
-		condition: WherePredicate<T> | IdxKey,
-		query?: IDBKeyRange | T[IdxKey]
+		condition: WherePredicate<Row> | IdxKey,
+		query?: IDBKeyRange | Row[IdxKey]
 	): this {
 		if (isFunction(condition)) {
 			this.#whereCondition = condition;
@@ -210,7 +212,7 @@ export class SelectQuery<
 	 * - This method performs in-memory sorting.
 	 * - For optimized sorting using `IndexedDB` indexes, use {@link sortByIndex} instead.
 	 */
-	orderBy<Key extends NestedPrimitiveKey<T>>(key: Key, dir: SortDirection = 'asc'): this {
+	orderBy<Key extends NestedPrimitiveKey<Row>>(key: Key, dir: SortDirection = 'asc'): this {
 		this.#orderByKey = key;
 		this.#orderByDir = dir;
 
@@ -231,7 +233,7 @@ export class SelectQuery<
 		indexName: IdxKey,
 		dir: SortDirection = 'asc'
 	): this {
-		this.#orderByKey = indexName as unknown as NestedPrimitiveKey<T>;
+		this.#orderByKey = indexName as unknown as NestedPrimitiveKey<Row>;
 		this.#orderByDir = dir;
 		this.#useIndexCursor = true;
 
@@ -248,12 +250,12 @@ export class SelectQuery<
 	}
 
 	/** Fetch all matching records */
-	async findAll(this: SelectQuery<T, null>): Promise<T[]>;
+	async findAll(this: SelectQuery<Row, null>): Promise<Row[]>;
 
 	/** Fetch all matching records with selected fields */
-	async findAll<Selection extends Partial<Record<keyof T, boolean>>>(
-		this: SelectQuery<T, Selection>
-	): Promise<SelectFields<T, Selection>[]>;
+	async findAll<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, Selection>
+	): Promise<SelectFields<Row, Selection>[]>;
 
 	async findAll() {
 		await this.#readyPromise;
@@ -266,7 +268,7 @@ export class SelectQuery<
 
 				if (!source) return;
 
-				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
 
 				request.onsuccess = () => {
 					resolve(this.#applyPipeline(request.result));
@@ -290,7 +292,7 @@ export class SelectQuery<
 				const index = store.index(this.#orderByKey as string);
 				const direction = this.#orderByDir === 'desc' ? 'prev' : 'next';
 				const request = index.openCursor(null, direction);
-				const results: T[] = [];
+				const results: Row[] = [];
 
 				let count = 0;
 
@@ -317,7 +319,7 @@ export class SelectQuery<
 				request.onerror = () => reject(request.error);
 			} else {
 				// Use standard getAll with in-memory sorting
-				const request = store.getAll() as IDBRequest<T[]>;
+				const request = store.getAll() as IDBRequest<Row[]>;
 
 				request.onsuccess = () => {
 					let results = request.result;
@@ -336,16 +338,19 @@ export class SelectQuery<
 	}
 
 	/** Fetch records with cursor-based pagination */
-	async page(this: SelectQuery<T, null>, options?: PageOptions): Promise<PageResult<T, null>>;
+	async page(
+		this: SelectQuery<Row, null>,
+		options?: PageOptions
+	): Promise<PageResult<Row, null>>;
 
 	/** Fetch records with cursor-based pagination and selected fields */
-	async page<Selection extends Partial<Record<keyof T, boolean>>>(
-		this: SelectQuery<T, Selection>,
+	async page<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, Selection>,
 		options?: PageOptions
-	): Promise<PageResult<T, Selection>>;
+	): Promise<PageResult<Row, Selection>>;
 
-	async page<Selection extends Partial<Record<keyof T, boolean>>>(
-		this: SelectQuery<T, Nullable<Selection>>,
+	async page<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, Nullable<Selection>>,
 		options: PageOptions = {}
 	) {
 		await this.#readyPromise;
@@ -378,9 +383,9 @@ export class SelectQuery<
 
 			if (limit === 0) {
 				resolve({
-					items: [] as T[],
+					items: [] as Row[],
 					nextCursor: options.cursor ?? null,
-				} as PageResult<T, Selection>);
+				} as PageResult<Row, Selection>);
 				return;
 			}
 
@@ -413,7 +418,7 @@ export class SelectQuery<
 			}
 
 			const request = source.openCursor(range ?? null, direction);
-			const items: Partial<T>[] = [];
+			const items: Partial<Row>[] = [];
 			let count = 0;
 
 			request.onsuccess = () => {
@@ -421,13 +426,13 @@ export class SelectQuery<
 
 				if (!cursor) {
 					resolve({
-						items: items as PageResult<T, Selection>['items'],
+						items: items as PageResult<Row, Selection>['items'],
 						nextCursor: undefined,
 					});
 					return;
 				}
 
-				const row = cursor.value as T;
+				const row = cursor.value as Row;
 
 				if (this.#whereCondition && !this.#whereCondition(row)) {
 					cursor.continue();
@@ -439,7 +444,7 @@ export class SelectQuery<
 
 				if (limit && count >= limit) {
 					resolve({
-						items: items as PageResult<T, Selection>['items'],
+						items: items as PageResult<Row, Selection>['items'],
 						nextCursor: cursor.key,
 					});
 					return;
@@ -453,17 +458,17 @@ export class SelectQuery<
 	}
 
 	/** Stream records with a cursor */
-	async stream(this: SelectQuery<T, null>, callback: CursorCallback<T>): Promise<void>;
+	async stream(this: SelectQuery<Row, null>, callback: CursorCallback<Row>): Promise<void>;
 
 	/** Stream records with a cursor and selected fields */
-	async stream<Selection extends Partial<Record<keyof T, boolean>>>(
-		this: SelectQuery<T, Selection>,
-		callback: CursorCallback<SelectFields<T, Selection>>
+	async stream<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, Selection>,
+		callback: CursorCallback<SelectFields<Row, Selection>>
 	): Promise<void>;
 
-	async stream<Selection extends Partial<Record<keyof T, boolean>>>(
-		this: SelectQuery<T, Selection>,
-		callback: CursorCallback<T> | CursorCallback<SelectFields<T, Selection>>
+	async stream<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, Selection>,
+		callback: CursorCallback<Row> | CursorCallback<SelectFields<Row, Selection>>
 	) {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
@@ -509,7 +514,7 @@ export class SelectQuery<
 					return;
 				}
 
-				const row = cursor.value as T;
+				const row = cursor.value as Row;
 
 				if (this.#whereCondition && !this.#whereCondition(row)) {
 					cursor.continue();
@@ -531,12 +536,12 @@ export class SelectQuery<
 	}
 
 	/** Fetch first matching record */
-	async findFirst(this: SelectQuery<T, null>): Promise<Nullable<T>>;
+	async findFirst(this: SelectQuery<Row, null>): Promise<Nullable<Row>>;
 
 	/** Fetch first matching record with selected fields */
-	async findFirst<Selection extends Partial<Record<keyof T, boolean>>>(
-		this: SelectQuery<T, Selection>
-	): Promise<Nullable<SelectFields<T, Selection>>>;
+	async findFirst<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, Selection>
+	): Promise<Nullable<SelectFields<Row, Selection>>>;
 
 	async findFirst() {
 		await this.#readyPromise;
@@ -549,7 +554,7 @@ export class SelectQuery<
 
 				if (!source) return;
 
-				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
 
 				request.onsuccess = () => {
 					const results = this.#applyPipeline(request.result);
@@ -560,7 +565,7 @@ export class SelectQuery<
 				return;
 			}
 
-			const request = store.getAll() as IDBRequest<T[]>;
+			const request = store.getAll() as IDBRequest<Row[]>;
 
 			request.onsuccess = () => {
 				let results = request.result;
@@ -588,29 +593,29 @@ export class SelectQuery<
 	 * - To find by index, use {@link findByIndex} instead.
 	 */
 	async findByPk(
-		key: $InferPrimaryKey<Tbl['columns']> extends keyof T
-			? T[$InferPrimaryKey<Tbl['columns']>]
-			: T[keyof T]
+		key: $InferPrimaryKey<Tbl['columns']> extends keyof Row
+			? Row[$InferPrimaryKey<Tbl['columns']>]
+			: Row[keyof Row]
 	): Promise<
-		S extends null
-			? Nullable<T>
-			: S extends Partial<Record<keyof T, boolean>>
-				? Nullable<SelectFields<T, S>>
+		Sel extends null
+			? Nullable<Row>
+			: Sel extends Partial<Record<keyof Row, boolean>>
+				? Nullable<SelectFields<Row, Sel>>
 				: never
 	> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
-			const request = store.get(key) as IDBRequest<T>;
+			const request = store.get(key) as IDBRequest<Row>;
 
-			type ResolvedData = S extends null
-				? Nullable<T>
-				: S extends Partial<Record<keyof T, boolean>>
-					? Nullable<SelectFields<T, S>>
+			type ResolvedData = Sel extends null
+				? Nullable<Row>
+				: Sel extends Partial<Record<keyof Row, boolean>>
+					? Nullable<SelectFields<Row, Sel>>
 					: never;
 
 			request.onsuccess = () => {
-				const result = request.result as Maybe<T>;
+				const result = request.result as Maybe<Row>;
 
 				if (!result) {
 					resolve(null as ResolvedData);
@@ -641,14 +646,14 @@ export class SelectQuery<
 	 * - Ensure that the specified index exists on the table.
 	 * - To find by primary key, use {@link findByPk} instead.
 	 */
-	async findByIndex<IdxKey extends $InferIndex<Tbl['columns']> & keyof T & string>(
+	async findByIndex<IdxKey extends $InferIndex<Tbl['columns']> & keyof Row & string>(
 		indexName: IdxKey,
-		query: T[IdxKey] | IDBKeyRange
+		query: Row[IdxKey] | IDBKeyRange
 	): Promise<
-		S extends null
-			? T[]
-			: S extends Partial<Record<keyof T, boolean>>
-				? SelectFields<T, S>[]
+		Sel extends null
+			? Row[]
+			: Sel extends Partial<Record<keyof Row, boolean>>
+				? SelectFields<Row, Sel>[]
 				: never
 	> {
 		await this.#readyPromise;
@@ -666,7 +671,7 @@ export class SelectQuery<
 			}
 
 			const index = store.index(indexName);
-			const request = index.getAll(query) as IDBRequest<T[]>;
+			const request = index.getAll(query) as IDBRequest<Row[]>;
 
 			request.onsuccess = () => {
 				let results = request.result;
@@ -677,10 +682,10 @@ export class SelectQuery<
 				}
 
 				resolve(
-					this.#applyPipeline(results) as S extends null
-						? T[]
-						: S extends Partial<Record<keyof T, boolean>>
-							? SelectFields<T, S>[]
+					this.#applyPipeline(results) as Sel extends null
+						? Row[]
+						: Sel extends Partial<Record<keyof Row, boolean>>
+							? SelectFields<Row, Sel>[]
 							: never
 				);
 			};
@@ -711,11 +716,11 @@ export class SelectQuery<
 
 			// If we have a predicate-based where condition, we need to get all and filter
 			if (this.#whereCondition) {
-				const request = store.getAll() as IDBRequest<T[]>;
+				const request = store.getAll() as IDBRequest<Row[]>;
 
 				request.onsuccess = () => {
 					const filtered = request.result.filter(
-						this.#whereCondition as WherePredicate<T>
+						this.#whereCondition as WherePredicate<Row>
 					);
 
 					resolve(filtered.length);

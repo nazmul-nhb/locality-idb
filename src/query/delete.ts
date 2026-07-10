@@ -11,12 +11,12 @@ import type {
 } from '../types';
 
 /** @class Delete query builder. */
-export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends Table> {
+export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T extends Table> {
 	#table: string;
 	#dbGetter: IDBGetter;
 	#readyPromise: Promise<void>;
 	#keyField: Key;
-	#whereCondition?: WherePredicate<T>;
+	#whereCondition?: WherePredicate<Row>;
 	#whereIndexName?: string;
 	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
 
@@ -72,21 +72,21 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends
 	 * @instance Filter rows to delete
 	 * @param predicate Filtering function
 	 */
-	where(predicate: WherePredicate<T>): this;
+	where(predicate: WherePredicate<Row>): this;
 
 	/**
 	 * @instance Filter rows to delete by index
 	 * @param indexName Index name to query
 	 * @param query Key value or {@link IDBKeyRange} to search for
 	 */
-	where<IdxKey extends $InferPrimaryKey<S['columns']> | $InferIndex<S['columns']>>(
+	where<IdxKey extends $InferPrimaryKey<T['columns']> | $InferIndex<T['columns']>>(
 		indexName: IdxKey,
-		query: IDBKeyRange | T[IdxKey]
+		query: IDBKeyRange | Row[IdxKey]
 	): this;
 
-	where<IdxKey extends $InferPrimaryKey<S['columns']> | $InferIndex<S['columns']>>(
-		condition: WherePredicate<T> | IdxKey,
-		query?: IDBKeyRange | T[IdxKey]
+	where<IdxKey extends $InferPrimaryKey<T['columns']> | $InferIndex<T['columns']>>(
+		condition: WherePredicate<Row> | IdxKey,
+		query?: IDBKeyRange | Row[IdxKey]
 	): this {
 		if (isFunction(condition)) {
 			this.#whereCondition = condition;
@@ -111,7 +111,7 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends
 			const transaction =
 				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
 			const store = transaction.objectStore(this.#table);
-			let request: IDBRequest<T[]> | IDBRequest<IDBValidKey[]>;
+			let request: IDBRequest<Row[]> | IDBRequest<IDBValidKey[]>;
 			let useKeysOnly = false;
 
 			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
@@ -120,13 +120,13 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends
 				if (!source) return;
 
 				if (this.#whereCondition) {
-					request = source.getAll(this.#whereIndexQuery) as IDBRequest<T[]>;
+					request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
 				} else {
 					useKeysOnly = true;
 					request = source.getAllKeys(this.#whereIndexQuery);
 				}
 			} else {
-				request = store.getAll() as IDBRequest<T[]>;
+				request = store.getAll() as IDBRequest<Row[]>;
 			}
 
 			let deleteCount = 0;
@@ -138,7 +138,7 @@ export class DeleteQuery<T extends GenericObject, Key extends keyof T, S extends
 				if (useKeysOnly) {
 					keys = results as IDBValidKey[];
 				} else {
-					let rows = results as T[];
+					let rows = results as Row[];
 
 					if (this.#whereCondition) {
 						rows = rows.filter(this.#whereCondition);

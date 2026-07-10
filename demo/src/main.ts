@@ -13,13 +13,9 @@ import {
 	uuidV4,
 } from 'locality';
 import { getTimestamp, isValidArray } from 'nhb-toolbox';
-import { Chronos } from 'nhb-toolbox/chronos';
 import { uuid } from 'nhb-toolbox/hash';
-import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
 import { Stylog } from 'nhb-toolbox/stylog';
 import { runAllTests } from './transaction-export';
-
-Chronos.register(timeZonePlugin);
 
 let todos: Partial<Todo>[] = [];
 
@@ -41,7 +37,7 @@ const customSchema = {
 			.optional()
 			.onUpdate((p) => (p ? p : undefined))
 			.validate((v) => v),
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
+		createdAt: column.timestamp(),
 		test: column.tuple<0 | 9>(),
 	}),
 };
@@ -57,8 +53,8 @@ const schema = defineSchema({
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().nullable(),
-		// .default(new Chronos().toLocalISOString())
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
+		number: column.number().default(0),
+		createdAt: column.timestamp(),
 		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
 		url: column.url().nullable(),
 	},
@@ -103,7 +99,7 @@ const loadTodos = async () => {
 		.findAll();
 	// as Todo[];
 
-	console.table(todos);
+	console.info(todos);
 
 	const test = await db.from('test1').findAll();
 
@@ -197,7 +193,11 @@ const toggleTodo = async (id: Maybe<number>, update: UpdateTodo) => {
 	try {
 		await db
 			.update('todos')
-			.set(update)
+			// .set({ serial: 0 })
+			.set((row) => {
+				console.table([row]);
+				return { number: row.number * 2, ...update, money: 0 };
+			})
 			.where((t) => t.serial === id)
 			.run();
 	} catch (error) {
