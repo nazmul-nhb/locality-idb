@@ -1,7 +1,7 @@
-import { IsAutoInc, IsIndexed, IsPrimaryKey, IsUnique } from './core';
 import { openDBWithStores } from './factory';
 import { _abortTransaction, _ensureIndexedDB, _getDBList } from './helpers';
 import { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
+import { IsAutoInc, IsIndexed, IsPrimaryKey, IsUnique } from './symbols';
 import type {
 	$InferRow,
 	ExportData,

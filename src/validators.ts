@@ -15,8 +15,8 @@ import {
 	isUndefined,
 	isUUID,
 } from 'toolbox-x/guards';
+import type { Column } from './core';
 import {
-	type Column,
 	ColumnType,
 	DefaultValue,
 	IsAutoInc,
@@ -24,7 +24,7 @@ import {
 	IsOptional,
 	OnUpdate,
 	ValidateFn,
-} from './core';
+} from './symbols';
 import type {
 	ColumnDefinition,
 	GenericObject,

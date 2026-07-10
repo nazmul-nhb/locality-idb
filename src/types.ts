@@ -2,8 +2,9 @@ import type { Maybe, Nullable, Uncertain } from 'toolbox-x/types';
 import type { $UUID } from 'toolbox-x/types/hash';
 import type { GenericObject } from 'toolbox-x/types/object';
 import type { LooseLiteral, Prettify } from 'toolbox-x/types/utils';
+import type { Column, Table } from './core';
+import type { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
 import type {
-	Column,
 	DefaultValue,
 	IsAutoInc,
 	IsIndexed,
@@ -11,9 +12,7 @@ import type {
 	IsOptional,
 	IsPrimaryKey,
 	IsUnique,
-	Table,
-} from './core';
-import type { DeleteQuery, InsertQuery, SelectQuery, UpdateQuery } from './query';
+} from './symbols';
 
 export type {
 	AdvancedTypes,
@@ -43,6 +42,9 @@ export type {
 } from 'toolbox-x/types/utils';
 
 export type ForcedAny = any;
+
+/** Type for IndexedDB getter function */
+export type IDBGetter = () => IDBDatabase;
 
 /** Type for reject function of a promise */
 export type RejectFn = (reason: unknown) => void;
