@@ -521,3 +521,7 @@ export type NumericDotKey<T> = T extends AdvancedTypes
 							: never;
 			}[keyof T & string]
 		: never;
+
+export type DistinctFieldValues<T extends GenericObject, U extends keyof T> = Prettify<
+	Array<{ [K in U]: T[K] }[U]>
+>;

@@ -128,7 +128,11 @@ const loadTodos = async () => {
 	const sum = await calc.where((t) => t.serial > 9).sum('serial');
 	const avg = await calc.where((t) => t.serial > 9).avg('serial');
 
+	const dist = await calc.distinct('number');
+
 	console.info({ sum, avg });
+
+	console.info(dist);
 
 	renderTodos();
 	updateStats();
@@ -221,7 +225,7 @@ const toggleTodo = async (id: Maybe<number>, update: UpdateTodo) => {
 			// .set({ serial: 0 })
 			.set((row) => {
 				console.table([row]);
-				return { number: row.number * 2, ...update };
+				return { number: (row.number + 1) * 2, ...update };
 			})
 			.where((t) => t.serial === id)
 			.run();

@@ -7,6 +7,7 @@ import type {
 	$InferIndex,
 	$InferPrimaryKey,
 	CursorCallback,
+	DistinctFieldValues,
 	FirstOverloadParams,
 	ForcedAny,
 	GenericObject,
@@ -282,7 +283,7 @@ export class SelectQuery<
 	}
 
 	/** Fetch all matching records */
-	async findAll(this: SelectQuery<Row, null>): Promise<Row[]>;
+	async findAll(this: SelectQuery<Row, null, Tbl>): Promise<Row[]>;
 
 	/** Fetch all matching records with selected fields */
 	async findAll<Selection extends Partial<Record<keyof Row, boolean>>>(
@@ -371,7 +372,7 @@ export class SelectQuery<
 
 	/** Fetch records with cursor-based pagination */
 	async page(
-		this: SelectQuery<Row, null>,
+		this: SelectQuery<Row, null, Tbl>,
 		options?: PageOptions
 	): Promise<PageResult<Row, null>>;
 
@@ -490,7 +491,10 @@ export class SelectQuery<
 	}
 
 	/** Stream records with a cursor */
-	async stream(this: SelectQuery<Row, null>, callback: CursorCallback<Row>): Promise<void>;
+	async stream(
+		this: SelectQuery<Row, null, Tbl>,
+		callback: CursorCallback<Row>
+	): Promise<void>;
 
 	/** Stream records with a cursor and selected fields */
 	async stream<Selection extends Partial<Record<keyof Row, boolean>>>(
@@ -568,7 +572,7 @@ export class SelectQuery<
 	}
 
 	/** Fetch first matching record */
-	async findFirst(this: SelectQuery<Row, null>): Promise<Nullable<Row>>;
+	async findFirst(this: SelectQuery<Row, null, Tbl>): Promise<Nullable<Row>>;
 
 	/** Fetch first matching record with selected fields */
 	async findFirst<Selection extends Partial<Record<keyof Row, boolean>>>(
@@ -777,7 +781,7 @@ export class SelectQuery<
 	}
 
 	async sum(
-		this: SelectQuery<Row, null>,
+		this: SelectQuery<Row, null, Tbl>,
 		column: NumericDotKey<Row>,
 		roundTo?: number
 	): Promise<number>;
@@ -789,7 +793,7 @@ export class SelectQuery<
 	): Promise<number>;
 
 	async sum(
-		this: SelectQuery<Row, null>,
+		this: SelectQuery<Row, null, Tbl>,
 		column: NumericDotKey<Row>,
 		roundTo = 2
 	): Promise<number> {
@@ -807,7 +811,7 @@ export class SelectQuery<
 	}
 
 	async avg(
-		this: SelectQuery<Row, null>,
+		this: SelectQuery<Row, null, Tbl>,
 		column: NumericDotKey<Row>,
 		roundTo?: number
 	): Promise<number>;
@@ -819,7 +823,7 @@ export class SelectQuery<
 	): Promise<number>;
 
 	async avg(
-		this: SelectQuery<Row, null>,
+		this: SelectQuery<Row, null, Tbl>,
 		column: NumericDotKey<Row>,
 		roundTo = 2
 	): Promise<number> {
@@ -832,6 +836,36 @@ export class SelectQuery<
 		} catch (error) {
 			throw new Error(
 				`Error computing average for column '${column}': ${_extractErrorMsg(error)}`
+			);
+		}
+	}
+
+	async distinct<Col extends keyof Row>(
+		this: SelectQuery<Row, null, Tbl>,
+		column: Col
+	): Promise<DistinctFieldValues<Row, Col>>;
+
+	async distinct<
+		Selection extends Partial<Record<keyof Row, boolean>>,
+		Col extends keyof SelectFields<Row, Selection>,
+	>(
+		this: SelectQuery<Row, Selection, Tbl>,
+		column: Col
+	): Promise<DistinctFieldValues<SelectFields<Row, Selection>, Col>>;
+
+	async distinct<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, null, Tbl> | SelectQuery<Row, Selection, Tbl>,
+		column: keyof Row | keyof SelectFields<Row, Selection>
+	) {
+		try {
+			const items = await (this as SelectQuery<Row, null, Tbl>).findAll();
+
+			const result = items.map((it) => it[column as keyof Row]);
+
+			return [...new Set(result)];
+		} catch (error) {
+			throw new Error(
+				`Error computing distinct values for column '${column as string}': ${_extractErrorMsg(error)}`
 			);
 		}
 	}
