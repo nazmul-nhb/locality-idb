@@ -7,7 +7,6 @@ import type {
 	$InferIndex,
 	$InferPrimaryKey,
 	CursorCallback,
-	DistinctFieldValues,
 	FirstOverloadParams,
 	ForcedAny,
 	GenericObject,
@@ -19,6 +18,7 @@ import type {
 	PageOptions,
 	PageResult,
 	RejectFn,
+	ResolveValue,
 	SelectFields,
 	SortDirection,
 	WherePredicate,
@@ -774,18 +774,36 @@ export class SelectQuery<
 		});
 	}
 
+	/**
+	 * @instance Checks if the query result set contains at least one record.
+	 * @returns A promise that resolves to `true` if the query result set contains at least one record, `false` otherwise.
+	 */
 	async exists(): Promise<boolean> {
 		const count = await this.count();
 
 		return count > 0;
 	}
 
+	/**
+	 * @instance Computes the sum of a numeric column.
+	 * @param column Column to compute sum of.
+	 * @param roundTo Number of decimal places to round to. @default 2
+	 *
+	 * @returns A promise that resolves to the sum of the specified column.
+	 */
 	async sum(
 		this: SelectQuery<Row, null, Tbl>,
 		column: NumericDotKey<Row>,
 		roundTo?: number
 	): Promise<number>;
 
+	/**
+	 * @instance Computes the sum of a numeric column after applying {@link select()} method.
+	 * @param column Column to compute sum of.
+	 * @param roundTo Number of decimal places to round to. @default 2
+	 *
+	 * @returns A promise that resolves to the sum of the specified column.
+	 */
 	async sum<Selection extends Partial<Record<keyof Row, boolean>>>(
 		this: SelectQuery<Row, Selection, Tbl>,
 		column: NumericDotKey<SelectFields<Row, Selection>>,
@@ -810,12 +828,26 @@ export class SelectQuery<
 		}
 	}
 
+	/**
+	 * @instance Computes the average of a numeric column.
+	 * @param column Column to compute average of.
+	 * @param roundTo Number of decimal places to round to. @default 2
+	 *
+	 * @returns A promise that resolves to the average of the specified column.
+	 */
 	async avg(
 		this: SelectQuery<Row, null, Tbl>,
 		column: NumericDotKey<Row>,
 		roundTo?: number
 	): Promise<number>;
 
+	/**
+	 * @instance Computes the average of a numeric column after applying {@link select()} method.
+	 * @param column Column to compute average of.
+	 * @param roundTo Number of decimal places to round to. @default 2
+	 *
+	 * @returns A promise that resolves to the average of the specified column.
+	 */
 	async avg<Selection extends Partial<Record<keyof Row, boolean>>>(
 		this: SelectQuery<Row, Selection, Tbl>,
 		column: NumericDotKey<SelectFields<Row, Selection>>,
@@ -840,18 +872,28 @@ export class SelectQuery<
 		}
 	}
 
+	/**
+	 * @instance Gets distinct values of a column.
+	 * @param column Column to get distinct values of.
+	 * @returns A promise that resolves to an array of distinct values of the specified column.
+	 */
 	async distinct<Col extends keyof Row>(
 		this: SelectQuery<Row, null, Tbl>,
 		column: Col
-	): Promise<DistinctFieldValues<Row, Col>>;
+	): Promise<ResolveValue<Row, Col>[]>;
 
+	/**
+	 * @instance Gets distinct values of a column after applying {@link select()} method.
+	 * @param column Column to get distinct values of.
+	 * @returns A promise that resolves to an array of distinct values of the specified column.
+	 */
 	async distinct<
 		Selection extends Partial<Record<keyof Row, boolean>>,
 		Col extends keyof SelectFields<Row, Selection>,
 	>(
 		this: SelectQuery<Row, Selection, Tbl>,
 		column: Col
-	): Promise<DistinctFieldValues<SelectFields<Row, Selection>, Col>>;
+	): Promise<ResolveValue<SelectFields<Row, Selection>, Col>[]>;
 
 	async distinct<Selection extends Partial<Record<keyof Row, boolean>>>(
 		this: SelectQuery<Row, null, Tbl> | SelectQuery<Row, Selection, Tbl>,
@@ -860,9 +902,9 @@ export class SelectQuery<
 		try {
 			const items = await (this as SelectQuery<Row, null, Tbl>).findAll();
 
-			const result = items.map((it) => it[column as keyof Row]);
+			const result = new Set(items.map((it) => it[column as keyof Row]));
 
-			return [...new Set(result)];
+			return [...result];
 		} catch (error) {
 			throw new Error(
 				`Error computing distinct values for column '${column as string}': ${_extractErrorMsg(error)}`

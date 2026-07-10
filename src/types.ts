@@ -522,6 +522,6 @@ export type NumericDotKey<T> = T extends AdvancedTypes
 			}[keyof T & string]
 		: never;
 
-export type DistinctFieldValues<T extends GenericObject, U extends keyof T> = Prettify<
-	Array<{ [K in U]: T[K] }[U]>
+export type ResolveValue<T extends GenericObject, U extends keyof T> = Prettify<
+	{ [K in U]: T[K] }[U]
 >;

@@ -1830,6 +1830,47 @@ const userCount = await db.from('users').where((user) => user.isActive).count()
 >   - `where()` uses an index or primary key
 > - Falls back to in-memory counting when `where()` uses a predicate function
 
+#### `sum(column: string): Promise<number>`
+
+Calculates the sum of a numeric column.
+
+```typescript
+const totalAmount = await db.from('orders').sum('amount');
+```
+
+#### `avg(column: string): Promise<number>`
+
+Calculates the average of a column.
+
+```typescript
+const averageAmount = await db.from('orders').avg('amount');
+```
+<!-- 
+#### `min(column: string): Promise<number>`
+
+Finds the minimum value of a column.
+
+```typescript
+const minAmount = await db.from('orders').min('amount');
+```
+
+#### `max(column: string): Promise<number>`
+
+Finds the maximum value of a column.
+
+```typescript
+const maxAmount = await db.from('orders').max('amount');
+```
+ -->
+
+#### `distinct(column: string): Promise<Array<T[string]>>`
+
+Finds the list of distinct values of a column.
+
+```typescript
+const distinctEmails = await db.from('users').distinct('email');
+```
+
 ##### `exists(): Promise<boolean>`
 
 Checks if any matching records exist.
