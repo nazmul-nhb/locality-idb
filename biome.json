@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -8,7 +8,6 @@
 	"files": {
 		"includes": [
 			"**",
-			"!demo",
 			"!!**/dist",
 			"!!**/node_modules",
 			"!!__dump__",
@@ -24,7 +23,7 @@
 	},
 	"formatter": {
 		"enabled": true,
-		"formatWithErrors": false,
+		"formatWithErrors": true,
 		"indentStyle": "tab",
 		"indentWidth": 4,
 		"lineEnding": "lf",

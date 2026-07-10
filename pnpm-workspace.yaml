@@ -3,3 +3,4 @@ packages:
 
 minimumReleaseAgeExclude:
   - toolbox-x
+  - nhb-scripts

@@ -1,0 +1,75 @@
+{
+	"root": false,
+	"$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
+	"extends": "//",
+	"files": {
+		"ignoreUnknown": true,
+		"includes": ["**", "!node_modules", "!dist", "!build"]
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 4,
+		"lineEnding": "lf",
+		"lineWidth": 96,
+		"attributePosition": "auto",
+		"bracketSameLine": false,
+		"bracketSpacing": true,
+		"expand": "auto",
+		"useEditorconfig": true,
+		"includes": ["**", "!node_modules", "!dist", "!build"]
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"a11y": {
+				"useButtonType": "info",
+				"useKeyWithClickEvents": "info",
+				"noStaticElementInteractions": "info"
+			},
+			"complexity": {
+				"noImportantStyles": "info"
+			},
+			"correctness": {
+				"useJsxKeyInIterable": "off"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "info"
+			},
+			"suspicious": {
+				"noArrayIndexKey": "info"
+			},
+			"style": {
+				"noNonNullAssertion": "info"
+			}
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
+	"html": {
+		"formatter": {
+			"enabled": true
+		},
+		"linter": {
+			"enabled": true
+		},
+		"assist": {
+			"enabled": true
+		},
+		"experimentalFullSupportEnabled": true
+	},
+	"assist": {
+		"includes": ["**"],
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	}
+}

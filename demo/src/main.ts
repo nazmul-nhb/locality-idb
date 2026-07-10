@@ -2,13 +2,7 @@ import './style.css';
 
 import './test';
 
-import { getTimestamp, isValidArray } from 'nhb-toolbox';
-import { Chronos } from 'nhb-toolbox/chronos';
-import { uuid } from 'nhb-toolbox/hash';
-import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
-import { Stylog } from 'nhb-toolbox/stylog';
-
-import type { InferInsertType, InferSelectType, InferUpdateType } from 'locality';
+import type { InferInsertType, InferSelectType, InferUpdateType, Maybe } from 'locality';
 import {
 	column,
 	defineSchema,
@@ -18,6 +12,11 @@ import {
 	table,
 	uuidV4,
 } from 'locality';
+import { getTimestamp, isValidArray } from 'nhb-toolbox';
+import { Chronos } from 'nhb-toolbox/chronos';
+import { uuid } from 'nhb-toolbox/hash';
+import { timeZonePlugin } from 'nhb-toolbox/plugins/timeZonePlugin';
+import { Stylog } from 'nhb-toolbox/stylog';
 import { runAllTests } from './transaction-export';
 
 Chronos.register(timeZonePlugin);
@@ -37,9 +36,13 @@ const customSchema = {
 		task: column.string(),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
-		timestamp: column.timestamp().optional().onUpdate(p=> p ? p : undefined).validate(v=> v),
+		timestamp: column
+			.timestamp()
+			.optional()
+			.onUpdate((p) => (p ? p : undefined))
+			.validate((v) => v),
 		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
-		test: column.tuple<0 | 9>()
+		test: column.tuple<0 | 9>(),
 	}),
 };
 
@@ -77,7 +80,6 @@ const schema = defineSchema({
 
 type SchemaType = typeof schema;
 
-
 type Todo = InferSelectType<SchemaType['todos']>;
 type InsertTodo = InferInsertType<SchemaType['todos']>;
 type UpdateTodo = InferUpdateType<SchemaType['todos']>;
@@ -105,7 +107,7 @@ const loadTodos = async () => {
 
 	const test = await db.from('test1').findAll();
 
-	console.info({test})
+	console.info({ test });
 
 	renderTodos();
 	updateStats();
@@ -131,7 +133,7 @@ const renderTodos = () => {
 		checkbox.checked = todo?.completed ?? false;
 		checkbox.className = 'w-5 h-5 cursor-pointer accent-blue-600';
 		checkbox.addEventListener('change', () =>
-			toggleTodo(todo.serial!, {
+			toggleTodo(todo.serial, {
 				completed: !todo.completed,
 				// updatedAt: new Chronos().toLocalISOString(),
 			})
@@ -147,7 +149,7 @@ const renderTodos = () => {
 		deleteBtn.textContent = 'Delete';
 		deleteBtn.className = `px-3 py-1 text-sm font-semibold bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100`;
 
-		deleteBtn.addEventListener('click', () => removeTodo(todo.serial!));
+		deleteBtn.addEventListener('click', () => removeTodo(todo.serial));
 
 		li.appendChild(checkbox);
 		li.appendChild(span);
@@ -167,7 +169,7 @@ const handleAddTodo = async () => {
 
 	const newTodo: InsertTodo = {
 		task,
-		timestamp: null
+		timestamp: null,
 	};
 
 	// await addTodo(newTodo);
@@ -189,7 +191,7 @@ const handleAddTodo = async () => {
 };
 
 // Toggle todo completion status
-const toggleTodo = async (id: number, update: UpdateTodo) => {
+const toggleTodo = async (id: Maybe<number>, update: UpdateTodo) => {
 	// const updatedTodo = { completed: !update.completed };
 	// await updateTodo(updatedTodo);
 	try {
@@ -210,7 +212,7 @@ const toggleTodo = async (id: number, update: UpdateTodo) => {
 };
 
 // Remove a todo
-const removeTodo = async (id: number) => {
+const removeTodo = async (id: Maybe<number>) => {
 	// await deleteTodo(id);
 	await db
 		.delete('todos')
@@ -226,7 +228,7 @@ const handleClearCompleted = async () => {
 		// await deleteTodo(todo.id!);
 		await db
 			.delete('todos')
-			.where((t) => t.serial === todo.serial!)
+			.where((t) => t.serial === todo.serial)
 			.run();
 	}
 	await loadTodos();

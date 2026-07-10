@@ -10,19 +10,13 @@
 		"preview": "vite preview"
 	},
 	"devDependencies": {
-		"@eslint/js": "^10.0.1",
+		"@biomejs/biome": "^2.5.3",
 		"@tailwindcss/vite": "^4.3.2",
-		"@typescript-eslint/eslint-plugin": "^8.62.1",
-		"@typescript-eslint/parser": "^8.62.1",
-		"eslint": "^10.6.0",
-		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-prettier": "^5.5.6",
-		"globals": "^17.7.0",
-		"nhb-toolbox": "^4.31.2",
-		"prettier": "^3.9.4",
 		"tailwindcss": "^4.3.2",
-		"typescript": "~6.0.3",
-		"typescript-eslint": "^8.62.1",
-		"vite": "8.1.3"
+		"typescript": "~7.0.2",
+		"vite": "8.1.4"
+	},
+	"dependencies": {
+		"nhb-toolbox": "^4.31.3"
 	}
 }
