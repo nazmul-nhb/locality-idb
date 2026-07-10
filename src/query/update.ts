@@ -21,7 +21,7 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 	#readyPromise: Promise<void>;
 	#dataToUpdate?: InferUpdateType<T>;
 	#whereCondition?: WherePredicate<Row>;
-	#updateCallback?: UpdateCallback<Row, T>;
+	#updateCallback?: UpdateCallback<Row, T, InferUpdateType<T>>;
 	#whereIndexName?: string;
 	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
 	#columns?: ColumnDefinition;
@@ -88,9 +88,9 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 	 * @instance Sets the computed data to be updated
 	 * @param cb Callback function that receives the current row and returns the values to update
 	 */
-	set(cb: UpdateCallback<Row, T>): this;
+	set<U extends InferUpdateType<T>>(cb: UpdateCallback<Row, T, U>): this;
 
-	set(values: InferUpdateType<T> | UpdateCallback<Row, T>) {
+	set(values: InferUpdateType<T> | UpdateCallback<Row, T, InferUpdateType<T>>) {
 		if (isFunction(values)) {
 			this.#updateCallback = values;
 		} else {

@@ -725,6 +725,15 @@ const updatedCount = await db
 
 console.log(`Updated ${updatedCount} records`);
 
+// Computed update + indexed query for where condition
+const computedCount = await db
+  .update('users')
+  .set((row) => ({ name: row.name + ' Updated', age: row.age + 1 }))
+  .where('id', 1)
+  .run();
+
+console.log(`Computed update ${computedCount} records`);
+
 // Update all matching records
 await db
   .update('users')
@@ -1854,12 +1863,20 @@ const user = await db.insert('users').values({ name: 'John' }).run()
 
 #### UpdateQuery Methods
 
-##### `set<T>(values: Partial<T>): UpdateQuery`
+##### `set(values: Partial<T>): UpdateQuery`
 
 Sets the values to update.
 
 ```typescript
 db.update('users').set({ name: 'Jane', age: 30 })
+```
+
+##### `set(values: (row: T) => Partial<T>): UpdateQuery`
+
+Sets the values to update using a computed function.
+
+```typescript
+db.update('users').set((row) => ({ name: row.name + ' Updated', age: row.age + 1 }))
 ```
 
 ##### `where(predicate: (row: T) => boolean): UpdateQuery`

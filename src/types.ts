@@ -332,9 +332,11 @@ export type InferUpdateType<T extends Table> = Prettify<
 >;
 
 /** Callback function that gets the current row and returns values to be updated */
-export type UpdateCallback<Row extends GenericObject, T extends Table> = (
-	row: Row
-) => InferUpdateType<T>;
+export type UpdateCallback<
+	Row extends GenericObject,
+	T extends Table,
+	U extends InferUpdateType<T>,
+> = (row: Row) => U & Record<Exclude<keyof U, keyof InferUpdateType<T>>, never>;
 
 /** Creates a type for select operations. */
 export type InferSelectType<S extends Table> = Prettify<

@@ -196,7 +196,7 @@ const toggleTodo = async (id: Maybe<number>, update: UpdateTodo) => {
 			// .set({ serial: 0 })
 			.set((row) => {
 				console.table([row]);
-				return { number: row.number * 2, ...update, money: 0 };
+				return { number: row.number * 2, ...update };
 			})
 			.where((t) => t.serial === id)
 			.run();
