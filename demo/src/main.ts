@@ -92,12 +92,21 @@ const db = new Locality({
 
 // Load todos from IndexedDB
 const loadTodos = async () => {
-	todos = await db
-		.from('todos')
+	const base = db.from('todos');
+
+	const todosS = await base
 		.select({ serial: true, task: true, completed: true, createdAt: true, updatedAt: true })
 		.sortByIndex('serial', 'desc')
 		.findAll();
-	// as Todo[];
+
+	const count = await base.count();
+
+	const test1 = await base.where('serial', 8).exists();
+	const test2 = await base.findByPk(1);
+
+	console.info({ count, test1, test2 });
+
+	todos = todosS;
 
 	console.info(todos);
 

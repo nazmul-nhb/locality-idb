@@ -1,4 +1,4 @@
-import { isFunction, isNonEmptyString, isNotEmptyObject, isUndefined } from 'toolbox-x/guards';
+import { isFunction, isNonEmptyString, isNotEmptyObject } from 'toolbox-x/guards';
 import type { Table } from '../core';
 import { _abortTransaction } from '../helpers';
 import type {
@@ -124,7 +124,7 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 			this.#whereCondition = condition;
 			this.#whereIndexName = undefined;
 			this.#whereIndexQuery = undefined;
-		} else if (isNonEmptyString(condition) && !isUndefined(query)) {
+		} else if (isNonEmptyString(condition) && query != null) {
 			this.#whereIndexName = condition;
 			this.#whereIndexQuery = query;
 			this.#whereCondition = undefined;
@@ -149,7 +149,7 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 
 			let request: IDBRequest<Row[]>;
 
-			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+			if (this.#whereIndexName && this.#whereIndexQuery != null) {
 				const source = this.#buildIndexedStore(store, reject);
 
 				if (!source) return;

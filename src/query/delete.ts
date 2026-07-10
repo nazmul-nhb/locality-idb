@@ -1,4 +1,4 @@
-import { isFunction, isNonEmptyString, isUndefined } from 'toolbox-x/guards';
+import { isFunction, isNonEmptyString } from 'toolbox-x/guards';
 import type { Table } from '../core';
 import { _abortTransaction } from '../helpers';
 import type {
@@ -92,7 +92,7 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 			this.#whereCondition = condition;
 			this.#whereIndexName = undefined;
 			this.#whereIndexQuery = undefined;
-		} else if (isNonEmptyString(condition) && !isUndefined(query)) {
+		} else if (isNonEmptyString(condition) && query != null) {
 			this.#whereIndexName = condition;
 			this.#whereIndexQuery = query;
 			this.#whereCondition = undefined;
@@ -114,7 +114,7 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 			let request: IDBRequest<Row[]> | IDBRequest<IDBValidKey[]>;
 			let useKeysOnly = false;
 
-			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+			if (this.#whereIndexName && this.#whereIndexQuery != null) {
 				const source = this.#buildIndexedStore(store, reject);
 
 				if (!source) return;

@@ -1,5 +1,5 @@
 import { sortAnArray } from 'toolbox-x';
-import { isFunction, isNonEmptyString, isNotEmptyObject, isUndefined } from 'toolbox-x/guards';
+import { isFunction, isNonEmptyString, isNotEmptyObject } from 'toolbox-x/guards';
 import type { Table } from '../core';
 import { Selected } from '../symbols';
 import type {
@@ -57,6 +57,27 @@ export class SelectQuery<
 		this.#readyPromise = readyPromise;
 
 		this.#transaction = transaction;
+	}
+
+	/** @internal Clone this query into a new instance with all current state */
+	#clone(): SelectQuery<Row, Sel, Tbl> {
+		const query = new SelectQuery<Row, Sel, Tbl>(
+			this.#table,
+			this.#dbGetter,
+			this.#readyPromise,
+			this.#transaction
+		);
+
+		query[Selected] = this[Selected];
+		query.#whereCondition = this.#whereCondition;
+		query.#whereIndexName = this.#whereIndexName;
+		query.#whereIndexQuery = this.#whereIndexQuery;
+		query.#orderByKey = this.#orderByKey;
+		query.#orderByDir = this.#orderByDir;
+		query.#limitCount = this.#limitCount;
+		query.#useIndexCursor = this.#useIndexCursor;
+
+		return query;
 	}
 
 	/** @internal Create a readonly transaction and return the store */
@@ -133,13 +154,13 @@ export class SelectQuery<
 
 		if (!isNotEmptyObject(this?.[Selected])) return row;
 
-		const projected = {} as Partial<Row>;
+		const projected: Partial<Row> = {};
 
-		const selectionEntries = Object.entries(this[Selected]);
+		const selectionEntries = Object.entries<boolean>(this[Selected]);
 		const selectionKeys = new Set(Object.keys(this[Selected]));
 
 		// Check if any value is true
-		const hasTrueValues = selectionEntries.some(([, value]) => value === true);
+		const hasTrueValues = selectionEntries.some(([_, value]) => value === true);
 
 		if (hasTrueValues) {
 			// Include only fields marked as true
@@ -165,9 +186,11 @@ export class SelectQuery<
 	 * @param cols Columns to select or exclude
 	 */
 	select<Selection extends Partial<Record<keyof Row, boolean>>>(cols: Selection) {
-		this[Selected] = cols as unknown as Sel;
+		const query = this.#clone() as unknown as SelectQuery<Row, Selection, Tbl>;
 
-		return this as unknown as SelectQuery<Row, Selection, Tbl>;
+		query[Selected] = cols;
+
+		return query;
 	}
 
 	/**
@@ -189,18 +212,20 @@ export class SelectQuery<
 	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
 		condition: WherePredicate<Row> | IdxKey,
 		query?: IDBKeyRange | Row[IdxKey]
-	): this {
+	) {
+		const cloned = this.#clone();
+
 		if (isFunction(condition)) {
-			this.#whereCondition = condition;
-			this.#whereIndexName = undefined;
-			this.#whereIndexQuery = undefined;
-		} else if (isNonEmptyString(condition) && !isUndefined(query)) {
-			this.#whereIndexName = condition;
-			this.#whereIndexQuery = query;
-			this.#whereCondition = undefined;
+			cloned.#whereCondition = condition;
+			cloned.#whereIndexName = undefined;
+			cloned.#whereIndexQuery = undefined;
+		} else if (isNonEmptyString(condition) && query != null) {
+			cloned.#whereIndexName = condition;
+			cloned.#whereIndexQuery = query;
+			cloned.#whereCondition = undefined;
 		}
 
-		return this;
+		return cloned;
 	}
 
 	/**
@@ -213,10 +238,12 @@ export class SelectQuery<
 	 * - For optimized sorting using `IndexedDB` indexes, use {@link sortByIndex} instead.
 	 */
 	orderBy<Key extends NestedPrimitiveKey<Row>>(key: Key, dir: SortDirection = 'asc'): this {
-		this.#orderByKey = key;
-		this.#orderByDir = dir;
+		const cloned = this.#clone();
 
-		return this;
+		cloned.#orderByKey = key;
+		cloned.#orderByDir = dir;
+
+		return cloned as this;
 	}
 
 	/**
@@ -233,11 +260,13 @@ export class SelectQuery<
 		indexName: IdxKey,
 		dir: SortDirection = 'asc'
 	): this {
-		this.#orderByKey = indexName as unknown as NestedPrimitiveKey<Row>;
-		this.#orderByDir = dir;
-		this.#useIndexCursor = true;
+		const cloned = this.#clone();
 
-		return this;
+		cloned.#orderByKey = indexName as unknown as NestedPrimitiveKey<Row>;
+		cloned.#orderByDir = dir;
+		cloned.#useIndexCursor = true;
+
+		return cloned as this;
 	}
 
 	/**
@@ -245,8 +274,9 @@ export class SelectQuery<
 	 * @param count Maximum number of results to return
 	 */
 	limit(count: number): this {
-		this.#limitCount = count;
-		return this;
+		const cloned = this.#clone();
+		cloned.#limitCount = count;
+		return cloned as this;
 	}
 
 	/** Fetch all matching records */
@@ -263,7 +293,7 @@ export class SelectQuery<
 			const { store } = this.#getStore();
 
 			// If we have an index-based where query, use it
-			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+			if (this.#whereIndexName && this.#whereIndexQuery != null) {
 				const source = this.#buildIndexedStore(store, reject);
 
 				if (!source) return;
@@ -366,7 +396,7 @@ export class SelectQuery<
 				return;
 			}
 
-			if (!isUndefined(options.cursor) && !isUndefined(this.#whereIndexQuery)) {
+			if (options.cursor != null && this.#whereIndexQuery != null) {
 				reject(
 					new Error(
 						'page() does not support cursor pagination with index where queries.'
@@ -398,7 +428,7 @@ export class SelectQuery<
 			let source: Nullable<IDBObjectStore | IDBIndex> = null;
 			let range: Nullable<IDBKeyRange | IDBValidKey> = null;
 
-			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+			if (this.#whereIndexName && this.#whereIndexQuery != null) {
 				source = this.#buildIndexedStore(store, reject);
 				if (!source) return;
 				range = this.#whereIndexQuery;
@@ -410,7 +440,7 @@ export class SelectQuery<
 
 			const direction = this.#orderByDir === 'desc' ? 'prev' : 'next';
 
-			if (!isUndefined(options.cursor)) {
+			if (options.cursor != null) {
 				range =
 					direction === 'prev'
 						? IDBKeyRange.upperBound(options.cursor, true)
@@ -492,7 +522,7 @@ export class SelectQuery<
 			let source: Nullable<IDBObjectStore | IDBIndex> = null;
 			let range: Nullable<IDBKeyRange | IDBValidKey> = null;
 
-			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+			if (this.#whereIndexName && this.#whereIndexQuery != null) {
 				source = this.#buildIndexedStore(store, reject);
 				if (!source) return;
 				range = this.#whereIndexQuery;
@@ -549,7 +579,7 @@ export class SelectQuery<
 			const { store } = this.#getStore();
 
 			// If we have an index-based where query, use it
-			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+			if (this.#whereIndexName && this.#whereIndexQuery != null) {
 				const source = this.#buildIndexedStore(store, reject);
 
 				if (!source) return;
@@ -702,7 +732,7 @@ export class SelectQuery<
 			const { store } = this.#getStore();
 
 			// If we have an index-based where query, use it
-			if (this.#whereIndexName && !isUndefined(this.#whereIndexQuery)) {
+			if (this.#whereIndexName && this.#whereIndexQuery != null) {
 				const source = this.#buildIndexedStore(store, reject);
 
 				if (!source) return;

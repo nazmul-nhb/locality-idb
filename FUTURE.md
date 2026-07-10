@@ -158,10 +158,12 @@ Huge performance improvement.
 
 ## 6. Query reuse
 
+### Status
+
+- [x] Already exist, just did some improvements with immutability
+
 ```ts
-const adults =
-    db.from('users')
-      .where(u => u.age >= 18)
+const adults = db.from('users').where(u => u.age >= 18)
 
 await adults.count()
 
