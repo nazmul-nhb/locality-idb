@@ -1830,40 +1830,54 @@ const userCount = await db.from('users').where((user) => user.isActive).count()
 >   - `where()` uses an index or primary key
 > - Falls back to in-memory counting when `where()` uses a predicate function
 
-#### `sum(column: string): Promise<number>`
+##### `sum(column: string, roundTo?: number): Promise<number>`
 
-Calculates the sum of a numeric column.
+Calculates the sum of a numeric column. Supports dot-notation for nested fields.
 
 ```typescript
 const totalAmount = await db.from('orders').sum('amount');
+const totalNested = await db.from('orders').sum('metadata.price');
 ```
 
-#### `avg(column: string): Promise<number>`
+##### `avg(column: string, roundTo?: number): Promise<number>`
 
-Calculates the average of a column.
+Calculates the average of a numeric column. Supports dot-notation for nested fields.
 
 ```typescript
 const averageAmount = await db.from('orders').avg('amount');
 ```
-<!-- 
-#### `min(column: string): Promise<number>`
 
-Finds the minimum value of a column.
+##### `min(column: string): Promise<number>`
+
+Finds the minimum value of a numeric column. Supports dot-notation for nested fields. Returns `NaN` if the result set is empty.
+
+**Performance:**
+
+- Uses **`O(1)` IndexedDB cursor** when:
+  - The column is indexed or a primary key, AND
+  - No `where()` filters are active.
+- Otherwise, falls back to scanning filtered rows.
 
 ```typescript
 const minAmount = await db.from('orders').min('amount');
 ```
 
-#### `max(column: string): Promise<number>`
+##### `max(column: string): Promise<number>`
 
-Finds the maximum value of a column.
+Finds the maximum value of a numeric column. Supports dot-notation for nested fields. Returns `NaN` if the result set is empty.
+
+**Performance:**
+
+- Uses **`O(1)` IndexedDB cursor** when:
+  - The column is indexed or a primary key, AND
+  - No `where()` filters are active.
+- Otherwise, falls back to scanning filtered rows.
 
 ```typescript
 const maxAmount = await db.from('orders').max('amount');
 ```
- -->
 
-#### `distinct(column: string): Promise<Array<T[string]>>`
+##### `distinct(column: string): Promise<Array<T[string]>>`
 
 Finds the list of distinct values of a column.
 

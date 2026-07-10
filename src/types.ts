@@ -103,7 +103,7 @@ export type FirstOverloadParams<T> = T extends {
 /**
  * Determines if a selection object has any true values
  */
-type HasTrueValues<Selection extends Partial<Record<any, boolean>>> = {
+type HasTrueValues<Selection extends Partial<Record<string, boolean>>> = {
 	[K in keyof Selection]: Selection[K] extends true ? true : never;
 }[keyof Selection] extends never
 	? false
@@ -133,6 +133,23 @@ export type SelectFields<
 					: K]: T[K];
 			}
 >;
+
+/** Type for string-boolean records or `null` used in select queries */
+export type BooleanRecord = Nullable<Partial<Record<string, boolean>>>;
+
+/**
+ * Extracts the indexed result type from a select query
+ * - If `Sel` is `null`: returns the original row type
+ * - If `Sel` is a boolean record: returns the select fields type
+ */
+export type IndexedResult<
+	Sel extends BooleanRecord,
+	Row extends GenericObject,
+> = Sel extends null
+	? Row
+	: Sel extends Partial<Record<keyof Row, boolean>>
+		? SelectFields<Row, Sel>
+		: never;
 
 /** Callback function type for cursor-based queries */
 export type CursorCallback<T extends GenericObject> = (
@@ -522,6 +539,7 @@ export type NumericDotKey<T> = T extends AdvancedTypes
 			}[keyof T & string]
 		: never;
 
+/** Resolves the actual value type of a property in an object based on a top level key. */
 export type ResolveValue<T extends GenericObject, U extends keyof T> = Prettify<
 	{ [K in U]: T[K] }[U]
 >;

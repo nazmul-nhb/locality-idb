@@ -1,16 +1,24 @@
-import { avgByField, sortAnArray, sumByField } from 'toolbox-x';
+import {
+	avgByField,
+	normalizeNumber,
+	removeDuplicates,
+	sortAnArray,
+	sumByField,
+} from 'toolbox-x';
 import { isFunction, isNonEmptyString, isNotEmptyObject } from 'toolbox-x/guards';
 import type { Table } from '../core';
-import { _extractErrorMsg } from '../helpers';
+import { _extractErrorMsg, _resolveNestedKey } from '../helpers';
 import { Selected } from '../symbols';
 import type {
 	$InferIndex,
 	$InferPrimaryKey,
+	BooleanRecord,
 	CursorCallback,
 	FirstOverloadParams,
 	ForcedAny,
 	GenericObject,
 	IDBGetter,
+	IndexedResult,
 	Maybe,
 	NestedPrimitiveKey,
 	Nullable,
@@ -24,12 +32,10 @@ import type {
 	WherePredicate,
 } from '../types';
 
-type BoolRecord = Partial<Record<string, boolean>>;
-
 /** @class Select query builder. */
 export class SelectQuery<
 	Row extends GenericObject,
-	Sel extends Nullable<BoolRecord> = null,
+	Sel extends BooleanRecord = null,
 	Tbl extends Table = Table,
 > {
 	#table: string;
@@ -81,6 +87,50 @@ export class SelectQuery<
 		query.#useIndexCursor = this.#useIndexCursor;
 
 		return query;
+	}
+
+	/** @internal Get filtered rows without sorting, limiting, or projecting */
+	async #getFilteredRows(): Promise<Row[]> {
+		await this.#readyPromise;
+
+		return new Promise((resolve, reject) => {
+			const { store } = this.#getStore();
+
+			// If we have an index-based where query, use it
+			if (this.#whereIndexName && this.#whereIndexQuery != null) {
+				const source = this.#buildIndexedStore(store, reject);
+
+				if (!source) return;
+
+				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
+
+				request.onsuccess = () => resolve(request.result);
+				request.onerror = () => reject(request.error);
+
+				return;
+			}
+
+			const request = store.getAll() as IDBRequest<Row[]>;
+
+			request.onsuccess = () => {
+				let results = request.result;
+
+				if (this.#whereCondition) {
+					results = results.filter(this.#whereCondition);
+				}
+
+				resolve(results);
+			};
+
+			request.onerror = () => reject(request.error);
+		});
+	}
+
+	/** @internal Resolve a dot-notation key to a numeric value from a row */
+	#resolveValue(row: Row, key: string): number {
+		const value = _resolveNestedKey(row, key);
+
+		return normalizeNumber(value) ?? NaN;
 	}
 
 	/** @internal Create a readonly transaction and return the store */
@@ -292,39 +342,35 @@ export class SelectQuery<
 
 	async findAll() {
 		await this.#readyPromise;
-		return new Promise((resolve, reject) => {
-			const { store } = this.#getStore();
 
-			// If we have an index-based where query, use it
-			if (this.#whereIndexName && this.#whereIndexQuery != null) {
-				const source = this.#buildIndexedStore(store, reject);
+		const { store } = this.#getStore();
 
-				if (!source) return;
+		// Validate index key if sortByIndex was used
+		if (this.#useIndexCursor && this.#orderByKey && isNonEmptyString(this.#orderByKey)) {
+			const isPK = store.keyPath === this.#orderByKey;
+			const isIndex = store.indexNames.contains(this.#orderByKey);
 
-				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
-
-				request.onsuccess = () => {
-					resolve(this.#applyPipeline(request.result));
-				};
-
-				request.onerror = () => reject(request.error);
-
-				return;
+			if (!isPK && !isIndex) {
+				throw new RangeError(
+					`Index '${this.#orderByKey}' does not exist on table '${this.#table}'`
+				);
 			}
+		}
 
-			// Check if we can use an optimized index cursor
-			const useIdxCursor =
-				this.#useIndexCursor &&
-				this.#orderByKey &&
-				isNonEmptyString(this.#orderByKey) &&
-				store.indexNames.contains(this.#orderByKey) &&
-				!this.#whereCondition; // Only use cursor if no predicate where condition
+		// Check if we can use an optimized index cursor (sortByIndex without predicate where or index where)
+		const useIdxCursor =
+			this.#useIndexCursor &&
+			this.#orderByKey &&
+			isNonEmptyString(this.#orderByKey) &&
+			!this.#whereCondition &&
+			!this.#whereIndexName;
 
-			if (useIdxCursor) {
-				// Use optimized index cursor
-				const index = store.index(this.#orderByKey as string);
+		if (useIdxCursor) {
+			return new Promise((resolve, reject) => {
+				const isPK = store.keyPath === this.#orderByKey;
+				const source = isPK ? store : store.index(this.#orderByKey as string);
 				const direction = this.#orderByDir === 'desc' ? 'prev' : 'next';
-				const request = index.openCursor(null, direction);
+				const request = source.openCursor(null, direction);
 				const results: Row[] = [];
 
 				let count = 0;
@@ -350,24 +396,13 @@ export class SelectQuery<
 				};
 
 				request.onerror = () => reject(request.error);
-			} else {
-				// Use standard getAll with in-memory sorting
-				const request = store.getAll() as IDBRequest<Row[]>;
+			});
+		}
 
-				request.onsuccess = () => {
-					let results = request.result;
+		// Standard path: get filtered rows, then apply sort + limit + projection
+		const rows = await this.#getFilteredRows();
 
-					// Apply where filter
-					if (this.#whereCondition) {
-						results = results.filter(this.#whereCondition);
-					}
-
-					resolve(this.#applyPipeline(results));
-				};
-
-				request.onerror = () => reject(request.error);
-			}
-		});
+		return this.#applyPipeline(rows);
 	}
 
 	/** Fetch records with cursor-based pagination */
@@ -579,44 +614,11 @@ export class SelectQuery<
 		this: SelectQuery<Row, Selection, Tbl>
 	): Promise<Nullable<SelectFields<Row, Selection>>>;
 
-	async findFirst() {
-		await this.#readyPromise;
-		return new Promise((resolve, reject) => {
-			const { store } = this.#getStore();
+	async findFirst(this: SelectQuery<Row, ForcedAny, Tbl>): Promise<ForcedAny> {
+		const rows = await this.#getFilteredRows();
+		const processed = this.#applyPipeline(rows);
 
-			// If we have an index-based where query, use it
-			if (this.#whereIndexName && this.#whereIndexQuery != null) {
-				const source = this.#buildIndexedStore(store, reject);
-
-				if (!source) return;
-
-				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
-
-				request.onsuccess = () => {
-					const results = this.#applyPipeline(request.result);
-					resolve(results.length > 0 ? results[0] : null);
-				};
-
-				request.onerror = () => reject(request.error);
-				return;
-			}
-
-			const request = store.getAll() as IDBRequest<Row[]>;
-
-			request.onsuccess = () => {
-				let results = request.result;
-
-				// Apply where filter
-				if (this.#whereCondition) {
-					results = results.filter(this.#whereCondition);
-				}
-
-				const processed = this.#applyPipeline(results);
-				resolve(processed.length > 0 ? processed[0] : null);
-			};
-
-			request.onerror = () => reject(request.error);
-		});
+		return processed.length > 0 ? processed[0] : null;
 	}
 
 	/**
@@ -632,40 +634,28 @@ export class SelectQuery<
 		key: $InferPrimaryKey<Tbl['columns']> extends keyof Row
 			? Row[$InferPrimaryKey<Tbl['columns']>]
 			: Row[keyof Row]
-	): Promise<
-		Sel extends null
-			? Nullable<Row>
-			: Sel extends Partial<Record<keyof Row, boolean>>
-				? Nullable<SelectFields<Row, Sel>>
-				: never
-	> {
+	): Promise<Nullable<IndexedResult<Sel, Row>>> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
 			const request = store.get(key) as IDBRequest<Row>;
 
-			type ResolvedData = Sel extends null
-				? Nullable<Row>
-				: Sel extends Partial<Record<keyof Row, boolean>>
-					? Nullable<SelectFields<Row, Sel>>
-					: never;
-
 			request.onsuccess = () => {
 				const result = request.result as Maybe<Row>;
 
 				if (!result) {
-					resolve(null as ResolvedData);
+					resolve(null);
 					return;
 				}
 
 				// Apply where filter if specified
 				if (this.#whereCondition && !this.#whereCondition(result)) {
-					resolve(null as ResolvedData);
+					resolve(null);
 					return;
 				}
 
 				// Apply projection
-				resolve(this.#projectRow(result) as ResolvedData);
+				resolve(this.#projectRow(result) as Nullable<IndexedResult<Sel, Row>>);
 			};
 
 			request.onerror = () => reject(request.error);
@@ -685,13 +675,7 @@ export class SelectQuery<
 	async findByIndex<IdxKey extends $InferIndex<Tbl['columns']> & keyof Row & string>(
 		indexName: IdxKey,
 		query: Row[IdxKey] | IDBKeyRange
-	): Promise<
-		Sel extends null
-			? Row[]
-			: Sel extends Partial<Record<keyof Row, boolean>>
-				? SelectFields<Row, Sel>[]
-				: never
-	> {
+	): Promise<IndexedResult<Sel, Row>[]> {
 		await this.#readyPromise;
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
@@ -717,13 +701,7 @@ export class SelectQuery<
 					results = results.filter(this.#whereCondition);
 				}
 
-				resolve(
-					this.#applyPipeline(results) as Sel extends null
-						? Row[]
-						: Sel extends Partial<Record<keyof Row, boolean>>
-							? SelectFields<Row, Sel>[]
-							: never
-				);
+				resolve(this.#applyPipeline(results) as IndexedResult<Sel, Row>[]);
 			};
 
 			request.onerror = () => reject(request.error);
@@ -786,41 +764,20 @@ export class SelectQuery<
 
 	/**
 	 * @instance Computes the sum of a numeric column.
-	 * @param column Column to compute sum of.
+	 * @param column Column to compute sum of. Supports dot-notation for nested fields.
 	 * @param roundTo Number of decimal places to round to. @default 2
 	 *
 	 * @returns A promise that resolves to the sum of the specified column.
-	 */
-	async sum(
-		this: SelectQuery<Row, null, Tbl>,
-		column: NumericDotKey<Row>,
-		roundTo?: number
-	): Promise<number>;
-
-	/**
-	 * @instance Computes the sum of a numeric column after applying {@link select()} method.
-	 * @param column Column to compute sum of.
-	 * @param roundTo Number of decimal places to round to. @default 2
 	 *
-	 * @returns A promise that resolves to the sum of the specified column.
+	 * @remarks
+	 * - Operates on raw filtered rows (skips sort, limit, and projection for efficiency).
+	 * - Independent of the {@link select()} method's column filtering.
 	 */
-	async sum<Selection extends Partial<Record<keyof Row, boolean>>>(
-		this: SelectQuery<Row, Selection, Tbl>,
-		column: NumericDotKey<SelectFields<Row, Selection>>,
-		roundTo?: number
-	): Promise<number>;
-
-	async sum(
-		this: SelectQuery<Row, null, Tbl>,
-		column: NumericDotKey<Row>,
-		roundTo = 2
-	): Promise<number> {
+	async sum(column: NumericDotKey<Row>, roundTo = 2): Promise<number> {
 		try {
-			const items = await this.findAll();
+			const rows = await this.#getFilteredRows();
 
-			const result = sumByField(items, column, roundTo);
-
-			return result;
+			return sumByField(rows, column, roundTo);
 		} catch (error) {
 			throw new Error(
 				`Error computing sum for column '${column}': ${_extractErrorMsg(error)}`
@@ -830,41 +787,20 @@ export class SelectQuery<
 
 	/**
 	 * @instance Computes the average of a numeric column.
-	 * @param column Column to compute average of.
+	 * @param column Column to compute average of. Supports dot-notation for nested fields.
 	 * @param roundTo Number of decimal places to round to. @default 2
 	 *
 	 * @returns A promise that resolves to the average of the specified column.
-	 */
-	async avg(
-		this: SelectQuery<Row, null, Tbl>,
-		column: NumericDotKey<Row>,
-		roundTo?: number
-	): Promise<number>;
-
-	/**
-	 * @instance Computes the average of a numeric column after applying {@link select()} method.
-	 * @param column Column to compute average of.
-	 * @param roundTo Number of decimal places to round to. @default 2
 	 *
-	 * @returns A promise that resolves to the average of the specified column.
+	 * @remarks
+	 * - Operates on raw filtered rows (skips sort, limit, and projection for efficiency).
+	 * - Independent of the {@link select()} method's column filtering.
 	 */
-	async avg<Selection extends Partial<Record<keyof Row, boolean>>>(
-		this: SelectQuery<Row, Selection, Tbl>,
-		column: NumericDotKey<SelectFields<Row, Selection>>,
-		roundTo?: number
-	): Promise<number>;
-
-	async avg(
-		this: SelectQuery<Row, null, Tbl>,
-		column: NumericDotKey<Row>,
-		roundTo = 2
-	): Promise<number> {
+	async avg(column: NumericDotKey<Row>, roundTo = 2): Promise<number> {
 		try {
-			const items = await this.findAll();
+			const rows = await this.#getFilteredRows();
 
-			const result = avgByField(items, column, roundTo);
-
-			return result;
+			return avgByField(rows, column, roundTo);
 		} catch (error) {
 			throw new Error(
 				`Error computing average for column '${column}': ${_extractErrorMsg(error)}`
@@ -875,39 +811,127 @@ export class SelectQuery<
 	/**
 	 * @instance Gets distinct values of a column.
 	 * @param column Column to get distinct values of.
+	 *
 	 * @returns A promise that resolves to an array of distinct values of the specified column.
+	 *
+	 * @remarks
+	 * - Operates on raw filtered rows (skips sort, limit, and projection for efficiency).
+	 * - Independent of the {@link select()} method's column filtering.
 	 */
-	async distinct<Col extends keyof Row>(
-		this: SelectQuery<Row, null, Tbl>,
-		column: Col
-	): Promise<ResolveValue<Row, Col>[]>;
-
-	/**
-	 * @instance Gets distinct values of a column after applying {@link select()} method.
-	 * @param column Column to get distinct values of.
-	 * @returns A promise that resolves to an array of distinct values of the specified column.
-	 */
-	async distinct<
-		Selection extends Partial<Record<keyof Row, boolean>>,
-		Col extends keyof SelectFields<Row, Selection>,
-	>(
-		this: SelectQuery<Row, Selection, Tbl>,
-		column: Col
-	): Promise<ResolveValue<SelectFields<Row, Selection>, Col>[]>;
-
-	async distinct<Selection extends Partial<Record<keyof Row, boolean>>>(
-		this: SelectQuery<Row, null, Tbl> | SelectQuery<Row, Selection, Tbl>,
-		column: keyof Row | keyof SelectFields<Row, Selection>
-	) {
+	async distinct<Col extends keyof Row>(column: Col): Promise<ResolveValue<Row, Col>[]> {
 		try {
-			const items = await (this as SelectQuery<Row, null, Tbl>).findAll();
+			const rows = await this.#getFilteredRows();
 
-			const result = new Set(items.map((it) => it[column as keyof Row]));
+			const result = rows.map((it) => it[column as keyof Row]);
 
-			return [...result];
+			return removeDuplicates(result);
 		} catch (error) {
 			throw new Error(
 				`Error computing distinct values for column '${column as string}': ${_extractErrorMsg(error)}`
+			);
+		}
+	}
+
+	/**
+	 * @instance Finds the minimum value of a numeric column.
+	 * @param column Column to find minimum of. Supports dot-notation for nested fields.
+	 *
+	 * @returns A promise that resolves to the minimum value, or `NaN` if the result set is empty.
+	 *
+	 * @remarks
+	 * - Uses **O(1) `IndexedDB` cursor** when the column is indexed/primary key and no `where()` filters are active.
+	 * - Falls back to scanning all filtered rows for non-indexed or nested columns.
+	 * - Independent of the {@link select()} method's column filtering.
+	 */
+	async min(column: NumericDotKey<Row>): Promise<number> {
+		try {
+			await this.#readyPromise;
+
+			const hasNoWhere = !this.#whereCondition && !this.#whereIndexName;
+			const isTopLevel = !column.includes('.');
+
+			// O(1) cursor optimization: first value in ascending order = min
+			if (hasNoWhere && isTopLevel) {
+				const { store } = this.#getStore();
+				const isIndexed = store.indexNames.contains(column);
+				const isPK = store.keyPath === column;
+
+				if (isIndexed || isPK) {
+					return new Promise((resolve, reject) => {
+						const source = isPK ? store : store.index(column);
+						const request = source.openCursor(null, 'next');
+
+						request.onsuccess = () => {
+							const cursor = request.result;
+							resolve(cursor ? cursor.value[column] : NaN);
+						};
+
+						request.onerror = () => reject(request.error);
+					});
+				}
+			}
+
+			// Fallback: scan all filtered rows
+			const rows = await this.#getFilteredRows();
+
+			if (rows.length === 0) return NaN;
+
+			return Math.min(...rows.map((r) => this.#resolveValue(r, column)));
+		} catch (error) {
+			throw new Error(
+				`Error computing minimum value for column '${column}': ${_extractErrorMsg(error)}`
+			);
+		}
+	}
+
+	/**
+	 * @instance Finds the maximum value of a numeric column.
+	 * @param column Column to find maximum of. Supports dot-notation for nested fields.
+	 *
+	 * @returns A promise that resolves to the maximum value, or `NaN` if the result set is empty.
+	 *
+	 * @remarks
+	 * - Uses **O(1) `IndexedDB` cursor** when the column is indexed/primary key and no `where()` filters are active.
+	 * - Falls back to scanning all filtered rows for non-indexed or nested columns.
+	 * - Independent of the {@link select()} method's column filtering.
+	 */
+	async max(column: NumericDotKey<Row>): Promise<number> {
+		try {
+			await this.#readyPromise;
+
+			const hasNoWhere = !this.#whereCondition && !this.#whereIndexName;
+			const isTopLevel = !column.includes('.');
+
+			// O(1) cursor optimization: last value in descending order = max
+			if (hasNoWhere && isTopLevel) {
+				const { store } = this.#getStore();
+				const isIndexed = store.indexNames.contains(column);
+				const isPK = store.keyPath === column;
+
+				if (isIndexed || isPK) {
+					return new Promise((resolve, reject) => {
+						const source = isPK ? store : store.index(column);
+						const request = source.openCursor(null, 'prev');
+
+						request.onsuccess = () => {
+							const cursor = request.result;
+							resolve(cursor ? cursor.value[column] : NaN);
+						};
+
+						request.onerror = () => reject(request.error);
+					});
+				}
+			}
+
+			// Fallback: scan all filtered rows
+			const rows = await this.#getFilteredRows();
+
+			if (rows.length === 0) return NaN;
+
+			return Math.max(...rows.map((r) => this.#resolveValue(r, column)));
+		} catch (error) {
+			throw new Error(
+				`Error computing maximum value for column '${column}': ${_extractErrorMsg(error)}`
 			);
 		}
 	}

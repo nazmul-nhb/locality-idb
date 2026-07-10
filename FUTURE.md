@@ -88,6 +88,10 @@ support
 
 ## 3. Aggregations
 
+### Status
+
+- [x] Done
+
 It already has `count()`.
 
 Next:
@@ -185,11 +189,11 @@ await Promise.all(...)
 have
 
 ```ts
-insertMany()
+insertMany() // Has overload
 
-updateMany()
+updateMany() // Already does this for matching where condition
 
-deleteMany()
+deleteMany() // Already does this for matching where condition
 ```
 
 with optimized batching.

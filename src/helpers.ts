@@ -1,4 +1,4 @@
-import { isObjectWithKeys, isString } from 'toolbox-x/guards';
+import { isNotEmptyObject, isObjectWithKeys, isString } from 'toolbox-x/guards';
 import type { Nullable, RejectFn, UUID, UUIDVersion } from './types';
 
 /** Ensure UUID variant is RFC4122 compliant */
@@ -39,9 +39,28 @@ export async function _getDBList(): Promise<IDBDatabaseInfo[]> {
 
 /** Extract the error message from an error object */
 export function _extractErrorMsg(error: unknown): string {
-	return Error.isError(error)
+	return error instanceof Error
 		? error.message
 		: isObjectWithKeys(error, ['message']) && isString(error.message)
 			? error.message
 			: 'Unknown Error';
+}
+
+/**
+ * Safely resolves value of nested key (dot-notation key like `"user.city"`).
+ *
+ * @param obj - The source object
+ * @param path - The nested path string (e.g. `"user.city"`)
+ * @returns The resolved value or `undefined`
+ */
+export function _resolveNestedKey(obj: unknown, path: string): unknown {
+	if (isNotEmptyObject(obj)) {
+		return path?.split('.').reduce<unknown>((acc, key) => {
+			if (isNotEmptyObject(acc)) {
+				return acc[key];
+			}
+
+			return undefined;
+		}, obj);
+	}
 }

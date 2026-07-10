@@ -29,7 +29,7 @@ const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
 const customSchema = {
 	test: table('test', {
 		serial: column.int().pk().auto(),
-		task: column.string(),
+		task: column.string().index(),
 		completed: column.bool().default(false),
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column
@@ -54,6 +54,7 @@ const schema = defineSchema({
 		uuid: column.uuid().default(uuid({ version: 'v6' })),
 		timestamp: column.timestamp().nullable(),
 		number: column.number().default(0),
+		custom: column.custom<{ price: number }>().default({ price: 0 }),
 		createdAt: column.timestamp(),
 		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
 		url: column.url().nullable(),
@@ -86,7 +87,7 @@ type UpdateTodo = InferUpdateType<SchemaType['todos']>;
 
 const db = new Locality({
 	dbName: 'todo-db',
-	version: 44,
+	version: 45,
 	schema,
 });
 
@@ -110,7 +111,13 @@ const loadTodos = async () => {
 
 	console.info(todosS);
 
-	const test = await db.from('test1').findAll();
+	const test = await db
+		.from('todos')
+		.select({
+			serial: true,
+			task: true,
+		})
+		.findByIndex('task', 'g');
 
 	console.info({ test });
 
@@ -125,14 +132,19 @@ const loadTodos = async () => {
 
 	console.info(await calc.where((t) => t.serial > 9).findAll());
 
-	const sum = await calc.where((t) => t.serial > 9).sum('serial');
-	const avg = await calc.where((t) => t.serial > 9).avg('serial');
+	const sum = await calc.sum('custom.price');
+	const avg = await calc.avg('custom.price');
 
-	const dist = await calc.distinct('number');
+	const dist = await calc.distinct('custom');
 
 	console.info({ sum, avg });
 
-	console.info(dist);
+	console.info({ dist });
+
+	const min = await calc.min('number');
+	const max = await calc.max('number');
+
+	console.info({ min, max });
 
 	renderTodos();
 	updateStats();
@@ -225,7 +237,11 @@ const toggleTodo = async (id: Maybe<number>, update: UpdateTodo) => {
 			// .set({ serial: 0 })
 			.set((row) => {
 				console.table([row]);
-				return { number: (row.number + 1) * 2, ...update };
+				return {
+					number: (row.number + 1) * 2,
+					...update,
+					custom: { price: row.custom.price + 5 },
+				};
 			})
 			.where((t) => t.serial === id)
 			.run();
