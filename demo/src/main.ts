@@ -114,12 +114,21 @@ const loadTodos = async () => {
 
 	console.info({ test });
 
-	const sum = await base
-		.select({ serial: true, task: true, completed: true, createdAt: true, updatedAt: true })
-		.where((t) => t.serial > 9)
-		.sum('serial');
+	const calc = base.select({
+		serial: true,
+		task: true,
+		number: true,
+		completed: true,
+		createdAt: true,
+		updatedAt: true,
+	});
 
-	console.info({ sum });
+	console.info(await calc.where((t) => t.serial > 9).findAll());
+
+	const sum = await calc.where((t) => t.serial > 9).sum('serial');
+	const avg = await calc.where((t) => t.serial > 9).avg('serial');
+
+	console.info({ sum, avg });
 
 	renderTodos();
 	updateStats();

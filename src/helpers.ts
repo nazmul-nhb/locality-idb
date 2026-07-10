@@ -1,3 +1,4 @@
+import { isObjectWithKeys, isString } from 'toolbox-x/guards';
 import type { Nullable, RejectFn, UUID, UUIDVersion } from './types';
 
 /** Ensure UUID variant is RFC4122 compliant */
@@ -34,4 +35,13 @@ export function _ensureIndexedDB() {
 export async function _getDBList(): Promise<IDBDatabaseInfo[]> {
 	if (!('databases' in window.indexedDB)) return [];
 	return await window.indexedDB.databases();
+}
+
+/** Extract the error message from an error object */
+export function _extractErrorMsg(error: unknown): string {
+	return Error.isError(error)
+		? error.message
+		: isObjectWithKeys(error, ['message']) && isString(error.message)
+			? error.message
+			: 'Unknown Error';
 }

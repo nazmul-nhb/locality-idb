@@ -1,6 +1,7 @@
-import { sortAnArray, sumByField } from 'toolbox-x';
+import { avgByField, sortAnArray, sumByField } from 'toolbox-x';
 import { isFunction, isNonEmptyString, isNotEmptyObject } from 'toolbox-x/guards';
 import type { Table } from '../core';
+import { _extractErrorMsg } from '../helpers';
 import { Selected } from '../symbols';
 import type {
 	$InferIndex,
@@ -775,18 +776,63 @@ export class SelectQuery<
 		return count > 0;
 	}
 
-	async sum(this: SelectQuery<Row, null>, column: NumericDotKey<Row>): Promise<number>;
+	async sum(
+		this: SelectQuery<Row, null>,
+		column: NumericDotKey<Row>,
+		roundTo?: number
+	): Promise<number>;
 
 	async sum<Selection extends Partial<Record<keyof Row, boolean>>>(
 		this: SelectQuery<Row, Selection, Tbl>,
-		column: NumericDotKey<SelectFields<Row, Selection>>
+		column: NumericDotKey<SelectFields<Row, Selection>>,
+		roundTo?: number
 	): Promise<number>;
 
-	async sum(this: SelectQuery<Row, null>, column: NumericDotKey<Row>): Promise<number> {
-		const items = await this.findAll();
+	async sum(
+		this: SelectQuery<Row, null>,
+		column: NumericDotKey<Row>,
+		roundTo = 2
+	): Promise<number> {
+		try {
+			const items = await this.findAll();
 
-		const result = sumByField(items, column);
+			const result = sumByField(items, column, roundTo);
 
-		return result;
+			return result;
+		} catch (error) {
+			throw new Error(
+				`Error computing sum for column '${column}': ${_extractErrorMsg(error)}`
+			);
+		}
+	}
+
+	async avg(
+		this: SelectQuery<Row, null>,
+		column: NumericDotKey<Row>,
+		roundTo?: number
+	): Promise<number>;
+
+	async avg<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, Selection, Tbl>,
+		column: NumericDotKey<SelectFields<Row, Selection>>,
+		roundTo?: number
+	): Promise<number>;
+
+	async avg(
+		this: SelectQuery<Row, null>,
+		column: NumericDotKey<Row>,
+		roundTo = 2
+	): Promise<number> {
+		try {
+			const items = await this.findAll();
+
+			const result = avgByField(items, column, roundTo);
+
+			return result;
+		} catch (error) {
+			throw new Error(
+				`Error computing average for column '${column}': ${_extractErrorMsg(error)}`
+			);
+		}
 	}
 }
