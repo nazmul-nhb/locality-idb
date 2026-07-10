@@ -1,4 +1,4 @@
-import { sortAnArray } from 'toolbox-x';
+import { sortAnArray, sumByField } from 'toolbox-x';
 import { isFunction, isNonEmptyString, isNotEmptyObject } from 'toolbox-x/guards';
 import type { Table } from '../core';
 import { Selected } from '../symbols';
@@ -13,6 +13,7 @@ import type {
 	Maybe,
 	NestedPrimitiveKey,
 	Nullable,
+	NumericDotKey,
 	PageOptions,
 	PageResult,
 	RejectFn,
@@ -284,7 +285,7 @@ export class SelectQuery<
 
 	/** Fetch all matching records with selected fields */
 	async findAll<Selection extends Partial<Record<keyof Row, boolean>>>(
-		this: SelectQuery<Row, Selection>
+		this: SelectQuery<Row, Selection, Tbl>
 	): Promise<SelectFields<Row, Selection>[]>;
 
 	async findAll() {
@@ -375,7 +376,7 @@ export class SelectQuery<
 
 	/** Fetch records with cursor-based pagination and selected fields */
 	async page<Selection extends Partial<Record<keyof Row, boolean>>>(
-		this: SelectQuery<Row, Selection>,
+		this: SelectQuery<Row, Selection, Tbl>,
 		options?: PageOptions
 	): Promise<PageResult<Row, Selection>>;
 
@@ -492,12 +493,12 @@ export class SelectQuery<
 
 	/** Stream records with a cursor and selected fields */
 	async stream<Selection extends Partial<Record<keyof Row, boolean>>>(
-		this: SelectQuery<Row, Selection>,
+		this: SelectQuery<Row, Selection, Tbl>,
 		callback: CursorCallback<SelectFields<Row, Selection>>
 	): Promise<void>;
 
 	async stream<Selection extends Partial<Record<keyof Row, boolean>>>(
-		this: SelectQuery<Row, Selection>,
+		this: SelectQuery<Row, Selection, Tbl>,
 		callback: CursorCallback<Row> | CursorCallback<SelectFields<Row, Selection>>
 	) {
 		await this.#readyPromise;
@@ -570,7 +571,7 @@ export class SelectQuery<
 
 	/** Fetch first matching record with selected fields */
 	async findFirst<Selection extends Partial<Record<keyof Row, boolean>>>(
-		this: SelectQuery<Row, Selection>
+		this: SelectQuery<Row, Selection, Tbl>
 	): Promise<Nullable<SelectFields<Row, Selection>>>;
 
 	async findFirst() {
@@ -772,5 +773,20 @@ export class SelectQuery<
 		const count = await this.count();
 
 		return count > 0;
+	}
+
+	async sum(this: SelectQuery<Row, null>, column: NumericDotKey<Row>): Promise<number>;
+
+	async sum<Selection extends Partial<Record<keyof Row, boolean>>>(
+		this: SelectQuery<Row, Selection, Tbl>,
+		column: NumericDotKey<SelectFields<Row, Selection>>
+	): Promise<number>;
+
+	async sum(this: SelectQuery<Row, null>, column: NumericDotKey<Row>): Promise<number> {
+		const items = await this.findAll();
+
+		const result = sumByField(items, column);
+
+		return result;
 	}
 }

@@ -108,11 +108,18 @@ const loadTodos = async () => {
 
 	todos = todosS;
 
-	console.info(todos);
+	console.info(todosS);
 
 	const test = await db.from('test1').findAll();
 
 	console.info({ test });
+
+	const sum = await base
+		.select({ serial: true, task: true, completed: true, createdAt: true, updatedAt: true })
+		.where((t) => t.serial > 9)
+		.sum('serial');
+
+	console.info({ sum });
 
 	renderTodos();
 	updateStats();

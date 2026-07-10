@@ -1,4 +1,11 @@
-import type { Maybe, Nullable, Uncertain } from 'toolbox-x/types';
+import type {
+	AdvancedTypes,
+	Maybe,
+	Nullable,
+	NullOrUndefined,
+	Numeric,
+	Uncertain,
+} from 'toolbox-x/types';
 import type { $UUID } from 'toolbox-x/types/hash';
 import type { GenericObject } from 'toolbox-x/types/object';
 import type { LooseLiteral, Prettify } from 'toolbox-x/types/utils';
@@ -499,3 +506,18 @@ export type TransactionCallback<
 	TName extends keyof Schema,
 	Tables extends TName[],
 > = (ctx: TransactionContext<Schema, TName, Tables>) => Promise<void>;
+
+/** - Extract only number, string, undefined and null keys from an object, including nested dot-notation keys.  */
+export type NumericDotKey<T> = T extends AdvancedTypes
+	? never
+	: T extends GenericObject
+		? {
+				[K in keyof T & string]: T[K] extends Function
+					? never
+					: T[K] extends Numeric | NullOrUndefined
+						? K
+						: T[K] extends GenericObject
+							? `${K}.${NumericDotKey<T[K]>}`
+							: never;
+			}[keyof T & string]
+		: never;
