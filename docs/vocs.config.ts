@@ -1,9 +1,10 @@
+import dotenv from 'dotenv';
 import { Changelog, defineConfig } from 'vocs/config';
 import { version } from '../package.json';
 
-const token = process.env.GITHUB_TOKEN;
+dotenv.config({ quiet: true });
 
-console.log({ token });
+const token = process.env.GITHUB_TOKEN;
 
 let starsCount = '';
 
@@ -13,11 +14,12 @@ try {
 			Authorization: `Bearer ${token}`,
 		},
 	});
+
 	if (res.ok) {
 		const data = await res.json();
 
 		if (typeof data.stargazers_count === 'number') {
-			starsCount = ` (${data.stargazers_count} ★)`;
+			starsCount = `: ${data.stargazers_count} ★`;
 		}
 	}
 } catch (err) {
@@ -40,7 +42,7 @@ export default defineConfig({
 	}),
 	description: 'SQL-like query builder for IndexedDB with a chainable API',
 	topNav: [
-		{ text: 'Guide', link: '/intro/motivation' },
+		{ text: 'Guide', link: '/intro/getting-started' },
 		{ text: 'API Reference', link: '/reference/locality' },
 		{
 			text: `v${version}`,
@@ -77,7 +79,11 @@ export default defineConfig({
 			items: [
 				{ text: 'Getting Started', link: '/intro/getting-started' },
 				{ text: 'Key Features', link: '/intro/features' },
-				{ text: 'Why Locality IDB?', link: '/intro/motivation' },
+				{
+					text: 'Why Locality IDB?',
+					badge: { variant: 'info', text: 'COMPARISON' },
+					link: '/intro/motivation',
+				},
 			],
 		},
 		{

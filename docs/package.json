@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vocs dev",
+    "dev": "vocs dev --host",
     "build": "vocs build",
     "preview": "vocs preview",
     "changelog": "node scripts/update-changelog.mjs"
@@ -17,5 +17,8 @@
     "vite": "8.1.4",
     "vocs": "^2.5.3",
     "waku": "1.0.0-beta.6"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2"
   }
 }

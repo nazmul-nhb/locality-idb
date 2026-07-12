@@ -7,7 +7,7 @@ Frequently asked questions and troubleshooting guides for Locality IDB.
 ### Why are my schema changes not showing up?
 IndexedDB schemas do not update automatically when you edit your code. If you add, rename, or drop a column/store, you **must bump the database `version`** in your `Locality` config. This triggers IndexedDB's internal `onupgradeneeded` handler to run migrations.
 
-### My `.where('column', value)` query is throwing a runtime error. Why?
+### My `.where('column', value)` query is throwing a runtime/compile-time error. Why?
 Locality IDB only allows index-based filtering on fields that have an index. To fix this, make sure the column is defined with the `.pk()`, `.index()`, or `.unique()` modifier in your schema. If a column is not indexed, you must use predicate-based filtering:
 ```typescript
 // ❌ Throws error if 'age' is not indexed:

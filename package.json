@@ -1,7 +1,7 @@
 {
   "name": "locality-idb",
-  "version": "2.4.0",
-  "description": "SQL-like query builder for IndexedDB with chainable API",
+  "version": "2.4.1",
+  "description": "A type-safe, SQL-like query builder for IndexedDB with a chainable API",
   "type": "module",
   "sideEffects": false,
   "types": "./dist/index.d.cts",
