@@ -40,7 +40,7 @@ export default defineConfig({
 			collapsed: false,
 			items: [
 				{ text: 'Getting Started', link: '/' },
-				{ text: 'Features', link: '/intro/features' },
+				{ text: 'Key Features', link: '/intro/features' },
 				{ text: 'Why Locality IDB?', link: '/intro/motivation' },
 			],
 		},
