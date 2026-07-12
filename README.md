@@ -1,5 +1,7 @@
 # Locality IDB
 
+[![Chronos Date](https://raw.githubusercontent.com/nazmul-nhb/locality-idb/refs/heads/main/locality.png)](https://locality.nazmul-nhb.dev/)
+
 > **SQL**-like query builder for `IndexedDB` with a type-safe, chainable API.
 
 ---

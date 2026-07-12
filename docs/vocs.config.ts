@@ -1,13 +1,29 @@
-import { defineConfig } from 'vocs/config';
+import { Changelog, defineConfig } from 'vocs/config';
 
 export default defineConfig({
 	title: 'Locality IDB',
+	iconUrl: '/favicon.png',
+	logoUrl: '/locality-idb.png',
+	banner: {
+		content: '⭐ Check out the new release!',
+		variant: 'success',
+		href: '/changelog',
+	},
+	changelog: Changelog.github({
+		repo: 'nazmul-nhb/locality-idb',
+		prereleases: true,
+	}),
 	description: 'SQL-like query builder for IndexedDB with a chainable API',
 	topNav: [
 		{ text: 'Guide', link: '/intro/motivation' },
 		{ text: 'API Reference', link: '/reference/locality' },
 		{ text: 'Changelog', link: '/changelog' },
 	],
+	groupIcons: {
+		customIcons: {
+			locality: '/favicon.png',
+		},
+	},
 	socials: [
 		{
 			icon: 'github',

@@ -22,7 +22,7 @@ const DOCS_ROOT = resolve(__dirname, '..');
 const REPO_ROOT = resolve(DOCS_ROOT, '..');
 
 const CHANGELOG_PATH = resolve(REPO_ROOT, 'CHANGELOG.md');
-const MDX_PATH = resolve(DOCS_ROOT, 'src/pages/changelog.mdx');
+const MDX_PATH = resolve(DOCS_ROOT, 'src/pages/changelog-manual.mdx');
 
 const FRONTMATTER = `# Changelog
 

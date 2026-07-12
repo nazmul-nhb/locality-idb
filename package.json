@@ -43,8 +43,8 @@
   },
   "files": [
     "dist",
+    "LICENSE",
     "README.md",
-    "CHANGELOG.md",
     "package.json"
   ],
   "keywords": [
@@ -70,8 +70,8 @@
   "scripts": {
     "build": "tsdown",
     "dev:pkg": "tsdown --watch",
-    "dev": "pnpm --dir demo run dev",
-    "dev:docs": "pnpm --filter locality-docs run dev",
+    "dev:demo": "pnpm --dir demo run dev",
+    "dev": "pnpm --filter locality-docs run dev",
     "build:docs": "pnpm --filter locality-docs run build",
     "install:demo": "pnpm --dir demo install",
     "build:demo": "pnpm --dir demo run build",

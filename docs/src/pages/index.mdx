@@ -6,6 +6,30 @@
 IndexedDB is a powerful browser-native database, but its low-level API can be cumbersome and complex to work with. `Locality IDB` simplifies IndexedDB interactions by providing a modern, type-safe, and SQL-like query builder inspired by **Drizzle ORM**.
 :::
 
+## 📦 Installation
+
+Install `locality-idb` using your favorite package manager:
+
+:::code-group
+
+```bash [npm]
+npm i locality-idb
+```
+
+```bash [pnpm]
+pnpm add locality-idb
+```
+
+```bash [yarn]
+yarn add locality-idb
+```
+
+```bash [bun]
+bun add locality-idb
+```
+
+:::
+
 ## 🚀 Quick Start
 
 Here is a quick look at how you can define a schema, initialize the database, and run basic CRUD operations:
@@ -49,19 +73,4 @@ await idb.update('users').set({ name: 'Alice in Wonderland' }).where('id', 1).ru
 
 // Delete data
 await idb.delete('users').where('id', 1).run();
-```
-
-## 📦 Installation
-
-Install `locality-idb` using your package manager of choice:
-
-```bash
-# npm
-npm install locality-idb
-
-# pnpm
-pnpm add locality-idb
-
-# yarn
-yarn add locality-idb
 ```
