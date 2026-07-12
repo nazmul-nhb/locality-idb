@@ -4,6 +4,51 @@
 
 <!-- markdownlint-disable-file MD024 -->
 
+## 🚀 Quick Start
+
+```typescript
+import { Locality, defineSchema, column } from 'locality-idb';
+
+// Define your schema
+const mySchema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+    email: column.text().unique(),
+    createdAt: column.timestamp(),
+  },
+  posts: {
+    id: column.int().pk().auto(),
+    userId: column.int().index(),
+    title: column.varchar(255),
+    content: column.text(),
+    createdAt: column.timestamp(),
+  },
+});
+
+// Initialize database
+const idb = new Locality({
+  dbName: 'my-app-db',
+  schema: mySchema,
+  version: 1,
+});
+
+// Insert data
+const user = await idb.insert('users').values({ name: 'Alice',  email: 'alice@example.com' }).run();
+
+// Query data
+const users = await idb.from('users').findAll();
+const alice = await idb.from('users').where((user) => user.email === 'alice@example.com').findFirst();
+
+// Update data
+await idb.update('users').set({ name: 'Alice in Wonderland' }).where('id', 1).run();
+
+// Delete data
+await idb.delete('users').where('id', 1).run();
+```
+
+---
+
 <div align="center">
 
 ![npm version](https://img.shields.io/npm/v/locality-idb?color=blue)
@@ -43,7 +88,6 @@ If you're weighing using `Locality IDB` vs. the raw `IndexedDB` API:
 
 - [Features](#-features)
 - [Installation](#-installation)
-- [Quick Start](#-quick-start)
 - [Core Concepts](#-core-concepts)
   - [Schema Definition](#schema-definition)
   - [Column Types](#column-types)
@@ -103,73 +147,6 @@ pnpm add locality-idb
 # yarn
 yarn add locality-idb
 ```
-
----
-
-## 🚀 Quick Start
-
-```typescript
-import { Locality, defineSchema, column } from 'locality-idb';
-
-// Define your schema
-const schema = defineSchema({
-  users: {
-    id: column.int().pk().auto(),
-    name: column.text(),
-    email: column.text().unique(),
-    createdAt: column.timestamp(),
-  },
-  posts: {
-    id: column.int().pk().auto(),
-    userId: column.int().index(),
-    title: column.varchar(255),
-    content: column.text(),
-    createdAt: column.timestamp(),
-  },
-});
-
-// Initialize database
-const db = new Locality({
-  dbName: 'my-app-db',
-  version: 1,
-  schema,
-});
-
-// Wait for database to be ready (optional)
-await db.ready();
-
-// Insert data
-const user = await db
-  .insert('users')
-  .values({
-    name: 'Alice',
-    email: 'alice@example.com',
-  })
-  .run();
-
-// Query data
-const users = await db.from('users').findAll();
-const alice = await db
-  .from('users')
-  .where((user) => user.email === 'alice@example.com')
-  .findFirst();
-
-// Update data
-await db
-  .update('users')
-  .set({ name: 'Alice Wonderland' })
-  .where((user) => user.id === 1)
-  .run();
-
-// Delete data
-await db
-  .delete('users')
-  .where((user) => user.id === 1)
-  .run();
-```
-
->Check out the demo in the [demo](demo/) directory for selective examples with basic CRUD, transactions and database export.
->You can also try the live demo here: [locality-idb-demo.vercel.app](https://locality-idb-demo.vercel.app/)
 
 ---
 
@@ -487,7 +464,7 @@ const db = new Locality({
   schema,
 });
 
-// Optional: Wait for database initialization
+// Optional: Wait for database initialization, use this only if you get any error during initialization
 await db.ready();
 ```
 
@@ -1030,7 +1007,6 @@ const db = new Locality({
   schema: mySchema,
 });
 
-await db.ready(); // (optional) for extra safety
 console.log(db.dbName); // 'my-database'
 ```
 
@@ -1049,7 +1025,6 @@ const db = new Locality({
   schema: mySchema,
 });
 
-await db.ready(); // (optional) for extra safety
 console.log(db.version); // 2
 ```
 
@@ -1089,6 +1064,8 @@ console.log(databases);
 ##### `ready(): Promise<void>`
 
 Waits for database initialization to complete.
+
+> Use this method only if you get any error during initialization.
 
 ```typescript
 await db.ready();
@@ -2421,6 +2398,13 @@ type PagedResult = PageResult<User, null>;
 }
 */
 ```
+
+---
+
+## Demo
+
+>Check out the demo in the [demo](demo/) directory for selective examples with basic CRUD, transactions and database export.
+>You can also try the live demo here: [locality-idb-demo.vercel.app](https://locality-idb-demo.vercel.app/)
 
 ---
 

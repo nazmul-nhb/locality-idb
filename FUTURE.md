@@ -1,23 +1,5 @@
 # Future Considerations
 
-<!-- markdownlint-disable-file MD024 -->
-
-## 0. Add Nullable Column Modifier ⭐⭐⭐⭐⭐
-
-### Status
-
-- [x] Done
-
-```ts
-description: column.varchar(256).nullable();
-```
-
-this would be different from:
-
-```ts
-description: column.varchar(256).optional();
-```
-
 ## 1. References ⭐⭐⭐⭐⭐
 
 > [!NOTE]
@@ -60,59 +42,7 @@ Then Locality could
 
 ---
 
-## 2. Computed Updates ⭐⭐⭐⭐⭐
-
-### Status
-
-- [x] Done
-
-Instead of only
-
-```ts
-.set({
-    views: post.views + 1
-})
-```
-
-support
-
-```ts
-.set((row) => ({
-    views: row.views + 1
-}))
-```
-
-> Both should exist as overloads in the same method.
-
----
-
-## 3. Aggregations
-
-### Status
-
-- [x] Done
-
-It already has `count()`.
-
-Next:
-
-```ts
-.sum('price')
-
-.avg('price')
-
-.max('age')
-
-.min('age')
-
-.distinct('email')
-```
-
-These are frequently needed.
-
----
-
-## 4. Better relation loading
+## 2. Better relation loading
 
 Imagine
 
@@ -139,7 +69,7 @@ Internally it can perform two indexed queries.
 
 ---
 
-## 5. Composite indexes
+## 3. Composite indexes
 
 Instead of
 
@@ -160,47 +90,7 @@ Huge performance improvement.
 
 ---
 
-## 6. Query reuse
-
-### Status
-
-- [x] Already exist, just did some improvements with immutability
-
-```ts
-const adults = db.from('users').where(u => u.age >= 18)
-
-await adults.count()
-
-await adults.findAll()
-
-await adults.exists()
-```
-
----
-
-## 7. Bulk operations
-
-Instead of
-
-```ts
-await Promise.all(...)
-```
-
-have
-
-```ts
-insertMany() // Has overload
-
-updateMany() // Already does this for matching where condition
-
-deleteMany() // Already does this for matching where condition
-```
-
-with optimized batching.
-
----
-
-## 8. Schema migrations
+## 4. Schema migrations
 
 Currently versioning relies on IndexedDB upgrades.
 
@@ -221,7 +111,7 @@ Developers love explicit migrations.
 
 ---
 
-## 9. Live queries
+## 5. Live queries
 
 This would be huge.
 
@@ -239,7 +129,7 @@ Perfect for React.
 
 ---
 
-## 10. React bindings
+## 6. React bindings
 
 Separate library.
 
@@ -263,7 +153,7 @@ const notes = useLiveQuery(
 
 ---
 
-## 11. Better projection
+## 7. Better projection
 
 Currently
 
@@ -295,7 +185,7 @@ Very ORM-like.
 
 ---
 
-## 12. Full text search
+## 8. Full text search
 
 Optional.
 
@@ -305,7 +195,7 @@ Optional.
 
 ---
 
-## 13. Hooks
+## 9. Hooks
 
 Instead of only validators
 
@@ -332,7 +222,7 @@ or
 
 ---
 
-## 14. Query cancellation
+## 10. Query cancellation
 
 ```ts
 const controller = new AbortController()
@@ -346,7 +236,7 @@ await db
 
 ---
 
-## 15. Async validation
+## 14. Async validation
 
 Current validation appears synchronous.
 
