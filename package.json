@@ -83,7 +83,9 @@
     "delete": "nhb-delete",
     "lint": "biome lint --diagnostic-level=info",
     "fix": "biome check --write --diagnostic-level=info",
-    "format": "biome format --write --diagnostic-level=info"
+    "format": "biome format --write --diagnostic-level=info",
+    "changelog": "node scripts/generate-changelog.mjs",
+    "changelog:docs": "pnpm --filter locality-docs changelog"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.3",

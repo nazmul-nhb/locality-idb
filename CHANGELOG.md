@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **locality-idb** will be documented here.
+All notable changes to **locality-idb** will be documented in this file.
 
 > Auto-generated from git history using [changelog-maker](https://github.com/nodejs/changelog-maker).
 

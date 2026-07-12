@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vocs dev",
     "build": "vocs build",
-    "preview": "vocs preview"
+    "preview": "vocs preview",
+    "changelog": "node scripts/update-changelog.mjs"
   },
   "dependencies": {
     "@types/react": "^19.2.17",
