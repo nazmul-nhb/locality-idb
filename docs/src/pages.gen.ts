@@ -22,6 +22,7 @@ type Page =
   | { path: '/guide/update'; render: 'static' }
   | { path: '/'; render: 'static' }
   | { path: '/intro/features'; render: 'static' }
+  | { path: '/intro/getting-started'; render: 'static' }
   | { path: '/intro/motivation'; render: 'static' }
   | { path: '/reference/locality'; render: 'static' }
   | { path: '/reference/modifiers'; render: 'static' }

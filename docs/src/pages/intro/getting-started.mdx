@@ -1,0 +1,80 @@
+# Overview & Getting Started
+
+**Locality IDB** is a SQL-like query builder for `IndexedDB` with a chainable, type-safe API.
+
+:::info
+IndexedDB is a powerful browser-native database, but its low-level API can be cumbersome and complex to work with. `Locality IDB` simplifies IndexedDB interactions by providing a modern, type-safe, and SQL-like query builder inspired by **Drizzle ORM**.
+:::
+
+## 📦 Installation
+
+Install `locality-idb` using your favorite package manager:
+
+:::code-group
+
+```bash [npm]
+npm i locality-idb
+```
+
+```bash [pnpm]
+pnpm add locality-idb
+```
+
+```bash [yarn]
+yarn add locality-idb
+```
+
+```bash [bun]
+bun add locality-idb
+```
+
+```bash [deno]
+deno add npm:locality-idb
+```
+
+:::
+
+## 🚀 Quick Start
+
+Here is a quick look at how you can define a schema, initialize the database, and run basic CRUD operations:
+
+```typescript
+import { Locality, defineSchema, column } from 'locality-idb';
+
+// Define your schema
+const mySchema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+    email: column.text().unique(),
+    createdAt: column.timestamp(),
+  },
+  posts: {
+    id: column.int().pk().auto(),
+    userId: column.int().index(),
+    title: column.varchar(255),
+    content: column.text(),
+    createdAt: column.timestamp(),
+  },
+});
+
+// Initialize database
+const idb = new Locality({
+  dbName: 'my-app-db',
+  schema: mySchema,
+  version: 1,
+});
+
+// Insert data
+const user = await idb.insert('users').values({ name: 'Alice', email: 'alice@example.com' }).run();
+
+// Query data
+const users = await idb.from('users').findAll();
+const alice = await idb.from('users').where((user) => user.email === 'alice@example.com').findFirst();
+
+// Update data
+await idb.update('users').set({ name: 'Alice in Wonderland' }).where('id', 1).run();
+
+// Delete data
+await idb.delete('users').where('id', 1).run();
+```

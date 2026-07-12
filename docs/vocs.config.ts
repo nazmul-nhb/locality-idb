@@ -1,4 +1,28 @@
 import { Changelog, defineConfig } from 'vocs/config';
+import { version } from '../package.json';
+
+const token = process.env.GITHUB_TOKEN;
+
+console.log({ token });
+
+let starsCount = '';
+
+try {
+	const res = await fetch('https://api.github.com/repos/nazmul-nhb/locality-idb', {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	});
+	if (res.ok) {
+		const data = await res.json();
+
+		if (typeof data.stargazers_count === 'number') {
+			starsCount = ` (${data.stargazers_count} ★)`;
+		}
+	}
+} catch (err) {
+	console.error('Error fetching stars:', err);
+}
 
 export default defineConfig({
 	title: 'Locality IDB',
@@ -12,12 +36,28 @@ export default defineConfig({
 	changelog: Changelog.github({
 		repo: 'nazmul-nhb/locality-idb',
 		prereleases: true,
+		token,
 	}),
 	description: 'SQL-like query builder for IndexedDB with a chainable API',
 	topNav: [
 		{ text: 'Guide', link: '/intro/motivation' },
 		{ text: 'API Reference', link: '/reference/locality' },
-		{ text: 'Changelog', link: '/changelog' },
+		{
+			text: `v${version}`,
+			items: [
+				{ text: 'Changelog', link: '/changelog' },
+				{
+					external: true,
+					text: 'NPM Registry',
+					link: 'https://www.npmjs.com/package/locality-idb',
+				},
+				{
+					external: true,
+					text: `GitHub${starsCount}`,
+					link: 'https://github.com/nazmul-nhb/locality-idb',
+				},
+			],
+		},
 	],
 	groupIcons: {
 		customIcons: {
@@ -29,17 +69,13 @@ export default defineConfig({
 			icon: 'github',
 			link: 'https://github.com/nazmul-nhb/locality-idb',
 		},
-		// {
-		//   icon: 'npm',
-		//   link: 'https://www.npmjs.com/package/locality-idb',
-		// },
 	],
 	sidebar: [
 		{
 			text: 'Introduction',
 			collapsed: false,
 			items: [
-				{ text: 'Getting Started', link: '/' },
+				{ text: 'Getting Started', link: '/intro/getting-started' },
 				{ text: 'Key Features', link: '/intro/features' },
 				{ text: 'Why Locality IDB?', link: '/intro/motivation' },
 			],

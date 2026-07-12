@@ -95,7 +95,7 @@ Check out the demo application in the [demo/](demo/) directory for selective exa
 
 You can also try the live web demo here:
 
-👉 **<https://locality-idb.vercel.app>**
+👉 **<https://locality-idb-demo.vercel.app>**
 
 ---
 
