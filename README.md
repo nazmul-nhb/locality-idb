@@ -11,7 +11,7 @@
 [![Bundle Size](https://deno.bundlejs.com/badge?q=locality-idb)](https://bundlejs.com/?q=locality-idb)
 [![License](https://img.shields.io/npm/l/locality-idb)](LICENSE)
 
-[**Read the Full Documentation**](https://locality.nazmul-nhb.dev) • [Contributing](CONTRIBUTING.md)
+[Read the Full Documentation](https://locality.nazmul-nhb.dev) • [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -74,9 +74,9 @@ await db.delete('users').where('id', 1).run();
 
 ## 📖 Full Documentation
 
-For advanced usages and a complete reference, please visit our documentation website:
+For advanced usages and a complete reference, please visit the documentation website:
 
-👉 **[https://locality.nazmul-nhb.dev](https://locality.nazmul-nhb.dev)**
+👉 **<https://locality.nazmul-nhb.dev>**
 
 Our docs site covers:
 
@@ -100,3 +100,18 @@ You can also try the live web demo here:
 ## 📄 License
 
 [MIT](LICENSE) © [Nazmul Hassan](https://github.com/nazmul-nhb)
+
+---
+
+## 🔗 Links
+
+- **GitHub**: [nazmul-nhb/locality-idb](https://github.com/nazmul-nhb/locality-idb)
+- **Official Docs**: <https://locality.nazmul-nhb.dev>
+- **NPM Registry**: [locality-idb](https://www.npmjs.com/package/locality-idb)
+- **Author**: [Nazmul Hassan](https://nazmul-nhb.dev)
+
+---
+
+**Made with ❤️ by [Nazmul Hassan](https://nazmul-nhb.dev)**
+
+> If you find this package useful, please consider giving it a ⭐ on [GitHub](https://github.com/nazmul-nhb/locality-idb)!

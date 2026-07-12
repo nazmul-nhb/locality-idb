@@ -198,7 +198,14 @@ async function main() {
 		'',
 		`> Auto-generated from git history using [changelog-maker](https://github.com/nodejs/changelog-maker).`,
 		'',
-		...sections.map((s) => `${s.replace(/\ssrcipts\s/g, ' scripts ')}\n`),
+		...sections.map(
+			(s) =>
+				`${s
+					.replace(/\sspcific\s/g, ' specific ')
+					.replace(/\scompatilbility\s/g, ' compatibility ')
+					.replace(/\ssplitted\s/g, ' split ')
+					.replace(/transction/g, 'transaction')}\n`
+		),
 	].join('\n');
 
 	writeFileSync(CHANGELOG_PATH, changelog, 'utf-8');

@@ -12,7 +12,7 @@ All notable changes to **locality-idb** will be documented in this file.
 * \[[`cf23a9c84b`](https://github.com/nazmul-nhb/locality-idb/commit/cf23a9c84b)] - `📚 docs(select):` added docs and tsdoc for newly added methods (Nazmul Hassan)
 * \[[`b5965e3e9b`](https://github.com/nazmul-nhb/locality-idb/commit/b5965e3e9b)] - `✨ feat(select):` added new method `distinct()` to get the array of distinct values of a column (Nazmul Hassan)
 * \[[`7784e73dba`](https://github.com/nazmul-nhb/locality-idb/commit/7784e73dba)] - `✨ feat(select):` added new `avg()` method to calculate average for the selected column (Nazmul Hassan)
-* \[[`6f53117999`](https://github.com/nazmul-nhb/locality-idb/commit/6f53117999)] - `✨ feat(select):` added new method `sum()` to calculate the sum of spcific column (Nazmul Hassan)
+* \[[`6f53117999`](https://github.com/nazmul-nhb/locality-idb/commit/6f53117999)] - `✨ feat(select):` added new method `sum()` to calculate the sum of specific column (Nazmul Hassan)
 * \[[`5c69c310b6`](https://github.com/nazmul-nhb/locality-idb/commit/5c69c310b6)] - `🐛 fix(select):` return immutable instances when immutable instances are needed (Nazmul Hassan)
 * \[[`b914b692ef`](https://github.com/nazmul-nhb/locality-idb/commit/b914b692ef)] - `🐛 fix(update):` fixed issue with `set()` where return value of the callback was not checked properly in type level (Nazmul Hassan)
 * \[[`012a9082d1`](https://github.com/nazmul-nhb/locality-idb/commit/012a9082d1)] - `✨ feat(update):` added new overload for `set()` method to receive current value of the row for computed update (Nazmul Hassan)
@@ -91,7 +91,7 @@ All notable changes to **locality-idb** will be documented in this file.
 
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v1.5.6...v1.5.7)
 
-* \[[`c7b2137426`](https://github.com/nazmul-nhb/locality-idb/commit/c7b2137426)] - `🔧 update(types+docs):` update type def for `Timestamp` to allow maximum compatilbility across libraries (Nazmul Hassan)
+* \[[`c7b2137426`](https://github.com/nazmul-nhb/locality-idb/commit/c7b2137426)] - `🔧 update(types+docs):` update type def for `Timestamp` to allow maximum compatibility across libraries (Nazmul Hassan)
 * \[[`e1572471d9`](https://github.com/nazmul-nhb/locality-idb/commit/e1572471d9)] - `📦 deps:` updated deps (Nazmul Hassan)
 
 ## [v1.5.6](https://github.com/nazmul-nhb/locality-idb/releases/tag/v1.5.6) — 2026-02-05
@@ -166,7 +166,7 @@ All notable changes to **locality-idb** will be documented in this file.
 * \[[`3264d75197`](https://github.com/nazmul-nhb/locality-idb/commit/3264d75197)] - `🧹 cleanup(types):` organized type definitions (Nazmul Hassan)
 * \[[`c9c5469fe4`](https://github.com/nazmul-nhb/locality-idb/commit/c9c5469fe4)] - `🧼 refactor(transaction):` updated `transaction()` to align with the existing query APIs (Nazmul Hassan)
 * \[[`f5ff63cfe1`](https://github.com/nazmul-nhb/locality-idb/commit/f5ff63cfe1)] - `🛠️ chore(client):` removed unnecessary lines (Nazmul Hassan)
-* \[[`1839a06717`](https://github.com/nazmul-nhb/locality-idb/commit/1839a06717)] - `🔧 update(types):` updated type definitions for `transction()` and `export()` methods (Nazmul Hassan)
+* \[[`1839a06717`](https://github.com/nazmul-nhb/locality-idb/commit/1839a06717)] - `🔧 update(types):` updated type definitions for `transaction()` and `export()` methods (Nazmul Hassan)
 * \[[`d1edeaaacb`](https://github.com/nazmul-nhb/locality-idb/commit/d1edeaaacb)] - `✨ feat(core+client):` added new transaction and export methods; fixed type issues and improved codebase (Nazmul Hassan)
 * \[[`f6f4b5a270`](https://github.com/nazmul-nhb/locality-idb/commit/f6f4b5a270)] - `🔧 update:` updated README.md and fixed other dev issues (Nazmul Hassan)
 * \[[`c77bea6ee1`](https://github.com/nazmul-nhb/locality-idb/commit/c77bea6ee1)] - `✨ feat(core):` added new `onUpdate()` method to auto update certain column(s) and updated docs (Nazmul Hassan)
@@ -273,7 +273,7 @@ All notable changes to **locality-idb** will be documented in this file.
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v0.4.0...v0.5.0)
 
 * \[[`76a251b33d`](https://github.com/nazmul-nhb/locality-idb/commit/76a251b33d)] - `🔧 update(docs+types):` added tsdoc and updated type defs (Nazmul Hassan)
-* \[[`d57ad96913`](https://github.com/nazmul-nhb/locality-idb/commit/d57ad96913)] - `🧼 refactor:` splitted code and redefined types (Nazmul Hassan)
+* \[[`d57ad96913`](https://github.com/nazmul-nhb/locality-idb/commit/d57ad96913)] - `🧼 refactor:` split code and redefined types (Nazmul Hassan)
 * \[[`52c8cfdd60`](https://github.com/nazmul-nhb/locality-idb/commit/52c8cfdd60)] - `🔧 update(types):` updated type defs (Nazmul Hassan)
 
 ## [v0.4.0](https://github.com/nazmul-nhb/locality-idb/releases/tag/v0.4.0) — 2026-01-28
