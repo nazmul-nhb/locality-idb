@@ -1,0 +1,114 @@
+# Import & Export
+
+Locality IDB contains built-in capabilities to backup, migrate, and load data in bulk.
+
+## Exporting Database
+
+You can export database data as JSON. By default, `$export()` triggers a browser download.
+
+### Export All Tables
+
+```typescript
+// Export entire database with pretty-printed JSON
+await db.$export();
+// Triggers download: my-database-2026-02-04T10-30-45-123Z.json
+```
+
+### Export Specific Tables
+
+```typescript
+// Export only users and posts tables
+await db.$export({
+  tables: ['users', 'posts'],
+  filename: 'users-posts-backup.json',
+});
+```
+
+### Export with Custom Options
+
+You can customize formatting and metadata inclusion:
+
+```typescript
+await db.$export({
+  tables: ['users'], 
+  filename: 'users-export.json',
+  pretty: false,           // Compact JSON (smaller size, defaults to true)
+  includeMetadata: true,   // Include export details (defaults to true)
+});
+```
+
+## Exported Data Structure
+
+The exported backup payload is structured as follows:
+
+```json
+{
+  "metadata": {
+    "dbName": "my-database",
+    "version": 1,
+    "exportedAt": "2026-02-04T10:30:45.123Z",
+    "tables": ["users", "posts"]
+  },
+  "data": {
+    "users": [
+      { "id": 1, "name": "Alice", "email": "alice@example.com" },
+      { "id": 2, "name": "Bob", "email": "bob@example.com" }
+    ],
+    "posts": [
+      { "id": 1, "userId": 1, "title": "First Post", "content": "..." }
+    ]
+  }
+}
+```
+
+:::note
+Export runs in a single readonly IndexedDB transaction to guarantee a consistent snapshot of the data.
+:::
+
+## Exporting to an Object
+
+If you want to access the backup payload in memory (e.g. to send it to an API endpoint instead of triggering a browser download), use `exportToObject()`:
+
+```typescript
+const exportedData = await db.exportToObject({
+  tables: ['users'],
+  includeMetadata: true,
+});
+
+console.log(exportedData.data.users);
+```
+
+## Importing Database
+
+Use the `$import()` method to load exported JSON payloads back into your database. It supports three distinct insertion modes:
+
+### Merge Mode (Default)
+
+Appends new rows to existing tables.
+
+```typescript
+// Merge into existing tables
+await db.$import(exportedData, { mode: 'merge' });
+```
+
+:::warning
+Because `merge` mode uses IndexedDB's `add()` under the hood, any primary key or unique index conflicts will abort the import and roll back changes.
+:::
+
+### Replace Mode
+
+Clears the target tables completely before inserting the imported rows:
+
+```typescript
+// Clear and replace table contents
+await db.$import(exportedData, { mode: 'replace' });
+```
+
+### Upsert Mode
+
+Inserts new records and updates existing ones if key conflicts are encountered:
+
+```typescript
+// Insert or update conflicting records
+await db.$import(exportedData, { mode: 'upsert' });
+```

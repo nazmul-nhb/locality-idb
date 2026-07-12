@@ -1,0 +1,57 @@
+# Updating Records
+
+Use the `update` method on your `Locality` instance to modify existing rows in a table.
+
+## Update with Condition
+
+To update rows that match a specific filter, chain `set()` and `where()` followed by `run()`. The return value is the number of rows updated:
+
+```typescript
+// Update by predicate condition
+const updatedCount = await db
+  .update('users')
+  .set({ name: 'Jane Doe', age: 30 })
+  .where((user) => user.id === 1)
+  .run();
+
+console.log(`Updated ${updatedCount} records`);
+```
+
+## Index-Based Filtering (Optimized)
+
+You can also use an index name or primary key for the update query's `where()` condition to speed up execution:
+
+```typescript
+const updatedCount = await db
+  .update('users')
+  .set({ isActive: true })
+  .where('email', 'alice@example.com')
+  .run();
+```
+
+## Computed Updates
+
+Instead of passing a static object, you can pass a callback function to `set()`. The function receives the current row state and returns the fields to update:
+
+```typescript
+const computedCount = await db
+  .update('users')
+  .set((row) => ({
+    name: row.name + ' Updated',
+    age: row.age + 1,
+  }))
+  .where('id', 1)
+  .run();
+```
+
+## Update All Matching Records
+
+If your condition matches multiple rows, they will all be updated:
+
+```typescript
+await db
+  .update('users')
+  .set({ isActive: false })
+  .where((user) => user.lastLogin < '2025-01-01')
+  .run();
+```

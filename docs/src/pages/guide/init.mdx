@@ -1,0 +1,34 @@
+# Database Initialization
+
+Initializing a database with Locality IDB requires instantiating the `Locality` class and passing a schema.
+
+```typescript
+import { Locality, defineSchema, column } from 'locality-idb';
+
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+    email: column.text().unique(),
+  },
+});
+
+const db = new Locality({
+  dbName: 'my-database',
+  version: 1, // Bumping this version triggers IndexedDB schema updates
+  schema,
+});
+```
+
+## Waiting for Readiness
+
+Under normal circumstances, you do not need to wait for the database connection. Locality IDB queues operations internally and executes them once the database opens.
+
+:::warning
+You should only await `db.ready()` if you encounter initialization errors and need to ensure the database has completed connection setup before executing code.
+:::
+
+```typescript
+// Optional: Use only for debugging / handling connection setup errors
+await db.ready();
+```

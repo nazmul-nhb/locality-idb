@@ -1,0 +1,108 @@
+# Locality Class Reference
+
+The main `Locality` class is the central coordinator for all interactions with your IndexedDB instance.
+
+## Constructor
+
+```typescript
+new Locality<DBName, Version, Schema>(config: LocalityConfig)
+```
+
+### Config Options
+
+- `dbName`: The name of the database (string).
+- `version`: The version of the database (optional, default: `1`).
+- `schema`: The schema definition object returned by `defineSchema`.
+
+```typescript
+const db = new Locality({
+  dbName: 'my-database',
+  version: 2,
+  schema: mySchema,
+});
+```
+
+## Getters
+
+### `dbName: string`
+Returns the database name.
+
+### `version: number`
+Returns the database version.
+
+### `tableList: string[]`
+Returns an array of table (store) names defined in the schema.
+
+### `dbList: Promise<IDBDatabaseInfo[]>`
+Asynchronously returns information about all IndexedDB databases matching the current origin.
+
+## Instance Methods
+
+### `ready(): Promise<void>`
+Waits for database connection setup to complete. 
+:::warning
+Use this method only if you get setup or connection errors during initialization.
+:::
+
+### `from(table: string): SelectQuery`
+Creates a SELECT query builder for the given table name.
+
+### `insert(table: string): InsertQuery`
+Creates an INSERT query builder for the given table name.
+
+### `update(table: string): UpdateQuery`
+Creates an UPDATE query builder for the given table name.
+
+### `delete(table: string): DeleteQuery`
+Creates a DELETE query builder for the given table name.
+
+### `clearTable(table: string): Promise<void>`
+Deletes all records from the specified table.
+
+### `deleteDB(): Promise<void>`
+Closes connection and deletes the active database store.
+
+### `close(): void`
+Closes the IndexedDB connection immediately.
+
+### `getDBInstance(): Promise<IDBDatabase>`
+Returns the raw browser `IDBDatabase` connection.
+
+### `seed(table: string, data: any[]): Promise<any[]>`
+A convenience method to batch insert initial/seed data. Does not clear existing table contents.
+
+### `transaction(tables: string[], callback: TransactionCallback): Promise<void>`
+Executes multiple database writes or reads within a single atomic database transaction.
+
+### `$export(options?: ExportOptions): Promise<void>`
+Exports database records as JSON and triggers a browser file download.
+
+### `exportToObject(options?: ExportObjectOptions): Promise<ExportData>`
+Exports database records to a JS object directly.
+
+### `$import(data: ExportData, options?: ImportOptions): Promise<void>`
+Imports a backup payload using `merge`, `replace`, or `upsert` mode.
+
+### `clearAll(): Promise<void>`
+Empties all tables in the active schema in a single transaction.
+
+### `dropTable(table: string): Promise<void>`
+Drops a table store, incrementing the internal IndexedDB version.
+
+## Static Methods
+
+### `Locality.getDatabaseList(): Promise<IDBDatabaseInfo[]>`
+Retrieves a list of all existing IndexedDB databases in the origin.
+
+```typescript
+import { Locality } from 'locality-idb';
+
+const databases = await Locality.getDatabaseList();
+```
+
+### `Locality.deleteDatabase(name: string): Promise<void>`
+Deletes any IndexedDB database by name, without requiring a class instance.
+
+```typescript
+await Locality.deleteDatabase('old-database');
+```

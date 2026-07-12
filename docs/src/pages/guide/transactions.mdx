@@ -1,0 +1,94 @@
+# Transactions
+
+Transactions allow you to execute multiple operations across multiple tables atomically. All operations in a transaction either succeed together or fail together, ensuring database consistency.
+
+## Basic Transaction
+
+To perform operations in a transaction, define the tables involved, and write your operations inside the callback context (`ctx`):
+
+```typescript
+// Create a user and their first post atomically
+await db.transaction(['users', 'posts'], async (ctx) => {
+  const newUser = await ctx
+    .insert('users')
+    .values({ name: 'John Doe', email: 'john@example.com' })
+    .run();
+
+  await ctx
+    .insert('posts')
+    .values({
+      userId: newUser.id,
+      title: 'My First Post',
+      content: 'Hello World!',
+    })
+    .run();
+});
+```
+
+## Multiple Context Operations
+
+The transaction context (`ctx`) provides isolated versions of standard query builder methods: `insert()`, `update()`, `delete()`, and `from()`.
+
+```typescript
+await db.transaction(['users', 'posts', 'comments'], async (ctx) => {
+  // 1. Update user
+  await ctx
+    .update('users')
+    .set({ isActive: true })
+    .where((user) => user.id === 1)
+    .run();
+
+  // 2. Create post
+  const post = await ctx
+    .insert('posts')
+    .values({ userId: 1, title: 'New Post', content: 'Content' })
+    .run();
+
+  // 3. Add comment
+  await ctx
+    .insert('comments')
+    .values({ postId: post.id, userId: 1, text: 'First comment!' })
+    .run();
+
+  // 4. Query within transaction
+  const userPosts = await ctx
+    .from('posts')
+    .where((p) => p.userId === 1)
+    .findAll();
+
+  console.log(`User now has ${userPosts.length} posts`);
+});
+```
+
+## Automatic Rollback
+
+If any operation in the transaction callback throws an error, the database transaction is automatically aborted, and all pending changes are rolled back.
+
+```typescript
+try {
+  await db.transaction(['users', 'posts'], async (ctx) => {
+    const user = await ctx
+      .insert('users')
+      .values({ name: 'Alice', email: 'alice@example.com' })
+      .run();
+
+    // 💥 An error thrown here aborts the transaction
+    throw new Error('Something went wrong!');
+
+    // This statement is never reached
+    await ctx
+      .insert('posts')
+      .values({ userId: user.id, title: 'Post' })
+      .run();
+  });
+} catch (error) {
+  console.error('Transaction failed:', error);
+  // No data was inserted into 'users' or 'posts' - state is rolled back!
+}
+```
+
+:::important
+- Transactions guarantee atomicity (all-or-nothing execution).
+- Only tables declared in the first argument array (e.g. `['users', 'posts']`) can be accessed during the transaction. Accessing other tables on `ctx` will result in a runtime error.
+- All operations inside the transaction must use the context object `ctx` instead of the root database `db` instance.
+:::

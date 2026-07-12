@@ -30,7 +30,7 @@
     }
   ],
   "license": "MIT",
-  "homepage": "https://github.com/nazmul-nhb/locality-idb#readme",
+  "homepage": "https://locality.nazmul-nhb.dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nazmul-nhb/locality-idb.git"
@@ -44,6 +44,7 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "package.json"
   ],
   "keywords": [
@@ -70,6 +71,8 @@
     "build": "tsdown",
     "dev:pkg": "tsdown --watch",
     "dev": "pnpm --dir demo run dev",
+    "dev:docs": "pnpm --filter locality-docs run dev",
+    "build:docs": "pnpm --filter locality-docs run build",
     "install:demo": "pnpm --dir demo install",
     "build:demo": "pnpm --dir demo run build",
     "preview": "pnpm --dir demo run preview",

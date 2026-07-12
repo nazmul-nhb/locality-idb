@@ -1,0 +1,56 @@
+# Type Inference
+
+Locality IDB provides powerful type inference utilities out of the box. Instead of hand-crafting TS interfaces for selection, insertion, and update payloads, you can infer them directly from your schema definitions.
+
+```typescript
+import { defineSchema, column } from 'locality-idb';
+import type { InferSelectType, InferInsertType, InferUpdateType } from 'locality-idb';
+
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+    email: column.text().unique(),
+    age: column.int().optional(),
+    createdAt: column.timestamp(),
+  },
+});
+
+// 1. Infer the full row type returned from select queries
+type User = InferSelectType<typeof schema.users>;
+/*
+Type inferred as:
+{
+  id: number;
+  name: string;
+  email: string;
+  age?: number;
+  createdAt: string;
+}
+*/
+
+// 2. Infer the insert payload type (auto-generated columns like pk and timestamps are optional)
+type InsertUser = InferInsertType<typeof schema.users>;
+/*
+Type inferred as:
+{
+  name: string;
+  email: string;
+  age?: number;
+  id?: number;         // Optional because of .auto()
+  createdAt?: string;  // Optional because it auto-generates a timestamp
+}
+*/
+
+// 3. Infer the update payload type (primary keys are omitted, other fields are optional)
+type UpdateUser = InferUpdateType<typeof schema.users>;
+/*
+Type inferred as:
+{
+  name?: string;
+  email?: string;
+  age?: number;
+  createdAt?: string;
+}
+*/
+```

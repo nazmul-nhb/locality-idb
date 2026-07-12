@@ -1,0 +1,70 @@
+# Inserting Records
+
+Use the `insert` method on your `Locality` instance to add new rows to a table.
+
+## Single Insert
+
+To insert a single row, call `insert(tableName).values(record).run()`:
+
+```typescript
+const user = await db
+  .insert('users')
+  .values({
+    name: 'John Doe',
+    email: 'john@example.com',
+  })
+  .run();
+
+console.log(user); 
+// Returns the inserted row:
+// { id: 1, name: 'John Doe', email: 'john@example.com' }
+```
+
+## Batch Insert
+
+You can insert multiple rows at once by passing an array of objects to `values()`:
+
+```typescript
+const users = await db
+  .insert('users')
+  .values([
+    { name: 'Alice', email: 'alice@example.com' },
+    { name: 'Bob', email: 'bob@example.com' },
+  ])
+  .run();
+
+console.log(users); 
+// Returns an array of the inserted records:
+// [ { id: 2, name: 'Alice', ... }, { id: 3, name: 'Bob', ... } ]
+```
+
+## Auto-Generated Values
+
+If your schema specifies column constraints that generate values automatically, they will be computed and returned in the result:
+
+```typescript
+const schema = defineSchema({
+  posts: {
+    id: column.uuid().pk(),
+    title: column.text(),
+    createdAt: column.timestamp(),
+    isPublished: column.bool().default(false),
+  },
+});
+
+const post = await db
+  .insert('posts')
+  .values({ title: 'My First Post' })
+  .run();
+
+console.log(post);
+/*
+Output:
+{
+  id: "550e8400-e29b-41d4-a716-446655440000", // Auto-generated UUID v4
+  title: "My First Post",
+  createdAt: "2026-01-29T12:34:56.789Z",      // Auto-generated ISO timestamp
+  isPublished: false                          // Injected schema default
+}
+*/
+```

@@ -1,0 +1,55 @@
+# Validation Rules
+
+Locality IDB performs format and type validation during database insertion and update operations.
+
+## Automatic Validation
+
+When calling `.run()` on inserts or updates, Locality IDB checks that your payloads match their column type restrictions. If type matching fails, it throws a `TypeError` before calling IndexedDB.
+
+```typescript
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    age: column.int(),
+  },
+});
+
+// ❌ Throws TypeError: Invalid value for field 'age' in table 'users': '"twenty"' is not an integer
+await db.insert('users').values({ age: 'twenty' }).run();
+```
+
+## Manual Validation
+
+You can manually trigger format validations using the `validateColumnType` helper. It returns `null` if the value is valid, or an error message `string` if it is invalid.
+
+```typescript
+import { validateColumnType } from 'locality-idb';
+
+validateColumnType('int', 42);          // null (valid)
+validateColumnType('int', 'hello');     // "'\"hello\"' is not an integer"
+validateColumnType('varchar(5)', 'hello world'); // error message
+validateColumnType('numeric', '3.14');  // null (valid)
+```
+
+## Validated Column Types
+
+The following validation checks are applied automatically to each column type:
+
+| Column Type | Validation Rule |
+| :--- | :--- |
+| `int` | Must be a valid integer. |
+| `float` / `number` | Must be a valid number. |
+| `numeric` | Must be a number or a numeric string (e.g. `42` or `"42"`). |
+| `bigint` | Must be a BigInt. |
+| `text` / `string` | Must be a string. |
+| `char(n)` | Must be a string with exactly `n` characters. |
+| `varchar(n)` | Must be a string with at most `n` characters. |
+| `bool` / `boolean` | Must be a boolean. |
+| `uuid` | Must be a valid UUID format. |
+| `timestamp` | Must be a valid ISO 8601 timestamp string. |
+| `date` | Must be a Date object. |
+| `array` / `list` / `tuple` | Must be an array. |
+| `set` | Must be a Set. |
+| `map` | Must be a Map. |
+| `object` | Must be an object. |
+| `custom` | No validation (always passes). Custom validations can be implemented using the `.validate(fn)` modifier. |

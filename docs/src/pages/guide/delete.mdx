@@ -1,0 +1,40 @@
+# Deleting Records
+
+Use the `delete` method on your `Locality` instance to remove rows from your database stores.
+
+## Delete with Condition
+
+To delete rows, chain `where()` and `run()`. The command returns the count of deleted rows:
+
+```typescript
+// Delete matching a predicate
+const deletedCount = await db
+  .delete('users')
+  .where((user) => user.id === 1)
+  .run();
+
+console.log(`Deleted ${deletedCount} records`);
+```
+
+## Index-Based Filtering (Optimized)
+
+For better performance on large tables, query the deletion using an index name or primary key:
+
+```typescript
+const deletedCount = await db
+  .delete('users')
+  .where('email', 'alice@example.com')
+  .run();
+```
+
+## Delete Multiple Records
+
+If the condition matches multiple rows, all of them will be removed:
+
+```typescript
+// Delete all archived posts
+await db
+  .delete('posts')
+  .where((post) => post.status === 'archived')
+  .run();
+```

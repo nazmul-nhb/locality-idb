@@ -1,0 +1,161 @@
+# Querying Records
+
+Locality IDB provides a robust, chainable query builder to fetch data from your tables.
+
+## Basic Queries
+
+### Get All Records
+
+Use `findAll()` to retrieve all rows from a table:
+
+```typescript
+const allUsers = await db.from('users').findAll();
+```
+
+### Find First Matching Record
+
+Use `findFirst()` to get only the first matching record (or `null` if none exist):
+
+```typescript
+const user = await db
+  .from('users')
+  .where((user) => user.email === 'john@example.com')
+  .findFirst();
+```
+
+## Filtering with Where
+
+Locality IDB supports two styles of filtering: **predicate-based** (in-memory) and **index-based** (optimized IndexedDB queries).
+
+### Predicate-based filtering (In-Memory)
+
+Pass a callback function to `where()`. The callback evaluates on each row in memory:
+
+```typescript
+// Filter by status and age
+const activeUsers = await db
+  .from('users')
+  .where((user) => user.isActive && user.age >= 18)
+  .findAll();
+```
+
+:::warning[Performance Note]
+Predicate functions filter rows *after* loading them from the store. For large datasets, use index-based queries instead to let IndexedDB filter them at the database engine level.
+:::
+
+### Index-based filtering (Optimized)
+
+Provide an indexed column name and a search term or an `IDBKeyRange`:
+
+```typescript
+// Optimized index filter
+const usersByEmail = await db
+  .from('users')
+  .where('email', 'alice@example.com')
+  .findAll();
+
+// Range query using native IDBKeyRange
+const adults = await db
+  .from('users')
+  .where('age', IDBKeyRange.bound(18, 65))
+  .findAll();
+```
+
+## Column Projection (Select)
+
+Include or exclude specific columns to reduce data transfers.
+
+```typescript
+// Include only name and email
+const userNames = await db
+  .from('users')
+  .select({ name: true, email: true })
+  .findAll(); // Returns Array<{ name: string; email: string }>
+
+// Exclude password field
+const publicUsers = await db
+  .from('users')
+  .select({ password: false })
+  .findAll(); // Returns Omit<User, 'password'>[]
+```
+
+## Ordering and Limiting
+
+### Order By (In-Memory)
+
+Sort results by a column in ascending (`'asc'`) or descending (`'desc'`) order. Supports nested paths using dot notation:
+
+```typescript
+const sortedUsers = await db
+  .from('users')
+  .orderBy('name', 'asc')
+  .findAll();
+
+// Nested ordering
+const sortedByAge = await db
+  .from('users')
+  .orderBy('profile.age', 'desc')
+  .findAll();
+```
+
+### Limit
+
+Limit the total number of results returned:
+
+```typescript
+const topTen = await db
+  .from('users')
+  .orderBy('createdAt', 'desc')
+  .limit(10)
+  .findAll();
+```
+
+## Optimized Lookups
+
+### Find by Primary Key (O(1))
+
+For maximum performance, retrieve a single row using IndexedDB's optimized `get()` lookup via `findByPk()`:
+
+```typescript
+const user = await db.from('users').findByPk(1);
+
+// Works with select projection:
+const userProfile = await db
+  .from('users')
+  .select({ name: true })
+  .findByPk(1);
+```
+
+### Find by Index
+
+Quickly retrieve all records matching an indexed or unique field:
+
+```typescript
+const users = await db.from('users').findByIndex('email', 'alice@example.com');
+```
+
+## Cursor-Based Sorting
+
+Use `sortByIndex()` to sort records using IndexedDB cursors instead of reading everything into memory and sorting in JavaScript.
+
+```typescript
+// Sorted cursor iteration
+const sorted = await db
+  .from('users')
+  .sortByIndex('age', 'desc')
+  .findAll();
+```
+
+## Method Chaining
+
+All builders can be chained together to perform complex queries:
+
+```typescript
+const result = await db
+  .from('users')
+  .select({ id: true, name: true, email: true })
+  .where((user) => user.age >= 18)
+  .orderBy('name', 'asc')
+  .limit(5)
+  .findAll();
+```

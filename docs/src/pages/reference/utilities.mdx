@@ -1,0 +1,79 @@
+# Utility Functions
+
+Locality IDB exports several standalone utility functions for validation, ID generation, and low-level IndexedDB access.
+
+## ID & Date Generators
+
+### `uuidV4(uppercase?: boolean)`
+Generates a random UUID v4 string. Internally uses `crypto.randomUUID` or `crypto.getRandomValues` when available, falling back to `Math.random` if needed.
+```typescript
+import { uuidV4 } from 'locality-idb';
+
+const id = uuidV4();      // "550e8400-e29b-41d4-a716-446655440000"
+const upperId = uuidV4(true); // "550E8400-E29B-41D4-A716-446655440000"
+```
+
+### `getTimestamp(value?: string | number | Date)`
+Generates or parses a timestamp and returns an ISO 8601 string. If no value is provided, or the input is invalid, it falls back to the current date and time.
+```typescript
+import { getTimestamp } from 'locality-idb';
+
+const now = getTimestamp(); // "2026-01-29T12:34:56.789Z"
+const ts = getTimestamp(1704067200000); // From unix milliseconds
+```
+
+## Type Guards & Validators
+
+### `isTimestamp(value: unknown): value is Timestamp`
+Checks if the value is a valid ISO 8601 timestamp string.
+```typescript
+import { isTimestamp } from 'locality-idb';
+
+isTimestamp('2026-01-29T12:34:56.789Z'); // true
+isTimestamp('2026-01-29');              // false
+```
+
+### `isUUID(value: unknown): value is UUID`
+Checks if the value is a valid UUID string (v1, v4, or v5).
+```typescript
+import { isUUID } from 'locality-idb';
+
+isUUID('550e8400-e29b-41d4-a716-446655440000'); // true
+isUUID('invalid-uuid');                         // false
+```
+
+### `isEmail(value: unknown): value is EmailString`
+Checks if the value is a valid email format.
+```typescript
+import { isEmail } from 'locality-idb';
+
+isEmail('user@example.com'); // true
+```
+
+### `isURL(value: unknown): value is URLString`
+Checks if the value is a valid URL format (can be successfully parsed by the `URL` constructor).
+```typescript
+import { isURL } from 'locality-idb';
+
+isURL('https://example.com'); // true
+```
+
+## Low-Level APIs
+
+### `openDBWithStores(name, stores, version?)`
+Opens an IndexedDB connection with specified stores. Used internally by `Locality`.
+```typescript
+import { openDBWithStores } from 'locality-idb';
+
+const idb = await openDBWithStores('custom-db', [
+  { name: 'users', keyPath: 'id', autoIncrement: true }
+], 1);
+```
+
+### `deleteDB(name)`
+Deletes any IndexedDB database in the browser by name.
+```typescript
+import { deleteDB } from 'locality-idb';
+
+await deleteDB('temp-database');
+```

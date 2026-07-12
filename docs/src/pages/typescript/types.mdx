@@ -1,0 +1,95 @@
+# Type System Reference
+
+This reference details the TypeScript utility types exported by Locality IDB for type-safe database integration.
+
+## Inference Utilities
+
+### `InferSelectType<T>`
+Extracts the full row type returned from select queries.
+```typescript
+type User = InferSelectType<typeof schema.users>;
+```
+
+### `InferInsertType<T>`
+Extracts the required insertion payload. Auto-generated and default columns are optional.
+```typescript
+type InsertUser = InferInsertType<typeof schema.users>;
+```
+
+### `InferUpdateType<T>`
+Extracts the payload for update calls. Primary keys are excluded, and all other fields are optional.
+```typescript
+type UpdateUser = InferUpdateType<typeof schema.users>;
+```
+
+### `$InferRow<T>`
+Low-level inference helper to extract row types directly from column definition records.
+```typescript
+type UserRow = $InferRow<typeof schema.users.columns>;
+```
+
+## Branded Types
+
+### `UUID<Version>`
+Represents a branded string for UUID values, checking the version parameter.
+```typescript
+import type { UUID } from 'locality-idb';
+
+type UserId = UUID<'v4'>; // Branded UUID v4
+```
+
+## Helper Types
+
+### `GenericObject`
+Alias for `Record<string, any>`.
+
+### `Prettify<T>`
+Flattens complex intersecting types to make IDE hover labels human-readable.
+
+### `NestedPrimitiveKey<T>`
+Extracts nested primitive keys into dot-separated paths (e.g. `"profile.address.zip"`).
+```typescript
+type Keys = NestedPrimitiveKey<{ user: { profile: { age: number } } }>; 
+// "user.profile.age"
+```
+
+### `SelectFields<T, Selection>`
+Applies a select/exclude projection mask to a target object type.
+
+## Transaction & Pagination Types
+
+### `TransactionContext<Schema, TableName, TargetTables>`
+The database transaction context API provided inside the transaction callback.
+
+### `TransactionCallback<Schema, TableName, TargetTables>`
+The transaction callback signature.
+```typescript
+type TxCallback = TransactionCallback<Schema, TableName, ['users']>;
+```
+
+### `ExportOptions<Tables>`
+Configuration payload passed to `$export()` or `exportToObject()`.
+
+### `ExportData`
+The backup payload format containing `metadata` and `data`.
+
+### `ImportOptions`
+Options defining the import `mode` (`merge`, `replace`, `upsert`).
+
+### `PageOptions`
+Arguments for cursor-based pagination.
+```typescript
+interface PageOptions {
+  cursor?: IDBValidKey;
+  limit?: number;
+}
+```
+
+### `PageResult<T, Cursor>`
+Response structure returned by `page()`.
+```typescript
+interface PageResult<T, Cursor> {
+  items: T[];
+  nextCursor: Cursor | undefined;
+}
+```

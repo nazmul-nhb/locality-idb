@@ -1,0 +1,51 @@
+# Schema Functions Reference
+
+Locality IDB provides declarative builders to set up schemas.
+
+## `defineSchema`
+
+Defines your complete database schema from an object mapping table names to column configurations.
+
+```typescript
+function defineSchema<S extends ColumnRecord>(schema: S): Schema<S>
+```
+
+### Example
+
+```typescript
+import { defineSchema, column } from 'locality-idb';
+
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+  },
+  posts: {
+    id: column.int().pk().auto(),
+    title: column.text(),
+  },
+});
+```
+
+## `table`
+
+An alternative function to define a single table in isolation.
+
+```typescript
+function table<Col extends ColumnDefinition>(name: string, columns: Col): Table<Col>
+```
+
+### Example
+
+```typescript
+import { table, column } from 'locality-idb';
+
+const userTable = table('users', {
+  id: column.int().pk().auto(),
+  name: column.text(),
+});
+```
+
+:::warning
+You should generally avoid using the `table` function. Instead, define your database using `defineSchema` for better readability, cleaner exports, and unified structure. Using `table` separately may lead to confusion and is more verbose.
+:::

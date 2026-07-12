@@ -1,0 +1,94 @@
+# Column Modifiers Reference
+
+Column modifiers are chainable methods called on the `column` builder to define column settings and constraints.
+
+## Modifiers List
+
+### `pk()`
+Marks a column as the primary key.
+```typescript
+column.int().pk()
+```
+:::important
+Every table in your schema must contain exactly one primary key.
+:::
+
+### `auto()`
+Enables auto-increment for numeric columns (`int`, `float`, `number`).
+```typescript
+column.int().pk().auto()
+```
+
+### `unique()`
+Marks a column as unique, automatically creating a unique database index.
+```typescript
+column.text().unique()
+```
+
+### `index()`
+Creates a standard index on the column for quick query filtering and cursor sorting.
+```typescript
+column.int().index()
+```
+
+### `optional()`
+Marks a column as optional. This allows the value to be `undefined`.
+```typescript
+column.text().optional() // Inferred type: string | undefined
+```
+
+### `nullable()`
+Allows the column value to be explicitly `null`.
+```typescript
+column.text().nullable() // Inferred type: string | null
+```
+
+### `default(value)`
+Sets a default value for the column when a row is inserted without one.
+```typescript
+column.bool().default(true)
+column.text().default('N/A')
+```
+
+### `validate(validator)`
+Defines a custom validation function that runs before inserts and updates. 
+
+```typescript
+validate(validator: (value: T) => string | null | undefined): Column
+```
+
+If validation fails, the validator should return a custom error message `string`. If the value is valid, return `null` or `undefined`.
+```typescript
+column.text().validate((val) => {
+  return val.length >= 3 ? null : 'Username is too short';
+})
+```
+:::note
+Custom validators override built-in type checks for that column.
+To access the custom validator function programmatically, import the `ValidateFn` symbol:
+```typescript
+import { ValidateFn } from 'locality-idb';
+const validator = emailColumn[ValidateFn];
+```
+:::
+
+### `onUpdate(updater)`
+Sets a function to dynamically update the column value during update operations.
+
+```typescript
+onUpdate(updater: (currentValue: T) => T): Column
+```
+
+Typically used for updating timestamps like `updatedAt`:
+```typescript
+column.timestamp().onUpdate(() => getTimestamp())
+```
+
+:::tip[Info]
+- The updater function overrides any value provided in the update payload.
+- To access this function programmatically, import the `OnUpdate` symbol:
+```typescript
+import { OnUpdate } from 'locality-idb';
+const updater = updatableColumn[OnUpdate];
+```
+:::

@@ -1,0 +1,20 @@
+{
+  "name": "locality-docs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vocs dev",
+    "build": "vocs build",
+    "preview": "vocs preview"
+  },
+  "dependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "vite": "8.1.4",
+    "vocs": "^2.5.3",
+    "waku": "1.0.0-beta.6"
+  }
+}

@@ -1,0 +1,196 @@
+# Query Builders Reference
+
+This page describes all chainable methods available on query builders returned by `from()`, `insert()`, `update()`, and `delete()`.
+
+## SelectQuery Builder
+
+Returned by calling `db.from(tableName)`.
+
+### `.select(projection)`
+Specifies which columns to include or exclude.
+```typescript
+select({ name: true, email: true }) // Include
+select({ password: false })         // Exclude
+```
+
+### `.where(predicate)`
+Filters results in memory using a predicate callback function.
+```typescript
+where((row) => row.age >= 18)
+```
+
+### `.where(indexName, valueOrKeyRange)`
+Filters results using an indexed column (or primary key) using IndexedDB keys.
+```typescript
+where('email', 'alice@example.com')
+where('age', IDBKeyRange.bound(18, 30))
+```
+
+### `.sortByIndex(indexName, direction)`
+Sorts rows using a database index (no in-memory sort) in `'asc'` or `'desc'` order.
+```typescript
+sortByIndex('createdAt', 'desc')
+```
+
+### `.orderBy(columnPath, direction)`
+Orders rows in memory. Supports dot notation for nested keys.
+```typescript
+orderBy('profile.age', 'asc')
+```
+
+### `.limit(count)`
+Limits the number of rows returned.
+```typescript
+limit(10)
+```
+
+### `.page(options)`
+Performs cursor-based pagination.
+```typescript
+page({ limit: 10, cursor: lastCursor })
+```
+
+### `.stream(callback)`
+Streams rows one by one via a cursor, executing the callback on each.
+```typescript
+stream(async (row, index) => { ... })
+```
+
+### `.findAll()`
+Retrieves all matching records.
+```typescript
+findAll(): Promise<T[]>
+```
+
+### `.findFirst()`
+Retrieves the first matching record or `null`.
+```typescript
+findFirst(): Promise<T | null>
+```
+
+### `.findByPk(pkValue)`
+Performs an optimized `O(1)` query by primary key.
+```typescript
+findByPk(1): Promise<T | null>
+```
+
+### `.findByIndex(indexName, queryValue)`
+Performs an optimized index search.
+```typescript
+findByIndex('email', 'alice@example.com'): Promise<T[]>
+```
+
+### `.count()`
+Counts matching rows. Uses optimized IndexedDB counts if indices are used.
+```typescript
+count(): Promise<number>
+```
+
+### `.sum(columnPath)`
+Calculates the sum of a numeric column.
+```typescript
+sum('price'): Promise<number>
+```
+
+### `.avg(columnPath)`
+Calculates the average of a numeric column.
+```typescript
+avg('rating'): Promise<number>
+```
+
+### `.min(columnPath)`
+Returns the minimum value of a numeric column. Uses `O(1)` index cursors if the column is indexed.
+```typescript
+min('age'): Promise<number>
+```
+
+### `.max(columnPath)`
+Returns the maximum value of a numeric column. Uses `O(1)` index cursors if the column is indexed.
+```typescript
+max('age'): Promise<number>
+```
+
+### `.distinct(columnPath)`
+Returns an array of unique values in the column.
+```typescript
+distinct('category'): Promise<any[]>
+```
+
+### `.exists()`
+Returns a boolean indicating if matching records exist.
+```typescript
+exists(): Promise<boolean>
+```
+
+## InsertQuery Builder
+
+Returned by calling `db.insert(tableName)`.
+
+### `.values(data)`
+Accepts a single object or an array of objects to insert.
+```typescript
+values({ name: 'John' })
+values([{ name: 'John' }, { name: 'Jane' }])
+```
+
+### `.run()`
+Executes the insert transaction. Returns the inserted row (or array of rows).
+```typescript
+run(): Promise<T | T[]>
+```
+
+## UpdateQuery Builder
+
+Returned by calling `db.update(tableName)`.
+
+### `.set(payload)`
+Accepts a partial object containing values to update.
+```typescript
+set({ status: 'active' })
+```
+
+### `.set(callback)`
+Accepts a callback that takes the current row and returns the partial update fields.
+```typescript
+set((row) => ({ views: row.views + 1 }))
+```
+
+### `.where(predicate)`
+Specifies which rows to update using a predicate function.
+```typescript
+where((row) => row.id === 1)
+```
+
+### `.where(indexName, valueOrKeyRange)`
+Specifies which rows to update using an index query.
+```typescript
+where('email', 'alice@example.com')
+```
+
+### `.run()`
+Executes the update transaction. Returns the number of updated records.
+```typescript
+run(): Promise<number>
+```
+
+## DeleteQuery Builder
+
+Returned by calling `db.delete(tableName)`.
+
+### `.where(predicate)`
+Specifies which rows to delete using a predicate function.
+```typescript
+where((row) => row.id === 1)
+```
+
+### `.where(indexName, valueOrKeyRange)`
+Specifies which rows to delete using an index query.
+```typescript
+where('email', 'alice@example.com')
+```
+
+### `.run()`
+Executes the delete transaction. Returns the number of deleted records.
+```typescript
+run(): Promise<number>
+```

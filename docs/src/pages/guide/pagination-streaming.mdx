@@ -1,0 +1,50 @@
+# Cursor Pagination & Streaming
+
+When working with large tables, loading all rows into memory at once can slow down the browser. Locality IDB offers cursor-based pagination and streaming.
+
+## Cursor Pagination
+
+Use `page()` to fetch records incrementally. It returns a result array and a `nextCursor` value to retrieve the subsequent batch.
+
+```typescript
+// Fetch first page
+const page1 = await db
+  .from('users')
+  .sortByIndex('id')
+  .page({ limit: 20 });
+
+// Fetch next page using the cursor
+const page2 = await db
+  .from('users')
+  .sortByIndex('id')
+  .page({
+    limit: 20,
+    cursor: page1.nextCursor,
+  });
+
+console.log(page2.items); // Array of next 20 users
+```
+
+:::warning[Pagination Constraints]
+- `page()` requires `sortByIndex()` to order items correctly using IndexedDB indices. It does not support in-memory `orderBy()`.
+- `page()` does not support combining `cursor` with `where(indexName, query)` filters at this time.
+- `nextCursor` will return `undefined` when there are no more records left to fetch.
+:::
+
+## Streaming
+
+Use `stream()` to process rows one by one through a cursor. This is highly memory-efficient as rows are processed individually rather than accumulated in an array.
+
+```typescript
+await db
+  .from('users')
+  .sortByIndex('id')
+  .stream(async (row, index) => {
+    console.log(`Processing Row #${index}: ${row.email}`);
+    // You can return a Promise here, and the stream will await it before fetching the next row
+  });
+```
+
+:::warning[Streaming Constraints]
+- `stream()` does not support in-memory `orderBy()`. You must chain `sortByIndex()` if you want the stream ordered.
+:::

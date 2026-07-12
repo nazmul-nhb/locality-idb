@@ -1,0 +1,61 @@
+# Schema Definition
+
+Locality IDB is schema-first. You define your database structure using the `defineSchema` function, which maps table names to their column definitions.
+
+```typescript
+import { defineSchema, column } from 'locality-idb';
+
+const schema = defineSchema({
+  tableName: {
+    columnName: column.type().modifier(),
+    // ... more columns
+  },
+  // ... more tables
+});
+```
+
+## Primary Key Requirements
+
+:::danger[Critical Rule]
+Each table in your schema **must have exactly one** primary key defined using `.pk()`. Having zero or multiple primary keys will result in a runtime error during database initialization.
+:::
+
+### Examples
+
+#### ✅ Valid Schema
+A schema with exactly one primary key per table:
+
+```typescript
+const validSchema = defineSchema({
+  users: {
+    id: column.int().pk().auto(), // Single primary key
+    name: column.text(),
+  },
+});
+```
+
+#### ❌ Invalid: No Primary Key
+This schema will trigger a runtime error because the `users` table lacks a primary key:
+
+```typescript
+// ❌ Invalid - no primary key (runtime error)
+const noPkSchema = defineSchema({
+  users: {
+    name: column.text(),
+  },
+});
+```
+
+#### ❌ Invalid: Multiple Primary Keys
+This schema will trigger a runtime error because the `users` table has more than one primary key:
+
+```typescript
+// ❌ Invalid - multiple primary keys (runtime error)
+const multiPkSchema = defineSchema({
+  users: {
+    id: column.int().pk(),
+    uuid: column.uuid().pk(), // ❌ Error: Multiple primary keys detected!
+    name: column.text(),
+  },
+});
+```
