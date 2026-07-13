@@ -19,6 +19,7 @@
 		"waku": "1.0.0-beta.6"
 	},
 	"devDependencies": {
-		"dotenv": "^17.4.2"
+		"dotenv": "^17.4.2",
+		"tailwindcss": "^4.3.2"
 	}
 }
