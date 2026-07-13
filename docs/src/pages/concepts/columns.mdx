@@ -2,34 +2,34 @@
 
 Locality IDB supports a wide range of column types. These are defined using the chainable `column` builder.
 
-| Type | Description | Example |
-| :--- | :--- | :--- |
-| `number()` / `float()` | Numeric values (integer or float) | `column.number()` |
-| `int()` | Numeric values (only integer is allowed) | `column.int()` |
-| `numeric()` | Number or numeric string | `column.numeric()` |
-| `bigint()` | Large integers | `column.bigint()` |
-| `text()` / `string()` | Text strings | `column.text()` |
-| `char(length?)` | Fixed-length string | `column.char(10)` |
-| `varchar(length?)` | Variable-length string | `column.varchar(255)` |
-| `email()` | Email strings | `column.email()` |
-| `url()` | URL strings | `column.url()` |
-| `bool()` / `boolean()` | Boolean values | `column.bool()` |
-| `date()` | Date objects | `column.date()` |
-| `timestamp()` | ISO 8601 timestamps (auto-generated) | `column.timestamp()` |
-| `uuid()` | UUID strings (auto-generated v4) | `column.uuid()` |
-| `object<T>()` | Generic objects | `column.object<UserData>()` |
-| `array<T>()` | Arrays | `column.array<number>()` |
-| `list<T>()` | Read-only arrays | `column.list<string>()` |
-| `tuple<T>()` | Fixed-size tuples | `column.tuple<string, number>()` |
-| `set<T>()` | Sets | `column.set<string>()` |
-| `map<K,V>()` | Maps | `column.map<string, number>()` |
-| `custom<T>()` | Custom types | `column.custom<MyType>()` |
+| Type                   | Description                              | Example                          |
+| :--------------------- | :--------------------------------------- | :------------------------------- |
+| `number()` / `float()` | Numeric values (integer or float)        | `column.number()`                |
+| `int()`                | Numeric values (only integer is allowed) | `column.int()`                   |
+| `numeric()`            | Number or numeric string                 | `column.numeric()`               |
+| `bigint()`             | Large integers                           | `column.bigint()`                |
+| `text()` / `string()`  | Text strings                             | `column.text()`                  |
+| `char(length?)`        | Fixed-length string                      | `column.char(10)`                |
+| `varchar(length?)`     | Variable-length string                   | `column.varchar(255)`            |
+| `email()`              | Email strings                            | `column.email()`                 |
+| `url()`                | URL strings                              | `column.url()`                   |
+| `bool()` / `boolean()` | Boolean values                           | `column.bool()`                  |
+| `date()`               | Date objects                             | `column.date()`                  |
+| `timestamp()`          | ISO 8601 timestamps (auto-generated)     | `column.timestamp()`             |
+| `uuid()`               | UUID strings (auto-generated v4)         | `column.uuid()`                  |
+| `object<T>()`          | Generic objects                          | `column.object<UserData>()`      |
+| `array<T>()`           | Arrays                                   | `column.array<number>()`         |
+| `list<T>()`            | Read-only arrays                         | `column.list<string>()`          |
+| `tuple<T>()`           | Fixed-size tuples                        | `column.tuple<string, number>()` |
+| `set<T>()`             | Sets                                     | `column.set<string>()`           |
+| `map<K,V>()`           | Maps                                     | `column.map<string, number>()`   |
+| `custom<T>()`          | Custom types                             | `column.custom<MyType>()`        |
 
 ## Type Extensions
 
 Most column types support **generic type parameters** to allow branding, literal unions, or domain-specific types.
 
-:::note
+:::info[Info]
 Type extensions are compile-time only and do not affect runtime validation. Use custom validators for runtime type enforcement.
 :::
 
@@ -120,7 +120,7 @@ const schema = defineSchema({
 });
 ```
 
-:::tip
+:::tip[Info]
 - Auto-generated values can be overridden by providing explicit values during insertion.
 - Auto-generated values are computed at runtime during insertion.
 - The `onUpdate()` modifier can be used to automatically update columns like `updatedAt` during update operations.

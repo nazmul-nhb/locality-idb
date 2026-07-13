@@ -61,7 +61,7 @@ The exported backup payload is structured as follows:
 }
 ```
 
-:::note
+:::tip[Info]
 Export runs in a single readonly IndexedDB transaction to guarantee a consistent snapshot of the data.
 :::
 
@@ -91,7 +91,7 @@ Appends new rows to existing tables.
 await db.$import(exportedData, { mode: 'merge' });
 ```
 
-:::warning
+:::warning[Warning]
 Because `merge` mode uses IndexedDB's `add()` under the hood, any primary key or unique index conflicts will abort the import and roll back changes.
 :::
 

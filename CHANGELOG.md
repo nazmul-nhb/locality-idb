@@ -4,6 +4,19 @@ All notable changes to **locality-idb** will be documented in this file.
 
 > Auto-generated from git history using [changelog-maker](https://github.com/nodejs/changelog-maker).
 
+## [v2.4.1](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.4.1) — 2026-07-13
+
+[Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.4.0...v2.4.1)
+
+* \[[`2ea7feed65`](https://github.com/nazmul-nhb/locality-idb/commit/2ea7feed65)] - `🔧 update(docs):` updated intro pages and README.md (Nazmul Hassan)
+* \[[`71bce7cfbe`](https://github.com/nazmul-nhb/locality-idb/commit/71bce7cfbe)] - `🔧 update(docs):` added homepage and more links (Nazmul Hassan)
+* \[[`07450b759f`](https://github.com/nazmul-nhb/locality-idb/commit/07450b759f)] - `🔧 update(docs):` polished the docs (Nazmul Hassan)
+* \[[`a3822714ff`](https://github.com/nazmul-nhb/locality-idb/commit/a3822714ff)] - `🔧 update(docs):` added icon, logo and vocs generated changelog generator (Nazmul Hassan)
+* \[[`3300caf1a7`](https://github.com/nazmul-nhb/locality-idb/commit/3300caf1a7)] - `🔧 update(scripts):` updated changelog generator script and README.md (Nazmul Hassan)
+* \[[`eb578e8243`](https://github.com/nazmul-nhb/locality-idb/commit/eb578e8243)] - `🔧 update(docs):` added scripts to generate and update changelogs (Nazmul Hassan)
+* \[[`4cef4bbea9`](https://github.com/nazmul-nhb/locality-idb/commit/4cef4bbea9)] - `✨ feat(docs):` added boilerplate doc site from README.md with Vocs (Nazmul Hassan)
+* \[[`e1c240c6a0`](https://github.com/nazmul-nhb/locality-idb/commit/e1c240c6a0)] - `🔧 update(docs):` updated README.md and future plans (Nazmul Hassan)
+
 ## [v2.4.0](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.4.0) — 2026-07-11
 
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.2.10...v2.4.0)

@@ -24,7 +24,7 @@ const db = new Locality({
 
 Under normal circumstances, you do not need to wait for the database connection. Locality IDB queues operations internally and executes them once the database opens.
 
-:::warning
+:::tip[Tip]
 You should only await `db.ready()` if you encounter initialization errors and need to ensure the database has completed connection setup before executing code.
 :::
 

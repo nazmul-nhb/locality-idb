@@ -1,103 +1,103 @@
 {
-  "name": "locality-idb",
-  "version": "2.4.1",
-  "description": "A type-safe, SQL-like query builder for IndexedDB with a chainable API",
-  "type": "module",
-  "sideEffects": false,
-  "types": "./dist/index.d.cts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
-    },
-    "./package.json": "./package.json"
-  },
-  "author": {
-    "name": "Nazmul Hassan",
-    "email": "nazmulnhb@gmail.com",
-    "url": "https://nazmul-nhb.dev"
-  },
-  "contributors": [
-    {
-      "name": "Nazmul Hassan",
-      "email": "nazmulnhb007@yahoo.com",
-      "url": "https://github.com/nazmul-nhb"
-    },
-    {
-      "name": "Nazmul Hassan",
-      "email": "nazmulnhb@gmail.com",
-      "url": "https://github.com/nhb-nazmul"
-    }
-  ],
-  "license": "MIT",
-  "homepage": "https://locality.nazmul-nhb.dev",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nazmul-nhb/locality-idb.git"
-  },
-  "bugs": {
-    "url": "https://github.com/nazmul-nhb/locality-idb/issues"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "dist",
-    "LICENSE",
-    "README.md",
-    "package.json"
-  ],
-  "keywords": [
-    "indexeddb",
-    "indexed-db",
-    "indexeddb-orm",
-    "indexed-db-orm",
-    "sql",
-    "db",
-    "orm",
-    "idb",
-    "idb-orm",
-    "typescript",
-    "typescript-orm",
-    "typescript-idb",
-    "typescript-indexeddb",
-    "typescript-indexed-db",
-    "locality-idb",
-    "locality",
-    "drizzle",
-    "database"
-  ],
-  "scripts": {
-    "build": "tsdown",
-    "dev:pkg": "tsdown --watch",
-    "dev:demo": "pnpm --dir demo run dev",
-    "dev": "pnpm --filter locality-docs run dev",
-    "build:docs": "pnpm --filter locality-docs run build",
-    "install:demo": "pnpm --dir demo install",
-    "build:demo": "pnpm --dir demo run build",
-    "preview": "pnpm --dir demo run preview",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "pnpm run build",
-    "commit": "nhb-commit",
-    "count": "nhb-count",
-    "delete": "nhb-delete",
-    "lint": "biome lint --diagnostic-level=info",
-    "fix": "biome check --write --diagnostic-level=info",
-    "format": "biome format --write --diagnostic-level=info",
-    "changelog": "node scripts/generate-changelog.mjs",
-    "changelog:docs": "pnpm --filter locality-docs changelog"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.5.3",
-    "@types/node": "^26.1.1",
-    "nhb-scripts": "^1.9.2",
-    "toolbox-x": "^2.5.1",
-    "tsdown": "^0.22.4",
-    "typescript": "^7.0.2"
-  },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "inlinedDependencies": {
-    "toolbox-x": "2.5.1"
-  }
+	"name": "locality-idb",
+	"version": "2.4.1",
+	"description": "A type-safe, SQL-like query builder for IndexedDB with a chainable API",
+	"type": "module",
+	"sideEffects": false,
+	"types": "./dist/index.d.cts",
+	"exports": {
+		".": {
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs"
+		},
+		"./package.json": "./package.json"
+	},
+	"author": {
+		"name": "Nazmul Hassan",
+		"email": "nazmulnhb@gmail.com",
+		"url": "https://nazmul-nhb.dev"
+	},
+	"contributors": [
+		{
+			"name": "Nazmul Hassan",
+			"email": "nazmulnhb007@yahoo.com",
+			"url": "https://github.com/nazmul-nhb"
+		},
+		{
+			"name": "Nazmul Hassan",
+			"email": "nazmulnhb@gmail.com",
+			"url": "https://github.com/nhb-nazmul"
+		}
+	],
+	"license": "MIT",
+	"homepage": "https://locality.nazmul-nhb.dev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nazmul-nhb/locality-idb.git"
+	},
+	"bugs": {
+		"url": "https://github.com/nazmul-nhb/locality-idb/issues"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"package.json"
+	],
+	"keywords": [
+		"indexeddb",
+		"indexed-db",
+		"indexeddb-orm",
+		"indexed-db-orm",
+		"sql",
+		"db",
+		"orm",
+		"idb",
+		"idb-orm",
+		"typescript",
+		"typescript-orm",
+		"typescript-idb",
+		"typescript-indexeddb",
+		"typescript-indexed-db",
+		"locality-idb",
+		"locality",
+		"drizzle",
+		"database"
+	],
+	"scripts": {
+		"build": "tsdown",
+		"dev:pkg": "tsdown --watch",
+		"dev:demo": "pnpm --dir demo run dev",
+		"dev": "pnpm --filter locality-docs run dev",
+		"build:docs": "pnpm --filter locality-docs run build",
+		"install:demo": "pnpm --dir demo install",
+		"build:demo": "pnpm --dir demo run build",
+		"preview": "pnpm --dir demo run preview",
+		"typecheck": "tsc --noEmit",
+		"prepublishOnly": "pnpm run build",
+		"commit": "nhb-commit",
+		"count": "nhb-count",
+		"delete": "nhb-delete",
+		"lint": "biome lint --diagnostic-level=info",
+		"fix": "biome check --write --diagnostic-level=info",
+		"format": "biome format --write --diagnostic-level=info",
+		"changelog": "node scripts/generate-changelog.mjs",
+		"changelog:docs": "pnpm --filter locality-docs changelog"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.3",
+		"@types/node": "^26.1.1",
+		"nhb-scripts": "^1.9.2",
+		"toolbox-x": "^2.5.1",
+		"tsdown": "^0.22.5",
+		"typescript": "^7.0.2"
+	},
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.mjs",
+	"inlinedDependencies": {
+		"toolbox-x": "2.5.1"
+	}
 }

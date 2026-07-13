@@ -16,7 +16,7 @@ try {
 	});
 
 	if (res.ok) {
-		const data = await res.json();
+		const data = (await res.json()) as Record<string, unknown>;
 
 		if (typeof data.stargazers_count === 'number') {
 			starsCount = `: ${data.stargazers_count} ★`;

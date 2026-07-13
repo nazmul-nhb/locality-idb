@@ -9,7 +9,8 @@ Marks a column as the primary key.
 ```typescript
 column.int().pk()
 ```
-:::important
+
+:::warning[Important]
 Every table in your schema must contain exactly one primary key.
 :::
 
@@ -63,7 +64,8 @@ column.text().validate((val) => {
   return val.length >= 3 ? null : 'Username is too short';
 })
 ```
-:::note
+
+:::info[Note]
 Custom validators override built-in type checks for that column.
 To access the custom validator function programmatically, import the `ValidateFn` symbol:
 ```typescript

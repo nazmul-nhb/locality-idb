@@ -20,7 +20,7 @@ Use `clearAll()` to empty all tables in the database in a single transaction.
 await db.clearAll();
 ```
 
-:::danger
+:::danger[Critical Warning]
 Clearing tables deletes all records permanently. This operation is not reversible.
 :::
 
@@ -32,8 +32,8 @@ Use `dropTable()` to drop an object store from IndexedDB:
 await db.dropTable('users');
 ```
 
-:::note
-Dropping a table triggers a version update on the database. You will need to recreate your schema and re-instantiate the `Locality` class after dropping a table.
+:::warning[Note]
+Dropping a table requires a version update on the database. You will need to re-instantiate the `Locality` class with higher version after dropping a table.
 :::
 
 ## Deleting Database
@@ -44,6 +44,6 @@ To delete the entire database, call the `deleteDB` method:
 await db.deleteDB();
 ```
 
-:::danger
+:::danger[Critical Warning]
 This will permanently delete the current database from the browser storage and close the active connection.
 :::

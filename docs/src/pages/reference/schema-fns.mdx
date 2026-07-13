@@ -44,8 +44,58 @@ const userTable = table('users', {
   id: column.int().pk().auto(),
   name: column.text(),
 });
+
+const idb = new Locality({
+  dbName: 'my-database',
+  version: 1,
+  schema: {
+    users: userTable,
+  },
+});
 ```
 
-:::warning
-You should generally avoid using the `table` function. Instead, define your database using `defineSchema` for better readability, cleaner exports, and unified structure. Using `table` separately may lead to confusion and is more verbose.
+:::danger[Warning]
+In most cases, prefer `defineSchema()` over `table()`. It keeps your schema in a single place, improves readability, and eliminates the possibility of table name mismatches.
+
+When using `table()`, the table name passed to the function **must exactly match** the corresponding key in the `schema` object passed to `Locality` Constructor. TypeScript infers table names from the schema object keys, while Locality IDB uses the name passed to `table()` at runtime. If the two differ, your code may compile incorrectly or fail at runtime.
+
+Example:
+
+```typescript
+import { Locality, table, column } from 'locality-idb';
+
+const usersTable = table('users', {
+  id: column.int().pk().auto(),
+  name: column.text(),
+});
+
+const postsTable = table('postsMany', {
+  id: column.int().pk().auto(),
+  title: column.text(),
+});
+
+const idb = new Locality({
+  dbName: 'my-database',
+  version: 1,
+  schema: {
+    users: usersTable,
+    posts: postsTable,
+  },
+});
+```
+
+In this example, TypeScript recognizes the table as `'posts'`, but Locality IDB looks for `'postsMany'` at runtime.
+
+```typescript
+await idb.from('posts').findAll(); // Compiles, but throws at runtime.
+await idb.from('postsMany').findAll(); // Works at runtime, but TypeScript reports an error.
+```
+
+In the following example, both table name and schema object key name are same and works properly.
+
+```typescript
+await idb.from('users').findAll(); // This works without any issue
+```
+
+Using [`defineSchema()`](#defineSchema) avoids this kind of errors entirely. It handles table names internally using the keys.
 :::

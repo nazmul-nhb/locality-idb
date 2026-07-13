@@ -87,7 +87,7 @@ try {
 }
 ```
 
-:::important
+:::tip[Important]
 - Transactions guarantee atomicity (all-or-nothing execution).
 - Only tables declared in the first argument array (e.g. `['users', 'posts']`) can be accessed during the transaction. Accessing other tables on `ctx` will result in a runtime error.
 - All operations inside the transaction must use the context object `ctx` instead of the root database `db` instance.
