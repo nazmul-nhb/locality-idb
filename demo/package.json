@@ -10,13 +10,13 @@
 		"preview": "vite preview"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.3",
-		"@tailwindcss/vite": "^4.3.2",
-		"tailwindcss": "^4.3.2",
+		"@biomejs/biome": "^2.5.4",
+		"@tailwindcss/vite": "^4.3.3",
+		"tailwindcss": "^4.3.3",
 		"typescript": "~7.0.2",
 		"vite": "8.1.4"
 	},
 	"dependencies": {
-		"nhb-toolbox": "^4.31.3"
+		"nhb-toolbox": "^4.31.4"
 	}
 }

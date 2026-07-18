@@ -10,3 +10,5 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - toolbox-x
   - nhb-scripts
+
+minimumReleaseAge: 120
