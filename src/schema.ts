@@ -11,6 +11,7 @@ import type {
 	Timestamp,
 	Tuple,
 	URLString,
+	ValidateRefs,
 } from './types';
 
 /**
@@ -45,7 +46,7 @@ import type {
  * type InsertPost = InferInsertType<typeof schema.posts>;
  * type UpdatePost = InferUpdateType<typeof schema.posts>;
  */
-export function defineSchema<S extends ColumnRecord>(schema: S): Schema<S> {
+export function defineSchema<S extends ColumnRecord>(schema: ValidateRefs<S>): Schema<S> {
 	const result: GenericObject = {};
 
 	for (const [tableName, columns] of Object.entries(schema)) {
@@ -56,7 +57,10 @@ export function defineSchema<S extends ColumnRecord>(schema: S): Schema<S> {
 }
 
 /**
- * * Factory function to create a new {@link Table} instance.
+ * @deprecated Use the {@link defineSchema} function instead to define the entire schema at once.
+ *
+ * @function Factory function to create a new {@link Table} instance.
+ *
  * @param name The name of the table.
  * @param columns An object defining the columns of the table using {@link column} definitions.
  * @returns A new {@link Table} instance representing the table schema.

@@ -62,8 +62,9 @@ const schema = defineSchema({
 	experiments: {
 		id: column.float().pk().auto(),
 		name: column.text().index(),
+		task: column.int().nullable().ref('todos.serial', { onDelete: 'cascade' }),
 		active: column
-			.bool()
+			.bool<true>()
 			.default(true)
 			.validate((v) => (v ? null : 'Active must be true')),
 		email: column.email().optional(),

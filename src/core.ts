@@ -9,9 +9,18 @@ import {
 	IsPrimaryKey,
 	IsUnique,
 	OnUpdate,
+	RefMeta,
 	ValidateFn,
 } from './symbols';
-import type { ColumnDefinition, ColumnValue, TypeName, UpdaterFn, ValidatorFn } from './types';
+import type {
+	ColumnDefinition,
+	ColumnValue,
+	RefMetadata,
+	RefOptions,
+	TypeName,
+	UpdaterFn,
+	ValidatorFn,
+} from './types';
 
 /** @class Represents a column definition. */
 export class Column<T = any, TName extends TypeName = TypeName> {
@@ -25,6 +34,7 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 	declare [DefaultValue]?: T;
 	declare [ValidateFn]?: ValidatorFn<any>;
 	declare [OnUpdate]?: UpdaterFn<any>;
+	declare [RefMeta]?: RefMetadata<string>;
 
 	constructor(type: TName) {
 		this[ColumnType] = type;
@@ -148,14 +158,31 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		return this as This & { [OnUpdate]: UpdaterFn<ColumnValue<This, T>> };
 	}
 
-	// ref<Ref extends PKColumn>(refCol: Ref, options?: RefOptions) {
-	// 	return this;
-	// }
-}
+	/**
+	 * @instance Sets a reference to another table's column, enabling foreign key relationships
+	 * @param refPath - The reference path in the format `"TableName.ColumnName"`.
+	 * @param options - Optional configuration for foreign key actions on delete or update
+	 *
+	 * @remarks
+	 * - The `refPath` should be in `"TableName.ColumnName"` format (e.g., `"users.id"` to reference the `id` of the `users` table).
+	 * - The `options` parameter allows specifying actions on delete or update (e.g., cascade, restrict).
+	 * - This method attaches metadata to the column instance for later use in schema generation or validation.
+	 *
+	 * @returns The column instance with the reference metadata attached
+	 *
+	 * @example
+	 * // Reference to another table's column with cascade on delete
+	 * userId: column.int().ref('users.id', { onDelete: 'cascade' });
+	 *
+	 * // Reference with restrict on update
+	 * orderId: column.int().ref('orders.id', { onUpdate: 'restrict' });
+	 */
+	ref<This extends this, R extends string>(refPath: R, options?: RefOptions) {
+		this[RefMeta] = { refPath, options } as RefMetadata<R>;
 
-// interface RefOptions {
-// 	onDelete?: 'cascade' | 'restrict';
-// }
+		return this as This & { [RefMeta]: RefMetadata<R> };
+	}
+}
 
 /** @class Extends {@link Column} and represents a primary key column. */
 export class PKColumn<T = any, TName extends TypeName = TypeName> extends Column<T, TName> {
