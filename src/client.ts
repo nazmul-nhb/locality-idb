@@ -233,7 +233,9 @@ export class Locality<
 			() => this.#db,
 			this.#readyPromise,
 			this.#schema[table].columns,
-			this.#keyPaths[table]
+			this.#keyPaths[table],
+			undefined,
+			this.#schema
 		);
 	}
 
@@ -246,7 +248,9 @@ export class Locality<
 			table,
 			() => this.#db,
 			this.#readyPromise,
-			this.#extractTablePk<T, Row>(table)
+			this.#extractTablePk<T, Row>(table),
+			undefined,
+			this.#schema
 		);
 	}
 
@@ -402,7 +406,8 @@ export class Locality<
 					this.#readyPromise,
 					this.#schema[table].columns,
 					this.#keyPaths[table],
-					transaction
+					transaction,
+					this.#schema
 				);
 			},
 
@@ -414,7 +419,8 @@ export class Locality<
 					() => this.#db,
 					this.#readyPromise,
 					this.#extractTablePk<T, Row>(table),
-					transaction
+					transaction,
+					this.#schema
 				);
 			},
 		};

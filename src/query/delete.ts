@@ -7,8 +7,10 @@ import type {
 	GenericObject,
 	IDBGetter,
 	RejectFn,
+	SchemaDefinition,
 	WherePredicate,
 } from '../types';
+import { applyDeleteRefWorkflow } from './ref';
 
 /** @class Delete query builder. */
 export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T extends Table> {
@@ -19,21 +21,24 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 	#whereCondition?: WherePredicate<Row>;
 	#whereIndexName?: string;
 	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
+	#schema?: SchemaDefinition;
 
-	#transaction?: IDBTransaction;
+	#trx?: IDBTransaction;
 
 	constructor(
 		table: string,
 		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
 		keyField: Key,
-		transaction?: IDBTransaction
+		transaction?: IDBTransaction,
+		schema?: SchemaDefinition
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 		this.#keyField = keyField;
-		this.#transaction = transaction;
+		this.#trx = transaction;
+		this.#schema = schema;
 	}
 
 	/** @internal Check if key is an index on the store for the `#whereIndexName` */
@@ -65,7 +70,7 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 		}
 
 		// Primary keys use store directly, indexes use store.index()
-		return isPK ? store : store.index(this.#whereIndexName as string);
+		return isPK ? store : this.#whereIndexName ? store.index(this.#whereIndexName) : null;
 	}
 
 	/**
@@ -107,24 +112,18 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 	 */
 	async run(): Promise<number> {
 		await this.#readyPromise;
+
 		return new Promise((resolve, reject) => {
-			const transaction =
-				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
-			const store = transaction.objectStore(this.#table);
-			let request: IDBRequest<Row[]> | IDBRequest<IDBValidKey[]>;
-			let useKeysOnly = false;
+			const trx = this.#trx ?? this.#dbGetter().transaction(this.#table, 'readwrite');
+			const store = trx.objectStore(this.#table);
+			let request: IDBRequest<Row[]>;
 
 			if (this.#whereIndexName && this.#whereIndexQuery != null) {
 				const source = this.#buildIndexedStore(store, reject);
 
 				if (!source) return;
 
-				if (this.#whereCondition) {
-					request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
-				} else {
-					useKeysOnly = true;
-					request = source.getAllKeys(this.#whereIndexQuery);
-				}
+				request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
 			} else {
 				request = store.getAll() as IDBRequest<Row[]>;
 			}
@@ -132,43 +131,49 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 			let deleteCount = 0;
 
 			request.onsuccess = () => {
-				const results = request.result;
-				let keys: IDBValidKey[] = [];
+				let rows = request.result;
 
-				if (useKeysOnly) {
-					keys = results as IDBValidKey[];
-				} else {
-					let rows = results as Row[];
-
-					if (this.#whereCondition) {
-						rows = rows.filter(this.#whereCondition);
-					}
-
-					keys = rows.map((row) => row[this.#keyField]);
+				if (this.#whereCondition) {
+					rows = rows.filter(this.#whereCondition);
 				}
 
-				const deletePromises = keys.map((key) => {
-					return new Promise<void>((res, rej) => {
-						const delRequest = store.delete(key);
+				const processDelete = async () => {
+					try {
+						await applyDeleteRefWorkflow(this.#schema, this.#table, rows, trx);
 
-						delRequest.onsuccess = () => {
-							deleteCount++;
-							res();
-						};
+						const deletePromises = rows.map((row) => {
+							const key = row[this.#keyField];
 
-						delRequest.onerror = () => rej(delRequest.error);
-					});
-				});
+							return new Promise<void>((res, rej) => {
+								const delRequest = store.delete(key);
 
-				Promise.all(deletePromises)
-					.then(() => resolve(deleteCount))
-					.catch((err) => reject(err));
+								delRequest.onsuccess = () => {
+									deleteCount++;
+									res();
+								};
+
+								delRequest.onerror = () => rej(delRequest.error);
+							});
+						});
+
+						await Promise.all(deletePromises);
+						resolve(deleteCount);
+					} catch (err) {
+						trx.abort();
+						reject(err);
+					}
+				};
+
+				void processDelete();
 			};
 
-			request.onerror = () => reject(request.error);
+			request.onerror = () => {
+				trx.abort();
+				reject(request.error);
+			};
 
 			// Handle transaction abort (happens on errors)
-			transaction.onabort = () => _abortTransaction(transaction.error, reject);
+			trx.onabort = () => _abortTransaction(trx.error, reject);
 		});
 	}
 }

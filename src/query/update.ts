@@ -9,10 +9,12 @@ import type {
 	IDBGetter,
 	InferUpdateType,
 	RejectFn,
+	SchemaDefinition,
 	UpdateCallback,
 	WherePredicate,
 } from '../types';
 import { _validateAndPrepareData } from '../validators';
+import { applyUpdateRefWorkflow } from './ref';
 
 /** @class Update query builder. */
 export class UpdateQuery<Row extends GenericObject, T extends Table> {
@@ -25,10 +27,11 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 	#whereIndexName?: string;
 	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
 	#columns?: ColumnDefinition;
+	#schema?: SchemaDefinition;
 	// TODO: Handle multiple primary keys later
 	#keyPath?: string;
 
-	#transaction?: IDBTransaction;
+	#trx?: IDBTransaction;
 
 	constructor(
 		table: string,
@@ -36,14 +39,16 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
 		keyPath?: string,
-		transaction?: IDBTransaction
+		transaction?: IDBTransaction,
+		schema?: SchemaDefinition
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 		this.#columns = columns;
 		this.#keyPath = keyPath;
-		this.#transaction = transaction;
+		this.#trx = transaction;
+		this.#schema = schema;
 	}
 
 	/** @internal Check if key is an index on the store for the `#whereIndexName` */
@@ -140,12 +145,11 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 	async run(): Promise<number> {
 		await this.#readyPromise;
 
-		let dataToUpdate = this.#dataToUpdate;
+		const dataToUpdate = this.#dataToUpdate;
 
 		return new Promise((resolve, reject) => {
-			const transaction =
-				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
-			const store = transaction.objectStore(this.#table);
+			const trx = this.#trx ?? this.#dbGetter().transaction(this.#table, 'readwrite');
+			const store = trx.objectStore(this.#table);
 
 			let request: IDBRequest<Row[]>;
 
@@ -168,44 +172,65 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 					rows = rows.filter(this.#whereCondition);
 				}
 
-				const updatePromises = rows.map((row) => {
-					if (isFunction(this.#updateCallback)) {
-						dataToUpdate = this.#updateCallback(row);
+				const processUpdate = async () => {
+					try {
+						const updatePromises = rows.map(async (row) => {
+							let rowDataToUpdate = dataToUpdate;
+
+							if (isFunction(this.#updateCallback)) {
+								rowDataToUpdate = this.#updateCallback(row);
+							}
+
+							if (!isNotEmptyObject(rowDataToUpdate)) {
+								throw new Error('No values set for update!');
+							}
+
+							const updatedRow = _validateAndPrepareData<Row>(
+								{ ...row, ...rowDataToUpdate },
+								this.#columns,
+								this.#keyPath,
+								this.#table,
+								true
+							);
+
+							await applyUpdateRefWorkflow(
+								this.#schema,
+								this.#table,
+								row,
+								updatedRow,
+								trx
+							);
+
+							await new Promise<void>((res, rej) => {
+								const putRequest = store.put(updatedRow);
+
+								putRequest.onsuccess = () => {
+									updateCount++;
+									res();
+								};
+
+								putRequest.onerror = () => rej(putRequest.error);
+							});
+						});
+
+						await Promise.all(updatePromises);
+						resolve(updateCount);
+					} catch (err) {
+						trx.abort();
+						reject(err);
 					}
+				};
 
-					if (!isNotEmptyObject(dataToUpdate)) {
-						throw new Error('No values set for update!');
-					}
-
-					return new Promise<void>((res, rej) => {
-						const updatedRow = _validateAndPrepareData<Row>(
-							{ ...row, ...dataToUpdate },
-							this.#columns,
-							this.#keyPath,
-							this.#table,
-							true
-						);
-
-						const putRequest = store.put(updatedRow);
-
-						putRequest.onsuccess = () => {
-							updateCount++;
-							res();
-						};
-
-						putRequest.onerror = () => rej(putRequest.error);
-					});
-				});
-
-				Promise.all(updatePromises)
-					.then(() => resolve(updateCount))
-					.catch((err) => reject(err));
+				void processUpdate();
 			};
 
-			request.onerror = () => reject(request.error);
+			request.onerror = () => {
+				trx.abort();
+				reject(request.error);
+			};
 
 			// Handle transaction abort (happens on errors)
-			transaction.onabort = () => _abortTransaction(transaction.error, reject);
+			trx.onabort = () => _abortTransaction(trx.error, reject);
 		});
 	}
 }
