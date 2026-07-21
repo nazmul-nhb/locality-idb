@@ -1,14 +1,7 @@
 import './style.css';
 
 import type { InferInsertType } from 'locality';
-import {
-	column,
-	defineSchema,
-	deleteDB,
-	getTimestamp,
-	Locality,
-	validateColumnType,
-} from 'locality';
+import { column, defineSchema, deleteDB, Locality, validateColumnType } from 'locality';
 import { runDemoSuite } from './demo-suite';
 
 type OperationKind = 'info' | 'success' | 'error';
@@ -24,25 +17,25 @@ const schema = defineSchema({
 		name: column.text(),
 		email: column.text().unique(),
 		score: column.int().default(0),
-		createdAt: column.timestamp().default(getTimestamp()),
+		createdAt: column.timestamp(),
 	},
 	posts: {
 		id: column.int().pk().auto(),
 		userId: column.int().ref('users.id', { onDelete: 'cascade', onUpdate: 'cascade' }),
 		title: column.text(),
 		likes: column.int().default(0),
-		createdAt: column.timestamp().default(getTimestamp()),
+		createdAt: column.timestamp(),
 	},
 	comments: {
 		id: column.int().pk().auto(),
 		postId: column.int().ref('posts.id', { onDelete: 'cascade', onUpdate: 'cascade' }),
 		body: column.text(),
-		createdAt: column.timestamp().default(getTimestamp()),
+		createdAt: column.timestamp(),
 	},
 	auditLogs: {
 		id: column.int().pk().auto(),
 		event: column.text(),
-		createdAt: column.timestamp().default(getTimestamp()),
+		createdAt: column.timestamp(),
 	},
 });
 

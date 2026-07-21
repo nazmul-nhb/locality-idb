@@ -46,9 +46,17 @@ column.text().nullable() // Inferred type: string | null
 
 ### `default(value)`
 Sets a default value for the column when a row is inserted without one.
+
 ```typescript
 column.bool().default(true)
 column.text().default('N/A')
+```
+
+## `default(callback)`
+Sets a default value for the column using a callback function. The callback is executed at insert time, allowing for dynamic default values based on the current context or other factors.
+
+```typescript
+column.timestamp().default(() => new Date().toISOString())
 ```
 
 ### `validate(validator)`

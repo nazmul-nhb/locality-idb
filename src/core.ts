@@ -1,4 +1,4 @@
-import { isNonEmptyString } from 'toolbox-x/guards';
+import { isFunction, isNonEmptyString } from 'toolbox-x/guards';
 import {
 	ColumnType,
 	DefaultValue,
@@ -80,10 +80,35 @@ export class Column<T = any, TName extends TypeName = TypeName> {
 		return this as this & { [IsIndexed]: true };
 	}
 
+	/**
+	 * @instance Sets default value for the column
+	 * @param value Default value for the column
+	 * @returns The column instance with the default value attached
+	 *
+	 * @remarks
+	 * - The default value is used when a new record is inserted and no value is provided for the column.
+	 * - This allows for automatic population of fields with predefined values.
+	 * - If multiple default values are chained, only the last one is used.
+	 */
+	default(value: T): this & { [DefaultValue]: T };
+
+	/**
+	 * @instance Sets default value for the column using a callback function
+	 * @param callback Callback function that returns the default value for the column
+	 * @returns The column instance with the default value attached
+	 *
+	 * @remarks
+	 * - The callback function is called when a new record is inserted and no value is provided for the column.
+	 * - This allows for dynamic default values based on the current context or other factors.
+	 * - If multiple default values are chained, only the last one is used.
+	 */
+	default(callback: () => T): this & { [DefaultValue]: T };
+
 	/** @instance Sets default value for the column */
-	default<Default extends T>(value: Default) {
-		this[DefaultValue] = value;
-		return this as this & { [DefaultValue]: Default };
+	default(value: T | (() => T)) {
+		this[DefaultValue] = isFunction(value) ? value() : value;
+
+		return this as this & { [DefaultValue]: T };
 	}
 
 	/** @instance Marks column as optional (`undefined`) */
