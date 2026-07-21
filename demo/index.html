@@ -7,163 +7,514 @@
 		<title>Locality IDB Demo</title>
 	</head>
 	<body>
-		<main class="app-shell">
-			<header class="hero-card">
-				<div>
-					<p class="eyebrow">Locality IDB • browser-first IndexedDB playground</p>
-					<h1>Explore the full Locality API in one place.</h1>
-					<p>
-						This experience combines CRUD, filtering, aggregations, transactions,
-						import/export, and a terminal-style test runner without relying on the
-						browser console.
-					</p>
-				</div>
-				<div class="chip-row">
-					<span class="status-pill" id="dbStatus">Initializing…</span>
-					<span class="status-pill muted" id="versionBadge">v0</span>
+		<main class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+			<header
+				class="rounded-[2rem] border border-slate-800/80 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur"
+			>
+				<div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+					<div class="max-w-3xl space-y-4">
+						<div
+							class="inline-flex items-center rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-sky-300"
+						>
+							Locality IDB • browser-first IndexedDB playground
+						</div>
+						<h1
+							class="text-3xl font-semibold tracking-tight text-white sm:text-4xl"
+						>
+							Explore the Locality API with a polished, interactive demo.
+						</h1>
+						<p class="max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
+							This workspace showcases schema-driven inserts, queries, ref
+							validation, transactions, import/export, and the test runner in a
+							dedicated UI.
+						</p>
+					</div>
+					<div class="flex flex-wrap gap-3 text-sm">
+						<span
+							class="rounded-full border border-slate-700 bg-slate-800/90 px-3 py-2 font-medium text-slate-200"
+							id="dbStatus"
+						>
+							Initializing…
+						</span>
+						<span
+							class="rounded-full border border-slate-700 bg-slate-800/70 px-3 py-2 font-medium text-slate-300"
+							id="versionBadge"
+						>
+							v0
+						</span>
+					</div>
 				</div>
 			</header>
 
-			<nav class="tab-strip" aria-label="Demo sections">
-				<button type="button" class="tab-btn active" data-target="demo-panel">
+			<nav class="flex flex-wrap gap-3" aria-label="Demo sections">
+				<button
+					type="button"
+					class="tab-btn active rounded-full border border-slate-700 bg-slate-800/90 px-4 py-2 text-sm font-medium text-slate-100 transition"
+					data-target="demo-panel"
+				>
 					Demo App
 				</button>
-				<button type="button" class="tab-btn" data-target="tests-panel">Tests</button>
+				<button
+					type="button"
+					class="tab-btn rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm font-medium text-slate-300 transition"
+					data-target="tests-panel"
+				>
+					Tests
+				</button>
 			</nav>
 
-			<section id="demo-panel" class="panel active">
-				<div class="grid two-col">
-					<div class="card">
-						<h2>Database snapshot</h2>
-						<div class="kv-grid">
+			<section id="demo-panel" class="panel active space-y-6">
+				<div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+					<div
+						class="rounded-[1.75rem] border border-slate-800/80 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/30 backdrop-blur"
+					>
+						<div class="flex items-center justify-between gap-3">
 							<div>
-								<h3>Database</h3>
-								<strong id="dbNameValue">—</strong>
+								<h2 class="text-lg font-semibold text-white">
+									Database snapshot
+								</h2>
+								<p class="mt-1 text-sm text-slate-400">
+									Connected database and table metadata.
+								</p>
 							</div>
-							<div>
-								<h3>Version</h3>
-								<strong id="versionValue">—</strong>
+						</div>
+						<div class="mt-5 grid gap-4 sm:grid-cols-2">
+							<div
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4"
+							>
+								<p
+									class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+								>
+									Database
+								</p>
+								<p
+									class="mt-2 text-lg font-semibold text-white"
+									id="dbNameValue"
+								>
+									—
+								</p>
 							</div>
-							<div>
-								<h3>Tables</h3>
-								<strong id="tableCountValue">0</strong>
+							<div
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4"
+							>
+								<p
+									class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+								>
+									Version
+								</p>
+								<p
+									class="mt-2 text-lg font-semibold text-white"
+									id="versionValue"
+								>
+									—
+								</p>
 							</div>
-							<div>
-								<h3>Stores</h3>
-								<strong id="storeListValue">—</strong>
+							<div
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4"
+							>
+								<p
+									class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+								>
+									Tables
+								</p>
+								<p
+									class="mt-2 text-lg font-semibold text-white"
+									id="tableCountValue"
+								>
+									0
+								</p>
+							</div>
+							<div
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4"
+							>
+								<p
+									class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+								>
+									Stores
+								</p>
+								<p
+									class="mt-2 text-lg font-semibold text-white"
+									id="storeListValue"
+								>
+									—
+								</p>
 							</div>
 						</div>
 					</div>
 
-					<div class="card">
-						<h2>Schema snapshot</h2>
-						<ul id="schemaList" class="list"></ul>
+					<div
+						class="rounded-[1.75rem] border border-slate-800/80 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/30 backdrop-blur"
+					>
+						<div class="flex items-center justify-between gap-3">
+							<div>
+								<h2 class="text-lg font-semibold text-white">
+									Schema snapshot
+								</h2>
+								<p class="mt-1 text-sm text-slate-400">
+									The schema currently registered in the demo.
+								</p>
+							</div>
+						</div>
+						<ul id="schemaList" class="mt-5 space-y-3 text-sm text-slate-300"></ul>
 					</div>
 				</div>
 
-				<div class="grid two-col">
-					<div class="card">
-						<h2>Create records</h2>
-						<div class="form-grid">
-							<label>
-								<span>User name</span>
+				<div class="grid gap-6 lg:grid-cols-2">
+					<section
+						class="rounded-[1.75rem] border border-slate-800/80 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/30 backdrop-blur"
+					>
+						<div class="flex items-center justify-between gap-3">
+							<div>
+								<h2 class="text-lg font-semibold text-white">
+									Create and seed
+								</h2>
+								<p class="mt-1 text-sm text-slate-400">
+									Insert rows and seed the demo stores.
+								</p>
+							</div>
+						</div>
+						<div class="mt-5 grid gap-4 md:grid-cols-2">
+							<label
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300"
+							>
+								<span
+									class="mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+									>User name</span
+								>
 								<input
 									id="userNameInput"
 									type="text"
 									placeholder="Ada Lovelace"
+									class="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 text-sm text-white outline-none ring-0"
 								/>
 							</label>
-							<label>
-								<span>Email</span>
+							<label
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300"
+							>
+								<span
+									class="mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+									>Email</span
+								>
 								<input
 									id="userEmailInput"
 									type="email"
 									placeholder="ada@example.com"
+									class="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 text-sm text-white outline-none ring-0"
 								/>
 							</label>
-							<label>
-								<span>Post title</span>
+							<label
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300"
+							>
+								<span
+									class="mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+									>Post title</span
+								>
 								<input
 									id="postTitleInput"
 									type="text"
 									placeholder="Ref validation demo"
+									class="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 text-sm text-white outline-none ring-0"
 								/>
 							</label>
-							<label>
-								<span>User ID for post</span>
-								<input id="postUserIdInput" type="number" min="1" value="1" />
+							<label
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300"
+							>
+								<span
+									class="mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+									>User ID</span
+								>
+								<input
+									id="postUserIdInput"
+									type="number"
+									min="1"
+									value="1"
+									class="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 text-sm text-white outline-none ring-0"
+								/>
 							</label>
 						</div>
-						<div class="button-row">
-							<button type="button" id="insertUserBtn">Insert user</button>
-							<button type="button" id="insertPostBtn">Insert post</button>
-							<button type="button" id="seedDemoBtn">Seed demo data</button>
+						<div class="mt-5 flex flex-wrap gap-3">
+							<button
+								type="button"
+								id="insertUserBtn"
+								class="rounded-2xl border border-sky-500/40 bg-sky-500/15 px-4 py-2.5 text-sm font-semibold text-sky-200 transition hover:border-sky-400 hover:bg-sky-500/25"
+							>
+								Insert user
+							</button>
+							<button
+								type="button"
+								id="insertPostBtn"
+								class="rounded-2xl border border-violet-500/40 bg-violet-500/15 px-4 py-2.5 text-sm font-semibold text-violet-200 transition hover:border-violet-400 hover:bg-violet-500/25"
+							>
+								Insert post
+							</button>
+							<button
+								type="button"
+								id="seedDemoBtn"
+								class="rounded-2xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-200 transition hover:border-emerald-400 hover:bg-emerald-500/25"
+							>
+								Seed demo data
+							</button>
+							<button
+								type="button"
+								id="invalidRefBtn"
+								class="rounded-2xl border border-amber-500/40 bg-amber-500/15 px-4 py-2.5 text-sm font-semibold text-amber-200 transition hover:border-amber-400 hover:bg-amber-500/25"
+							>
+								Try invalid ref
+							</button>
 						</div>
-					</div>
+					</section>
 
-					<div class="card">
-						<h2>Mutate rows</h2>
-						<div class="form-grid compact">
-							<label>
-								<span>Target ID</span>
-								<input id="rowIdInput" type="number" min="1" value="1" />
+					<section
+						class="rounded-[1.75rem] border border-slate-800/80 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/30 backdrop-blur"
+					>
+						<div class="flex items-center justify-between gap-3">
+							<div>
+								<h2 class="text-lg font-semibold text-white">
+									Mutate and query
+								</h2>
+								<p class="mt-1 text-sm text-slate-400">
+									Update rows, delete data, and run builder helpers.
+								</p>
+							</div>
+						</div>
+						<div class="mt-5 grid gap-4 md:grid-cols-2">
+							<label
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300"
+							>
+								<span
+									class="mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+									>Target ID</span
+								>
+								<input
+									id="rowIdInput"
+									type="number"
+									min="1"
+									value="1"
+									class="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 text-sm text-white outline-none ring-0"
+								/>
 							</label>
-							<label>
-								<span>New likes</span>
-								<input id="likesInput" type="number" min="0" value="5" />
+							<label
+								class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300"
+							>
+								<span
+									class="mb-2 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+									>New likes</span
+								>
+								<input
+									id="likesInput"
+									type="number"
+									min="0"
+									value="5"
+									class="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 text-sm text-white outline-none ring-0"
+								/>
 							</label>
 						</div>
-						<div class="button-row">
-							<button type="button" id="updatePostBtn">Update post</button>
-							<button type="button" id="deletePostBtn">Delete post</button>
-							<button type="button" id="deleteUserBtn">Delete user</button>
+						<div class="mt-5 flex flex-wrap gap-3">
+							<button
+								type="button"
+								id="updatePostBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								Update post
+							</button>
+							<button
+								type="button"
+								id="deletePostBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								Delete post
+							</button>
+							<button
+								type="button"
+								id="deleteUserBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								Delete user
+							</button>
 						</div>
-					</div>
+						<div class="mt-5 flex flex-wrap gap-3">
+							<button
+								type="button"
+								id="loadUsersBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								from().findAll()
+							</button>
+							<button
+								type="button"
+								id="loadPostsBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								from().findAll()
+							</button>
+							<button
+								type="button"
+								id="countBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								count()
+							</button>
+							<button
+								type="button"
+								id="existsBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								exists()
+							</button>
+							<button
+								type="button"
+								id="aggregateBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								sum/avg/distinct
+							</button>
+							<button
+								type="button"
+								id="pageBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								page()
+							</button>
+							<button
+								type="button"
+								id="streamBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								stream()
+							</button>
+						</div>
+					</section>
 				</div>
 
-				<div class="grid two-col">
-					<div class="card">
-						<h2>Query builder demos</h2>
-						<div class="button-row wrap">
-							<button type="button" id="loadUsersBtn">from().findAll()</button>
-							<button type="button" id="loadPostsBtn">from().findAll()</button>
-							<button type="button" id="countBtn">count()</button>
-							<button type="button" id="existsBtn">exists()</button>
-							<button type="button" id="aggregateBtn">sum/avg/distinct</button>
-							<button type="button" id="pageBtn">page()</button>
-							<button type="button" id="streamBtn">stream()</button>
-						</div>
-						<pre id="resultOutput">{}</pre>
-					</div>
-
-					<div class="card">
-						<h2>Lifecycle & storage actions</h2>
-						<div class="button-row wrap">
-							<button type="button" id="transactionBtn">transaction()</button>
-							<button type="button" id="exportBtn">exportToObject()</button>
-							<button type="button" id="importBtn">$import()</button>
-							<button type="button" id="clearAllBtn">clearAll()</button>
-							<button type="button" id="clearTableBtn">clearTable()</button>
-							<button type="button" id="dropTableBtn">dropTable()</button>
-							<button type="button" id="deleteDbBtn">deleteDB()</button>
-						</div>
-						<div class="inline-input">
-							<label>
-								<span>Target table</span>
-								<input id="tableTargetInput" type="text" value="posts" />
-							</label>
+				<section
+					class="rounded-[1.75rem] border border-slate-800/80 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/30 backdrop-blur"
+				>
+					<div class="flex items-center justify-between gap-3">
+						<div>
+							<h2 class="text-lg font-semibold text-white">
+								Storage and lifecycle
+							</h2>
+							<p class="mt-1 text-sm text-slate-400">
+								Inspect, export, import, and reset the demo database.
+							</p>
 						</div>
 					</div>
-				</div>
+					<div class="mt-5 flex flex-wrap gap-3">
+						<button
+							type="button"
+							id="transactionBtn"
+							class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+						>
+							transaction()
+						</button>
+						<button
+							type="button"
+							id="exportBtn"
+							class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+						>
+							exportToObject()
+						</button>
+						<button
+							type="button"
+							id="importBtn"
+							class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+						>
+							$import()
+						</button>
+						<button
+							type="button"
+							id="clearAllBtn"
+							class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+						>
+							clearAll()
+						</button>
+						<button
+							type="button"
+							id="clearTableBtn"
+							class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+						>
+							clearTable()
+						</button>
+						<button
+							type="button"
+							id="dropTableBtn"
+							class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+						>
+							dropTable()
+						</button>
+						<button
+							type="button"
+							id="deleteDbBtn"
+							class="rounded-2xl border border-rose-500/40 bg-rose-500/15 px-4 py-2.5 text-sm font-semibold text-rose-200 transition hover:border-rose-400 hover:bg-rose-500/25"
+						>
+							deleteDB()
+						</button>
+					</div>
+					<label
+						class="mt-5 flex max-w-sm flex-col gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300"
+					>
+						<span
+							class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+							>Target table</span
+						>
+						<input
+							id="tableTargetInput"
+							type="text"
+							value="posts"
+							class="rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-2 text-sm text-white outline-none ring-0"
+						/>
+					</label>
+					<pre
+						id="resultOutput"
+						class="mt-5 min-h-[220px] rounded-[1.25rem] border border-slate-800 bg-slate-950/80 p-4 font-mono text-sm leading-6 text-slate-300"
+					>{}</pre>
+				</section>
 			</section>
 
 			<section id="tests-panel" class="panel">
-				<div class="card">
-					<div class="panel-head">
-						<h2>Terminal-style test runner</h2>
-						<button type="button" id="runSuiteBtn">Run full suite</button>
+				<div
+					class="rounded-[1.75rem] border border-slate-800/80 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/30 backdrop-blur"
+				>
+					<div
+						class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+					>
+						<div>
+							<h2 class="text-lg font-semibold text-white">
+								Terminal-style suite
+							</h2>
+							<p class="mt-1 text-sm text-slate-400">
+								Reference checks and lifecycle demos flow through a dedicated
+								transcript.
+							</p>
+						</div>
+						<div class="flex flex-wrap gap-3">
+							<button
+								type="button"
+								id="runSuiteBtn"
+								class="rounded-2xl border border-sky-500/40 bg-sky-500/15 px-4 py-2.5 text-sm font-semibold text-sky-200 transition hover:border-sky-400 hover:bg-sky-500/25"
+							>
+								Run full suite
+							</button>
+							<button
+								type="button"
+								id="runLogTestsBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								Run log tests
+							</button>
+							<button
+								type="button"
+								id="clearTerminalBtn"
+								class="rounded-2xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+							>
+								Clear
+							</button>
+						</div>
 					</div>
-					<ol id="terminalList" class="terminal-list"></ol>
+					<ol
+						id="terminalList"
+						class="mt-6 space-y-3 rounded-[1.25rem] border border-slate-800 bg-slate-950/90 p-4 font-mono text-sm text-slate-300"
+					></ol>
 				</div>
 			</section>
 		</main>

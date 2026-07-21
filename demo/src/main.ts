@@ -63,6 +63,7 @@ const ui = {
 	insertUserBtn: document.getElementById('insertUserBtn') as HTMLButtonElement,
 	insertPostBtn: document.getElementById('insertPostBtn') as HTMLButtonElement,
 	seedDemoBtn: document.getElementById('seedDemoBtn') as HTMLButtonElement,
+	invalidRefBtn: document.getElementById('invalidRefBtn') as HTMLButtonElement,
 	updatePostBtn: document.getElementById('updatePostBtn') as HTMLButtonElement,
 	deletePostBtn: document.getElementById('deletePostBtn') as HTMLButtonElement,
 	deleteUserBtn: document.getElementById('deleteUserBtn') as HTMLButtonElement,
@@ -81,6 +82,8 @@ const ui = {
 	dropTableBtn: document.getElementById('dropTableBtn') as HTMLButtonElement,
 	deleteDbBtn: document.getElementById('deleteDbBtn') as HTMLButtonElement,
 	runSuiteBtn: document.getElementById('runSuiteBtn') as HTMLButtonElement,
+	runLogTestsBtn: document.getElementById('runLogTestsBtn') as HTMLButtonElement,
+	clearTerminalBtn: document.getElementById('clearTerminalBtn') as HTMLButtonElement,
 	userNameInput: document.getElementById('userNameInput') as HTMLInputElement,
 	userEmailInput: document.getElementById('userEmailInput') as HTMLInputElement,
 	postTitleInput: document.getElementById('postTitleInput') as HTMLInputElement,
@@ -95,9 +98,34 @@ const terminalEntries: TerminalEntry[] = [];
 function pushEntry(kind: OperationKind, message: string) {
 	terminalEntries.push({ kind, message });
 	const item = document.createElement('li');
-	item.className = kind;
-	item.textContent = message;
+	item.className =
+		'terminal-entry flex items-start gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/80 px-3 py-3';
+	const badge = document.createElement('span');
+	badge.className = `mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full ${
+		kind === 'success' ? 'bg-emerald-400' : kind === 'error' ? 'bg-rose-400' : 'bg-sky-400'
+	}`;
+	const body = document.createElement('div');
+	body.className = 'min-w-0';
+	const title = document.createElement('div');
+	title.className = `text-[11px] font-semibold uppercase tracking-[0.3em] ${
+		kind === 'success'
+			? 'text-emerald-300'
+			: kind === 'error'
+				? 'text-rose-300'
+				: 'text-sky-300'
+	}`;
+	title.textContent = kind;
+	const text = document.createElement('div');
+	text.className = 'mt-1 break-words text-sm text-slate-300';
+	text.textContent = message;
+	body.append(title, text);
+	item.append(badge, body);
 	ui.terminalList.appendChild(item);
+}
+
+function clearTerminal() {
+	terminalEntries.length = 0;
+	ui.terminalList.innerHTML = '';
 }
 
 function setResult(payload: unknown) {
@@ -116,6 +144,7 @@ async function refreshSnapshot() {
 	ui.schemaList.innerHTML = '';
 	for (const [tableName, table] of Object.entries(schema)) {
 		const item = document.createElement('li');
+		item.className = 'rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2';
 		item.textContent = `${tableName}: ${Object.keys(table.columns).join(', ')}`;
 		ui.schemaList.appendChild(item);
 	}
@@ -177,6 +206,22 @@ async function handleInsertPost() {
 	const inserted = await db.insert('posts').values(payload).run();
 	setResult(inserted);
 	pushEntry('success', `Inserted post ${inserted.title}`);
+	await reloadViews();
+}
+
+async function handleInvalidRefInsert() {
+	try {
+		const inserted = await db
+			.insert('posts')
+			.values({ userId: 999, title: 'Broken reference', likes: 1 })
+			.run();
+		setResult(inserted);
+		pushEntry('error', 'The invalid ref insert unexpectedly succeeded.');
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		setResult({ error: message });
+		pushEntry('success', `Reference validation blocked the invalid insert: ${message}`);
+	}
 	await reloadViews();
 }
 
@@ -356,6 +401,9 @@ function bindEvents() {
 	ui.seedDemoBtn.addEventListener('click', () => {
 		void ensureSeedData();
 	});
+	ui.invalidRefBtn.addEventListener('click', () => {
+		void handleInvalidRefInsert();
+	});
 	ui.updatePostBtn.addEventListener('click', () => {
 		void handleUpdatePost();
 	});
@@ -409,6 +457,12 @@ function bindEvents() {
 	});
 	ui.runSuiteBtn.addEventListener('click', () => {
 		void runDemoSuite(db, pushEntry, setResult, reloadViews, refreshSnapshot);
+	});
+	ui.runLogTestsBtn.addEventListener('click', () => {
+		void runDemoSuite(db, pushEntry, setResult, reloadViews, refreshSnapshot);
+	});
+	ui.clearTerminalBtn.addEventListener('click', () => {
+		clearTerminal();
 	});
 }
 
