@@ -546,7 +546,7 @@ export type ResolveValue<T extends GenericObject, U extends keyof T> = Prettify<
 >;
 
 /** Actions on delete or update for reference columns (foreign keys) */
-export type RefAction = 'cascade' | 'restrict' | 'setNull' | 'noAction';
+export type RefAction = 'noAction' | 'cascade' | 'restrict' | 'setNull/Undefined';
 
 /** Options for reference columns (foreign keys) */
 export interface RefOptions {

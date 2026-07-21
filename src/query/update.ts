@@ -14,7 +14,7 @@ import type {
 	WherePredicate,
 } from '../types';
 import { _validateAndPrepareData } from '../validators';
-import { applyUpdateRefWorkflow } from './ref';
+import { applyUpdateRefWorkflow } from './_ref';
 
 /** @class Update query builder. */
 export class UpdateQuery<Row extends GenericObject, T extends Table> {

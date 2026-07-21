@@ -1,6 +1,9 @@
 import { IsNullable, IsOptional, IsPrimaryKey, RefMeta } from '../symbols';
 import type { GenericObject, Maybe, RefOptions, SchemaDefinition } from '../types';
 
+/**
+ * @internal Private interface for managing relationships between tables
+ */
 export interface RefRelation {
 	childTable: string;
 	childColumn: string;
@@ -9,6 +12,12 @@ export interface RefRelation {
 	options?: RefOptions;
 }
 
+/**
+ * @internal Private function for getting reference relations
+ * @param schema The schema definition
+ * @param tableName The table name
+ * @returns Array of reference relations
+ */
 function getRefRelations(schema: Maybe<SchemaDefinition>, tableName: string): RefRelation[] {
 	if (!schema) return [];
 
@@ -37,6 +46,12 @@ function getRefRelations(schema: Maybe<SchemaDefinition>, tableName: string): Re
 	return relations;
 }
 
+/**
+ * @internal Private function for getting reference workflow tables
+ * @param schema The schema definition
+ * @param tableName The table name
+ * @returns Array of reference workflow tables
+ */
 export function getRefWorkflowTables(schema: Maybe<SchemaDefinition>, tableName: string) {
 	const tables = new Set<string>([tableName]);
 
@@ -47,6 +62,12 @@ export function getRefWorkflowTables(schema: Maybe<SchemaDefinition>, tableName:
 	return [...tables];
 }
 
+/**
+ * @internal Private function for getting primary key name
+ * @param schema The schema definition
+ * @param tableName The table name
+ * @returns Primary key name
+ */
 function getPrimaryKeyName(schema: Maybe<SchemaDefinition>, tableName: string) {
 	const table = schema?.[tableName];
 
@@ -57,6 +78,13 @@ function getPrimaryKeyName(schema: Maybe<SchemaDefinition>, tableName: string) {
 	return pkEntry?.[0];
 }
 
+/**
+ * @internal Private function for checking if column can be set to null
+ * @param schema The schema definition
+ * @param tableName The table name
+ * @param columnName The column name
+ * @returns Boolean indicating if column can be set to null
+ */
 function canSetNull(schema: Maybe<SchemaDefinition>, tableName: string, columnName: string) {
 	const column = schema?.[tableName]?.columns?.[columnName];
 
@@ -66,6 +94,14 @@ function canSetNull(schema: Maybe<SchemaDefinition>, tableName: string, columnNa
 	};
 }
 
+/**
+ * @internal Private function for getting rows by value
+ * @param transaction The transaction
+ * @param tableName The table name
+ * @param columnName The column name
+ * @param value The value
+ * @returns Array of rows
+ */
 function getRowsByValue(
 	transaction: IDBTransaction,
 	tableName: string,
@@ -84,6 +120,14 @@ function getRowsByValue(
 	});
 }
 
+/**
+ * @internal Private function for deleting rows by primary key
+ * @param transaction The transaction
+ * @param tableName The table name
+ * @param rows The rows to delete
+ * @param schema The schema definition
+ * @returns Promise
+ */
 function deleteRowsByPrimaryKey(
 	transaction: IDBTransaction,
 	tableName: string,
@@ -109,6 +153,14 @@ function deleteRowsByPrimaryKey(
 	);
 }
 
+/**
+ * @internal Private function for updating rows by column
+ * @param transaction The transaction
+ * @param tableName The table name
+ * @param rows The rows to update
+ * @param columnName The column name
+ * @param value The value
+ */
 function updateRowsByColumn(
 	transaction: IDBTransaction,
 	tableName: string,
@@ -129,6 +181,13 @@ function updateRowsByColumn(
 	);
 }
 
+/**
+ * Applies the delete referential integrity workflow
+ * @param schema The schema definition
+ * @param tableName The table name
+ * @param rows The rows to delete
+ * @param transaction The transaction
+ */
 export async function applyDeleteRefWorkflow(
 	schema: Maybe<SchemaDefinition>,
 	tableName: string,
@@ -140,65 +199,60 @@ export async function applyDeleteRefWorkflow(
 	const relations = getRefRelations(schema, tableName);
 
 	for (const relation of relations) {
+		const { childColumn, childTable, targetColumn, options } = relation;
+
 		const targetValues = rows
-			.map((row) => row[relation.targetColumn])
+			.map((row) => row[targetColumn])
 			.filter((value) => value !== undefined && value !== null);
 
 		for (const value of new Set(targetValues)) {
 			const relatedRows = await getRowsByValue(
 				transaction,
-				relation.childTable,
-				relation.childColumn,
+				childTable,
+				childColumn,
 				value
 			);
 
 			if (relatedRows.length === 0) continue;
 
-			const action = relation.options?.onDelete ?? 'noAction';
+			const action = options?.onDelete ?? 'noAction';
 
 			switch (action) {
 				case 'cascade': {
-					await applyDeleteRefWorkflow(
-						schema,
-						relation.childTable,
-						relatedRows,
-						transaction
-					);
+					await applyDeleteRefWorkflow(schema, childTable, relatedRows, transaction);
 
-					await deleteRowsByPrimaryKey(
-						transaction,
-						relation.childTable,
-						relatedRows,
-						schema
-					);
+					await deleteRowsByPrimaryKey(transaction, childTable, relatedRows, schema);
 
 					break;
 				}
+
 				case 'restrict': {
 					throw new Error(
-						`Cannot delete row from '${tableName}' because '${relation.childTable}.${relation.childColumn}' has a restrict reference.`
+						`Cannot delete row from '${tableName}' because '${childTable}.${childColumn}' has a restrict reference.`
 					);
 				}
-				case 'setNull': {
+
+				case 'setNull/Undefined': {
 					const { setNull, makeOptional } = canSetNull(
 						schema,
-						relation.childTable,
-						relation.childColumn
+						childTable,
+						childColumn
 					);
 
 					if (!setNull && !makeOptional) {
 						throw new Error(
-							`Cannot set null for '${relation.childTable}.${relation.childColumn}' because the column is not nullable or optional.`
+							`Cannot set null/undefined for '${childTable}.${childColumn}' because the column is not nullable or optional.`
 						);
 					}
 
 					await updateRowsByColumn(
 						transaction,
-						relation.childTable,
+						childTable,
 						relatedRows,
-						relation.childColumn,
+						childColumn,
 						setNull ? null : undefined
 					);
+
 					break;
 				}
 				default:
@@ -208,6 +262,14 @@ export async function applyDeleteRefWorkflow(
 	}
 }
 
+/**
+ * Applies the update referential integrity workflow
+ * @param schema The schema definition
+ * @param tableName The table name
+ * @param currentRow The current row
+ * @param updatedRow The updated row
+ * @param transaction The transaction
+ */
 export async function applyUpdateRefWorkflow(
 	schema: Maybe<SchemaDefinition>,
 	tableName: string,
@@ -220,56 +282,54 @@ export async function applyUpdateRefWorkflow(
 	const relations = getRefRelations(schema, tableName);
 
 	for (const relation of relations) {
-		const oldValue = currentRow[relation.targetColumn];
-		const newValue = updatedRow[relation.targetColumn];
+		const { childColumn, childTable, targetColumn, options } = relation;
+
+		const oldValue = currentRow[targetColumn];
+		const newValue = updatedRow[targetColumn];
 
 		if (oldValue === newValue || newValue === undefined || newValue === null) continue;
 
 		const relatedRows = await getRowsByValue(
 			transaction,
-			relation.childTable,
-			relation.childColumn,
+			childTable,
+			childColumn,
 			oldValue
 		);
 
 		if (relatedRows.length === 0) continue;
 
-		const action = relation.options?.onUpdate ?? 'noAction';
+		const action = options?.onUpdate ?? 'noAction';
 
 		switch (action) {
 			case 'cascade': {
 				await updateRowsByColumn(
 					transaction,
-					relation.childTable,
+					childTable,
 					relatedRows,
-					relation.childColumn,
+					childColumn,
 					newValue
 				);
 				break;
 			}
 			case 'restrict': {
 				throw new Error(
-					`Cannot update row in '${tableName}' because '${relation.childTable}.${relation.childColumn}' has a restrict reference.`
+					`Cannot update row in '${tableName}' because '${childTable}.${childColumn}' has a restrict reference.`
 				);
 			}
-			case 'setNull': {
-				const { setNull, makeOptional } = canSetNull(
-					schema,
-					relation.childTable,
-					relation.childColumn
-				);
+			case 'setNull/Undefined': {
+				const { setNull, makeOptional } = canSetNull(schema, childTable, childColumn);
 
 				if (!setNull && !makeOptional) {
 					throw new Error(
-						`Cannot set null for '${relation.childTable}.${relation.childColumn}' because the column is not nullable or optional.`
+						`Cannot set null/undefined for '${childTable}.${childColumn}' because the column is not nullable or optional.`
 					);
 				}
 
 				await updateRowsByColumn(
 					transaction,
-					relation.childTable,
+					childTable,
 					relatedRows,
-					relation.childColumn,
+					childColumn,
 					setNull ? null : undefined
 				);
 				break;

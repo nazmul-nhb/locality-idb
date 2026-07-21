@@ -10,7 +10,7 @@ import type {
 	SchemaDefinition,
 	WherePredicate,
 } from '../types';
-import { applyDeleteRefWorkflow } from './ref';
+import { applyDeleteRefWorkflow } from './_ref';
 
 /** @class Delete query builder. */
 export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T extends Table> {
