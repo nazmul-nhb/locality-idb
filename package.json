@@ -41,12 +41,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": [
-		"dist",
-		"LICENSE",
-		"README.md",
-		"package.json"
-	],
+	"files": ["dist", "LICENSE", "README.md", "package.json"],
 	"keywords": [
 		"indexeddb",
 		"indexed-db",
@@ -70,12 +65,12 @@
 	"scripts": {
 		"build": "tsdown",
 		"dev:pkg": "tsdown --watch",
-		"dev:demo": "pnpm --dir demo run dev",
+		"dev:demo": "pnpm --filter locality-demo run dev",
 		"dev": "pnpm --filter locality-docs run dev",
 		"build:docs": "pnpm --filter locality-docs run build",
-		"install:demo": "pnpm --dir demo install",
-		"build:demo": "pnpm --dir demo run build",
-		"preview": "pnpm --dir demo run preview",
+		"install:demo": "pnpm --filter locality-demo install",
+		"build:demo": "pnpm --filter locality-demo run build",
+		"preview": "pnpm --filter locality-demo run preview",
 		"typecheck": "tsc --noEmit",
 		"prepublishOnly": "pnpm run build",
 		"commit": "nhb-commit",

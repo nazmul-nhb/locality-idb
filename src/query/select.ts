@@ -5,7 +5,7 @@ import {
 	sortAnArray,
 	sumByField,
 } from 'toolbox-x';
-import { isFunction, isNonEmptyString, isNotEmptyObject } from 'toolbox-x/guards';
+import { isNonEmptyString, isNotEmptyObject } from 'toolbox-x/guards';
 import type { Table } from '../core';
 import { _extractErrorMsg, _resolveNestedKey } from '../helpers';
 import { Selected } from '../symbols';
@@ -14,7 +14,6 @@ import type {
 	$InferPrimaryKey,
 	BooleanRecord,
 	CursorCallback,
-	FirstOverloadParams,
 	ForcedAny,
 	GenericObject,
 	IDBGetter,
@@ -25,62 +24,48 @@ import type {
 	NumericDotKey,
 	PageOptions,
 	PageResult,
-	RejectFn,
 	ResolveValue,
 	SelectFields,
 	SortDirection,
 	WherePredicate,
 } from '../types';
+import { BaseQuery } from './base';
 
 /** @class Select query builder. */
 export class SelectQuery<
 	Row extends GenericObject,
 	Sel extends BooleanRecord = null,
 	Tbl extends Table = Table,
-> {
-	#table: string;
-	#readyPromise: Promise<void>;
-
-	#dbGetter: IDBGetter;
-	#whereCondition?: WherePredicate<Row>;
-	#whereIndexName?: string;
-	#whereIndexQuery?: IDBKeyRange;
-
+> extends BaseQuery<Row, Tbl> {
 	#orderByKey?: NestedPrimitiveKey<Row>;
 	#orderByDir: SortDirection = 'asc';
 	#limitCount?: number;
 	#useIndexCursor?: boolean;
 
-	#trx?: IDBTransaction;
-
 	declare [Selected]?: Sel;
 
 	constructor(
-		table: string,
+		tableName: string,
 		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
 		transaction?: IDBTransaction
 	) {
-		this.#table = table;
-		this.#dbGetter = dbGetter;
-		this.#readyPromise = readyPromise;
-
-		this.#trx = transaction;
+		super(tableName, dbGetter, readyPromise, transaction);
 	}
 
 	/** @internal Clone this query into a new instance with all current state */
 	#clone(): SelectQuery<Row, Sel, Tbl> {
 		const query = new SelectQuery<Row, Sel, Tbl>(
-			this.#table,
-			this.#dbGetter,
-			this.#readyPromise,
-			this.#trx
+			this.$table,
+			this.$dbGetter,
+			this.$readyPromise,
+			this.$trx
 		);
 
 		query[Selected] = this[Selected];
-		query.#whereCondition = this.#whereCondition;
-		query.#whereIndexName = this.#whereIndexName;
-		query.#whereIndexQuery = this.#whereIndexQuery;
+		query.$whereCondition = this.$whereCondition;
+		query.$whereIndexName = this.$whereIndexName;
+		query.$whereIndexQuery = this.$whereIndexQuery;
 		query.#orderByKey = this.#orderByKey;
 		query.#orderByDir = this.#orderByDir;
 		query.#limitCount = this.#limitCount;
@@ -91,18 +76,18 @@ export class SelectQuery<
 
 	/** @internal Get filtered rows without sorting, limiting, or projecting */
 	async #getFilteredRows(): Promise<Row[]> {
-		await this.#readyPromise;
+		await this.$readyPromise;
 
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
 
 			// If we have an index-based where query, use it
-			if (this.#whereIndexName && this.#whereIndexQuery != null) {
-				const source = this.#buildIndexedStore(store, reject);
+			if (this.$whereIndexName && this.$whereIndexQuery != null) {
+				const source = this.$buildIndexedStore(store, reject);
 
 				if (!source) return;
 
-				const request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
+				const request = source.getAll(this.$whereIndexQuery) as IDBRequest<Row[]>;
 
 				request.onsuccess = () => resolve(request.result);
 				request.onerror = () => reject(request.error);
@@ -115,8 +100,8 @@ export class SelectQuery<
 			request.onsuccess = () => {
 				let results = request.result;
 
-				if (this.#whereCondition) {
-					results = results.filter(this.#whereCondition);
+				if (this.$whereCondition) {
+					results = results.filter(this.$whereCondition);
 				}
 
 				resolve(results);
@@ -135,41 +120,9 @@ export class SelectQuery<
 
 	/** @internal Create a readonly transaction and return the store */
 	#getStore(): { transaction: IDBTransaction; store: IDBObjectStore } {
-		const trx = this.#trx ?? this.#dbGetter().transaction(this.#table, 'readonly');
-		const store = trx.objectStore(this.#table);
+		const trx = this.$trx ?? this.$dbGetter().transaction(this.$table, 'readonly');
+		const store = trx.objectStore(this.$table);
 		return { transaction: trx, store };
-	}
-
-	/** @internal Check if key is an index on the store for the `#whereIndexName` */
-	#isIndexKey(store: IDBObjectStore): boolean {
-		return (
-			isNonEmptyString(this.#whereIndexName) &&
-			store.indexNames.contains(this.#whereIndexName)
-		);
-	}
-
-	/** @internal Check if key is the primary key on the store for the `#whereIndexName` */
-	#isPrimaryKey(store: IDBObjectStore): boolean {
-		return isNonEmptyString(this.#whereIndexName) && store.keyPath === this.#whereIndexName;
-	}
-
-	/** @internal Build indexed store (primary key or index) for where queries */
-	#buildIndexedStore(store: IDBObjectStore, reject: RejectFn) {
-		const isPK = this.#isPrimaryKey(store);
-		const isIndex = this.#isIndexKey(store);
-
-		if (!isPK && !isIndex) {
-			reject(
-				new RangeError(
-					`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
-				)
-			);
-
-			return null;
-		}
-
-		// Primary keys use store directly, indexes use store.index()
-		return isPK ? store : this.#whereIndexName ? store.index(this.#whereIndexName) : null;
 	}
 
 	/** @internal Sort data in memory if needed */
@@ -177,9 +130,7 @@ export class SelectQuery<
 		if (this.#orderByKey) {
 			return sortAnArray(data, {
 				sortOrder: this.#orderByDir,
-				sortByField: this.#orderByKey as FirstOverloadParams<
-					typeof sortAnArray
-				>[1]['sortByField'],
+				sortByField: this.#orderByKey,
 			});
 		}
 
@@ -246,41 +197,6 @@ export class SelectQuery<
 	}
 
 	/**
-	 * @instance Filter rows based on predicate function
-	 * @param predicate Filtering function
-	 */
-	where(predicate: WherePredicate<Row>): this;
-
-	/**
-	 * @instance Filter rows based on index query
-	 * @param indexName Name of the index/primary key to query
-	 * @param query Key value or {@link IDBKeyRange} to search for
-	 */
-	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
-		indexName: IdxKey,
-		query: IDBKeyRange | Row[IdxKey]
-	): this;
-
-	where<IdxKey extends $InferPrimaryKey<Tbl['columns']> | $InferIndex<Tbl['columns']>>(
-		condition: WherePredicate<Row> | IdxKey,
-		query?: IDBKeyRange | Row[IdxKey]
-	) {
-		const cloned = this.#clone();
-
-		if (isFunction(condition)) {
-			cloned.#whereCondition = condition;
-			cloned.#whereIndexName = undefined;
-			cloned.#whereIndexQuery = undefined;
-		} else if (isNonEmptyString(condition) && query != null) {
-			cloned.#whereIndexName = condition;
-			cloned.#whereIndexQuery = query;
-			cloned.#whereCondition = undefined;
-		}
-
-		return cloned;
-	}
-
-	/**
 	 * @instance Order results by specified key and direction
 	 * @param key Key to order by
 	 * @param dir Direction: 'asc' | 'desc' (default: 'asc')
@@ -340,7 +256,7 @@ export class SelectQuery<
 	): Promise<SelectFields<Row, Selection>[]>;
 
 	async findAll() {
-		await this.#readyPromise;
+		await this.$readyPromise;
 
 		const { store } = this.#getStore();
 
@@ -351,7 +267,7 @@ export class SelectQuery<
 
 			if (!isPK && !isIndex) {
 				throw new RangeError(
-					`Index '${this.#orderByKey}' does not exist on table '${this.#table}'`
+					`Index '${this.#orderByKey}' does not exist on table '${this.$table}'`
 				);
 			}
 		}
@@ -361,8 +277,8 @@ export class SelectQuery<
 			this.#useIndexCursor &&
 			this.#orderByKey &&
 			isNonEmptyString(this.#orderByKey) &&
-			!this.#whereCondition &&
-			!this.#whereIndexName;
+			!this.$whereCondition &&
+			!this.$whereIndexName;
 
 		if (useIdxCursor) {
 			return new Promise((resolve, reject) => {
@@ -420,7 +336,8 @@ export class SelectQuery<
 		this: SelectQuery<Row, Nullable<Selection>>,
 		options: PageOptions = {}
 	) {
-		await this.#readyPromise;
+		await this.$readyPromise;
+
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
 
@@ -433,7 +350,7 @@ export class SelectQuery<
 				return;
 			}
 
-			if (options.cursor != null && this.#whereIndexQuery != null) {
+			if (options.cursor != null && this.$whereIndexQuery != null) {
 				reject(
 					new Error(
 						'page() does not support cursor pagination with index where queries.'
@@ -465,10 +382,10 @@ export class SelectQuery<
 			let source: Nullable<IDBObjectStore | IDBIndex> = null;
 			let range: Nullable<IDBKeyRange | IDBValidKey> = null;
 
-			if (this.#whereIndexName && this.#whereIndexQuery != null) {
-				source = this.#buildIndexedStore(store, reject);
+			if (this.$whereIndexName && this.$whereIndexQuery != null) {
+				source = this.$buildIndexedStore(store, reject);
 				if (!source) return;
-				range = this.#whereIndexQuery;
+				range = this.$whereIndexQuery;
 			} else if (useIdxCursor) {
 				source = store.index(this.#orderByKey as string);
 			} else {
@@ -501,7 +418,7 @@ export class SelectQuery<
 
 				const row = cursor.value as Row;
 
-				if (this.#whereCondition && !this.#whereCondition(row)) {
+				if (this.$whereCondition && !this.$whereCondition(row)) {
 					cursor.continue();
 					return;
 				}
@@ -540,7 +457,8 @@ export class SelectQuery<
 		this: SelectQuery<Row, Selection, Tbl>,
 		callback: CursorCallback<Row> | CursorCallback<SelectFields<Row, Selection>>
 	) {
-		await this.#readyPromise;
+		await this.$readyPromise;
+
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
 
@@ -562,10 +480,10 @@ export class SelectQuery<
 			let source: Nullable<IDBObjectStore | IDBIndex> = null;
 			let range: Nullable<IDBKeyRange | IDBValidKey> = null;
 
-			if (this.#whereIndexName && this.#whereIndexQuery != null) {
-				source = this.#buildIndexedStore(store, reject);
+			if (this.$whereIndexName && this.$whereIndexQuery != null) {
+				source = this.$buildIndexedStore(store, reject);
 				if (!source) return;
-				range = this.#whereIndexQuery;
+				range = this.$whereIndexQuery;
 			} else if (useIdxCursor) {
 				source = store.index(this.#orderByKey as string);
 			} else {
@@ -586,7 +504,7 @@ export class SelectQuery<
 
 				const row = cursor.value as Row;
 
-				if (this.#whereCondition && !this.#whereCondition(row)) {
+				if (this.$whereCondition && !this.$whereCondition(row)) {
 					cursor.continue();
 					return;
 				}
@@ -634,7 +552,8 @@ export class SelectQuery<
 			? Row[$InferPrimaryKey<Tbl['columns']>]
 			: Row[keyof Row]
 	): Promise<Nullable<IndexedResult<Sel, Row>>> {
-		await this.#readyPromise;
+		await this.$readyPromise;
+
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
 			const request = store.get(key) as IDBRequest<Row>;
@@ -648,7 +567,7 @@ export class SelectQuery<
 				}
 
 				// Apply where filter if specified
-				if (this.#whereCondition && !this.#whereCondition(result)) {
+				if (this.$whereCondition && !this.$whereCondition(result)) {
 					resolve(null);
 					return;
 				}
@@ -675,7 +594,8 @@ export class SelectQuery<
 		indexName: IdxKey,
 		query: Row[IdxKey] | IDBKeyRange
 	): Promise<IndexedResult<Sel, Row>[]> {
-		await this.#readyPromise;
+		await this.$readyPromise;
+
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
 
@@ -683,7 +603,7 @@ export class SelectQuery<
 			if (!store.indexNames.contains(indexName)) {
 				reject(
 					new RangeError(
-						`Index '${indexName}' does not exist on table '${this.#table}'`
+						`Index '${indexName}' does not exist on table '${this.$table}'`
 					)
 				);
 				return;
@@ -696,8 +616,8 @@ export class SelectQuery<
 				let results = request.result;
 
 				// Apply where filter
-				if (this.#whereCondition) {
-					results = results.filter(this.#whereCondition);
+				if (this.$whereCondition) {
+					results = results.filter(this.$whereCondition);
 				}
 
 				resolve(this.#applyPipeline(results) as IndexedResult<Sel, Row>[]);
@@ -709,18 +629,18 @@ export class SelectQuery<
 
 	/** @instance Count matching records */
 	async count(): Promise<number> {
-		await this.#readyPromise;
+		await this.$readyPromise;
 
 		return new Promise((resolve, reject) => {
 			const { store } = this.#getStore();
 
 			// If we have an index-based where query, use it
-			if (this.#whereIndexName && this.#whereIndexQuery != null) {
-				const source = this.#buildIndexedStore(store, reject);
+			if (this.$whereIndexName && this.$whereIndexQuery != null) {
+				const source = this.$buildIndexedStore(store, reject);
 
 				if (!source) return;
 
-				const request = source.count(this.#whereIndexQuery);
+				const request = source.count(this.$whereIndexQuery);
 
 				request.onsuccess = () => resolve(request.result);
 				request.onerror = () => reject(request.error);
@@ -728,12 +648,12 @@ export class SelectQuery<
 			}
 
 			// If we have a predicate-based where condition, we need to get all and filter
-			if (this.#whereCondition) {
+			if (this.$whereCondition) {
 				const request = store.getAll() as IDBRequest<Row[]>;
 
 				request.onsuccess = () => {
 					const filtered = request.result.filter(
-						this.#whereCondition as WherePredicate<Row>
+						this.$whereCondition as WherePredicate<Row>
 					);
 
 					resolve(filtered.length);
@@ -844,9 +764,9 @@ export class SelectQuery<
 	 */
 	async min(column: NumericDotKey<Row>): Promise<number> {
 		try {
-			await this.#readyPromise;
+			await this.$readyPromise;
 
-			const hasNoWhere = !this.#whereCondition && !this.#whereIndexName;
+			const hasNoWhere = !this.$whereCondition && !this.$whereIndexName;
 			const isTopLevel = !column.includes('.');
 
 			// O(1) cursor optimization: first value in ascending order = min
@@ -896,9 +816,9 @@ export class SelectQuery<
 	 */
 	async max(column: NumericDotKey<Row>): Promise<number> {
 		try {
-			await this.#readyPromise;
+			await this.$readyPromise;
 
-			const hasNoWhere = !this.#whereCondition && !this.#whereIndexName;
+			const hasNoWhere = !this.$whereCondition && !this.$whereIndexName;
 			const isTopLevel = !column.includes('.');
 
 			// O(1) cursor optimization: last value in descending order = max

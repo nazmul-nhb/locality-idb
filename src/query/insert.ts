@@ -25,7 +25,7 @@ export class InsertQuery<
 	declare [IsArray]: boolean;
 
 	constructor(
-		table: string,
+		tableName: string,
 		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
@@ -33,7 +33,7 @@ export class InsertQuery<
 		schema?: SchemaDefinition,
 		transaction?: IDBTransaction
 	) {
-		this.#table = table;
+		this.#table = tableName;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 		this.#columns = columns;

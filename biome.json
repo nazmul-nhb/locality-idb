@@ -207,7 +207,7 @@
 			}
 		},
 		{
-			"includes": ["src/**/*types.ts", "src/**/types/*.ts", "**/*.extensions.ts"],
+			"includes": ["src/**/*types.ts", "src/**/types/*.ts"],
 			"linter": {
 				"rules": {
 					"complexity": {
@@ -217,7 +217,7 @@
 			}
 		},
 		{
-			"includes": ["__ideas__/**/*.ts", "__*.ts", "src/**/*log.ts"],
+			"includes": ["__ideas__/**/*.ts", "__*.ts"],
 			"linter": {
 				"rules": {
 					"correctness": {
@@ -266,11 +266,11 @@
 			}
 		},
 		{
-			"includes": ["**/*/plugins/*.ts"],
+			"includes": ["src/query/*.ts"],
 			"linter": {
 				"rules": {
 					"complexity": {
-						"useArrowFunction": "off"
+						"noUselessConstructor": "off"
 					}
 				}
 			}
