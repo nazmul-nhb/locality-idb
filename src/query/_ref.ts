@@ -1,3 +1,4 @@
+import { isString } from 'toolbox-x/guards';
 import { ColumnType, IsNullable, IsOptional, IsPrimaryKey, RefMeta } from '../symbols';
 import type { GenericObject, Maybe, RefOptions, SchemaDefinition } from '../types';
 
@@ -124,20 +125,20 @@ function canSetNull(schema: Maybe<SchemaDefinition>, tableName: string, columnNa
 
 /**
  * @internal Private function for getting rows by value
- * @param transaction The transaction
+ * @param trx The transaction
  * @param tableName The table name
  * @param columnName The column name
  * @param value The value
  * @returns Array of rows
  */
 function getRowsByValue(
-	transaction: IDBTransaction,
+	trx: IDBTransaction,
 	tableName: string,
 	columnName: string,
 	value: unknown
 ) {
 	return new Promise<GenericObject[]>((resolve, reject) => {
-		const store = transaction.objectStore(tableName);
+		const store = trx.objectStore(tableName);
 		const request = store.getAll() as IDBRequest<GenericObject[]>;
 
 		request.onsuccess = () => {
@@ -150,14 +151,14 @@ function getRowsByValue(
 
 /**
  * @internal Private function for deleting rows by primary key
- * @param transaction The transaction
+ * @param trx The transaction
  * @param tableName The table name
  * @param rows The rows to delete
  * @param schema The schema definition
  * @returns Promise
  */
 function deleteRowsByPrimaryKey(
-	transaction: IDBTransaction,
+	trx: IDBTransaction,
 	tableName: string,
 	rows: GenericObject[],
 	schema: Maybe<SchemaDefinition>
@@ -171,7 +172,7 @@ function deleteRowsByPrimaryKey(
 	return Promise.all(
 		rows.map((row) => {
 			return new Promise<void>((resolve, reject) => {
-				const store = transaction.objectStore(tableName);
+				const store = trx.objectStore(tableName);
 				const request = store.delete(row[keyName]);
 
 				request.onsuccess = () => resolve();
@@ -183,14 +184,14 @@ function deleteRowsByPrimaryKey(
 
 /**
  * @internal Private function for updating rows by column
- * @param transaction The transaction
+ * @param trx The transaction
  * @param tableName The table name
  * @param rows The rows to update
  * @param columnName The column name
  * @param value The value
  */
 function updateRowsByColumn(
-	transaction: IDBTransaction,
+	trx: IDBTransaction,
 	tableName: string,
 	rows: GenericObject[],
 	columnName: string,
@@ -199,7 +200,7 @@ function updateRowsByColumn(
 	return Promise.all(
 		rows.map((row) => {
 			return new Promise<void>((resolve, reject) => {
-				const store = transaction.objectStore(tableName);
+				const store = trx.objectStore(tableName);
 				const request = store.put({ ...row, [columnName]: value });
 
 				request.onsuccess = () => resolve();
@@ -214,13 +215,13 @@ function updateRowsByColumn(
  * @param schema The schema definition
  * @param tableName The table name
  * @param rows The rows to insert
- * @param transaction The transaction
+ * @param trx The transaction
  */
 export async function applyInsertRefWorkflow(
 	schema: Maybe<SchemaDefinition>,
 	tableName: string,
 	rows: GenericObject[],
-	transaction: IDBTransaction
+	trx: IDBTransaction
 ) {
 	if (!schema || rows.length === 0) return;
 
@@ -256,16 +257,13 @@ export async function applyInsertRefWorkflow(
 				);
 			}
 
-			const relatedRows = await getRowsByValue(
-				transaction,
-				targetTable,
-				targetColumn,
-				value
-			);
+			const relatedRows = await getRowsByValue(trx, targetTable, targetColumn, value);
 
 			if (relatedRows.length === 0) {
+				const strVal = `'${isString(value) ? value : JSON.stringify(value)}'`;
+
 				throw new Error(
-					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' references '${targetTable}.${targetColumn}' value '${String(value)}' that does not exist.`
+					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' references '${targetTable}.${targetColumn}' value ${strVal} that does not exist.`
 				);
 			}
 		}
@@ -277,13 +275,13 @@ export async function applyInsertRefWorkflow(
  * @param schema The schema definition
  * @param tableName The table name
  * @param rows The rows to delete
- * @param transaction The transaction
+ * @param trx The transaction
  */
 export async function applyDeleteRefWorkflow(
 	schema: Maybe<SchemaDefinition>,
 	tableName: string,
 	rows: GenericObject[],
-	transaction: IDBTransaction
+	trx: IDBTransaction
 ) {
 	if (!schema || rows.length === 0) return;
 
@@ -297,12 +295,7 @@ export async function applyDeleteRefWorkflow(
 			.filter((value) => value !== undefined && value !== null);
 
 		for (const value of new Set(targetValues)) {
-			const relatedRows = await getRowsByValue(
-				transaction,
-				childTable,
-				childColumn,
-				value
-			);
+			const relatedRows = await getRowsByValue(trx, childTable, childColumn, value);
 
 			if (relatedRows.length === 0) continue;
 
@@ -310,9 +303,9 @@ export async function applyDeleteRefWorkflow(
 
 			switch (action) {
 				case 'cascade': {
-					await applyDeleteRefWorkflow(schema, childTable, relatedRows, transaction);
+					await applyDeleteRefWorkflow(schema, childTable, relatedRows, trx);
 
-					await deleteRowsByPrimaryKey(transaction, childTable, relatedRows, schema);
+					await deleteRowsByPrimaryKey(trx, childTable, relatedRows, schema);
 
 					break;
 				}
@@ -337,7 +330,7 @@ export async function applyDeleteRefWorkflow(
 					}
 
 					await updateRowsByColumn(
-						transaction,
+						trx,
 						childTable,
 						relatedRows,
 						childColumn,
@@ -359,14 +352,14 @@ export async function applyDeleteRefWorkflow(
  * @param tableName The table name
  * @param currentRow The current row
  * @param updatedRow The updated row
- * @param transaction The transaction
+ * @param trx The transaction
  */
 export async function applyUpdateRefWorkflow(
 	schema: Maybe<SchemaDefinition>,
 	tableName: string,
 	currentRow: GenericObject,
 	updatedRow: GenericObject,
-	transaction: IDBTransaction
+	trx: IDBTransaction
 ) {
 	if (!schema) return;
 
@@ -378,35 +371,24 @@ export async function applyUpdateRefWorkflow(
 		const oldValue = currentRow[targetColumn];
 		const newValue = updatedRow[targetColumn];
 
-		if (oldValue === newValue || newValue === undefined || newValue === null) continue;
+		if (oldValue === newValue || newValue == null) continue;
 
-		const relatedRows = await getRowsByValue(
-			transaction,
-			childTable,
-			childColumn,
-			oldValue
-		);
+		const relatedRows = await getRowsByValue(trx, childTable, childColumn, oldValue);
 
 		if (relatedRows.length === 0) continue;
 
-		const action = options?.onUpdate ?? 'noAction';
-
-		switch (action) {
+		switch (options?.onUpdate) {
 			case 'cascade': {
-				await updateRowsByColumn(
-					transaction,
-					childTable,
-					relatedRows,
-					childColumn,
-					newValue
-				);
+				await updateRowsByColumn(trx, childTable, relatedRows, childColumn, newValue);
 				break;
 			}
+
 			case 'restrict': {
 				throw new Error(
 					`Cannot update row in '${tableName}' because '${childTable}.${childColumn}' has a restrict reference.`
 				);
 			}
+
 			case 'setNull/Undefined': {
 				const { setNull, makeOptional } = canSetNull(schema, childTable, childColumn);
 
@@ -417,14 +399,16 @@ export async function applyUpdateRefWorkflow(
 				}
 
 				await updateRowsByColumn(
-					transaction,
+					trx,
 					childTable,
 					relatedRows,
 					childColumn,
 					setNull ? null : undefined
 				);
+
 				break;
 			}
+
 			default:
 				break;
 		}

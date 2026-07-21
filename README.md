@@ -72,20 +72,29 @@ await db.update('users').set({ name: 'Alice in Wonderland' }).where('id', 1).run
 await db.delete('users').where('id', 1).run();
 ```
 
----
-
-## 📖 Full Documentation
-
 For advanced usages and a complete reference, please visit the documentation website:
 
 👉 **<https://locality.nazmul-nhb.dev>**
 
-Our docs site covers:
+---
 
-- **Core Concepts**: Declarative schema definitions, advanced column type extensions, complex nested types (objects, arrays, maps, sets), and type inference.
-- **Detailed Guides**: Queries, predicate & index-based filtering, sorting, pagination, streaming, and transactions with automatic rollbacks.
-- **Import & Export**: How to backup and restore your database using JSON imports/exports.
-- **Full API Reference**: Complete signature descriptions for `Locality` class, column modifiers, query builders, validation rules, and TypeScript utility helpers.
+## ✨ Features
+
+`Locality IDB` comes packed with features designed to make `IndexedDB` **simple**, **type-safe**, and highly **performant**:
+
+- 🎯 **Type-Safe**: Full TypeScript support with automatic type inference.
+- 🔍 **SQL-like Queries**: Familiar query syntax inspired by Drizzle ORM.
+- 🔒 **Transactions**: Execute multiple operations across tables with automatic rollback on failure.
+- 🗄️ **Foreign Key References**: Define relationships between tables with foreign key references.
+- 🚀 **Modern API**: Clean and intuitive interface for `IndexedDB` operations.
+- 📦 **Zero Dependencies**: Comes with zero runtime dependencies.
+- 🔄 **Auto-Generation**: Automatic UUID and timestamp generation during insertions.
+- 🎨 **Schema-First**: Define your database schema with a simple, declarative API.
+- 🛠️ **Rich Column Types**: Support for various data types including custom types.
+- ✅ **Built-in Validation**: Validation for built-in column types during insert and update operations.
+- 🔧 **Custom Validators**: Define custom validation logic for columns to enforce complex rules.
+- 📤 **Database Export**: Export database data as JSON for backup, migration, or debugging.
+- 📥 **Database Import**: Import exported data with `'merge'`, `'replace'`, or `'upsert'` modes.
 
 ---
 

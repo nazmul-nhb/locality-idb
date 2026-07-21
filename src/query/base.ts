@@ -72,7 +72,7 @@ export class BaseQuery<Row extends GenericObject, T extends Table> {
 	 * - It is less efficient than filtering by index, as it requires iterating over all rows in the store.
 	 * - Use this overload when you need to filter rows based on complex conditions that cannot be expressed using an index.
 	 *
-	 * @param predicate Filtering function
+	 * @param predicate Filtering function that receives each row and returns a boolean
 	 */
 	where(predicate: WherePredicate<Row>): this;
 

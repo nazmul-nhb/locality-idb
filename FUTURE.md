@@ -2,6 +2,8 @@
 
 ## 1. References ⭐⭐⭐⭐⭐
 
+- [x] Implemented the `ref` method (2nd version of the example) for foreign key references.
+
 > [!NOTE]
 > Will be implemented later
 

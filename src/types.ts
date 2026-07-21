@@ -616,5 +616,5 @@ export type ValidateRefs<S extends ColumnRecord> =
 	}
 		? S
 		: {
-				'Error...': `Invalid reference(s) found in table ${Extract<keyof S, string>}`;
+				Error: `Invalid reference(s) found in table ${Extract<keyof S, string>}`;
 			};
