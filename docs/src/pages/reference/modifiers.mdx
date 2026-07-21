@@ -94,3 +94,47 @@ import { OnUpdate } from 'locality-idb';
 const updater = updatableColumn[OnUpdate];
 ```
 :::
+
+### `ref(refPath, options)`
+Creates a foreign-key-style relationship to another table column.
+
+```typescript
+ref(refPath: string, options?: RefOptions): Column
+```
+
+Use it to model relationships such as `posts.userId -> users.id`:
+
+```typescript
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+  },
+  posts: {
+    id: column.int().pk().auto(),
+    userId: column.int().ref('users.id', {
+      onDelete: 'cascade',
+      onUpdate: 'cascade',
+    }),
+    title: column.text(),
+  },
+});
+```
+
+#### Runtime behavior
+- Insert validation checks that the referenced row exists before the write is accepted.
+- Insert validation also verifies the source and target column types are exactly the same.
+- Update validation follows the same rules for changed values.
+- Delete and update actions honor the configured `onDelete` and `onUpdate` strategy.
+
+Supported actions:
+- `noAction` (default)
+- `cascade`
+- `restrict`
+- `setNull/Undefined`
+
+`setNull/Undefined` only works when the child column is marked with `nullable()` or `optional()`.
+
+:::warning[Important]
+Reference validation is enforced before the insert loop starts, so invalid references abort the operation and roll back the transaction instead of partially writing data.
+:::

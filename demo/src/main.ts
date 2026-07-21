@@ -1,507 +1,434 @@
 import './style.css';
 
-import './test';
-
-import type { InferInsertType, InferSelectType, InferUpdateType, Maybe } from 'locality';
+import type { InferInsertType } from 'locality';
 import {
 	column,
 	defineSchema,
 	deleteDB,
-	// getTimestamp,
+	getTimestamp,
 	Locality,
-	table,
-	uuidV4,
+	validateColumnType,
 } from 'locality';
-import { getTimestamp, isValidArray } from 'nhb-toolbox';
-import { uuid } from 'nhb-toolbox/hash';
-import { Stylog } from 'nhb-toolbox/stylog';
-import { runAllTests } from './transaction-export';
+import { runDemoSuite } from './demo-suite';
 
-let todos: Partial<Todo>[] = [];
+type OperationKind = 'info' | 'success' | 'error';
 
-const todoInput = document.getElementById('todoInput') as HTMLInputElement;
-const addBtn = document.getElementById('addBtn') as HTMLButtonElement;
-const todoList = document.getElementById('todoList') as HTMLUListElement;
-const clearCompletedBtn = document.getElementById('clearCompleted') as HTMLButtonElement;
-const statsCompleted = document.getElementById('statsCompleted') as HTMLSpanElement;
-const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
-
-const customSchema = {
-	test: table('test', {
-		serial: column.int().pk().auto(),
-		task: column.string().index(),
-		completed: column.bool().default(false),
-		uuid: column.uuid().default(uuid({ version: 'v6' })),
-		timestamp: column
-			.timestamp()
-			.optional()
-			.onUpdate((p) => (p ? p : undefined))
-			.validate((v) => v),
-		createdAt: column.timestamp(),
-		test: column.tuple<0 | 9>(),
-	}),
-};
-
-export type _Test1 = InferSelectType<typeof customSchema.test>;
-export type _Test2 = InferInsertType<typeof customSchema.test>;
-export type _Test3 = InferUpdateType<typeof customSchema.test>;
+interface TerminalEntry {
+	kind: OperationKind;
+	message: string;
+}
 
 const schema = defineSchema({
-	todos: {
-		serial: column.int().pk().auto(),
-		task: column.text().unique(),
-		completed: column.bool().default(false),
-		uuid: column.uuid().default(uuid({ version: 'v6' })),
-		timestamp: column.timestamp().nullable(),
-		number: column.number().default(0),
-		custom: column.custom<{ price: number }>().default({ price: 0 }),
-		createdAt: column.timestamp(),
-		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
-		url: column.url().nullable(),
+	users: {
+		id: column.int().pk().auto(),
+		name: column.text(),
+		email: column.text().unique(),
+		score: column.int().default(0),
+		createdAt: column.timestamp().default(getTimestamp()),
 	},
-	experiments: {
-		id: column.float().pk().auto(),
-		name: column.text().index(),
-		task: column.int().nullable().ref('todos.serial', { onDelete: 'cascade' }),
-		active: column
-			.bool<true>()
-			.default(true)
-			.validate((v) => (v ? null : 'Active must be true')),
-		email: column.email().optional(),
-		url: column.url().optional(),
+	posts: {
+		id: column.int().pk().auto(),
+		userId: column.int().ref('users.id', { onDelete: 'cascade', onUpdate: 'cascade' }),
+		title: column.text(),
+		likes: column.int().default(0),
+		createdAt: column.timestamp().default(getTimestamp()),
 	},
-
-	test1: customSchema.test.columns,
+	comments: {
+		id: column.int().pk().auto(),
+		postId: column.int().ref('posts.id', { onDelete: 'cascade', onUpdate: 'cascade' }),
+		body: column.text(),
+		createdAt: column.timestamp().default(getTimestamp()),
+	},
+	auditLogs: {
+		id: column.int().pk().auto(),
+		event: column.text(),
+		createdAt: column.timestamp().default(getTimestamp()),
+	},
 });
 
-// schema.todos.columns.serial
+export type SchemaType = typeof schema;
 
-type SchemaType = typeof schema;
+type InsertUser = InferInsertType<SchemaType['users']>;
+type InsertPost = InferInsertType<SchemaType['posts']>;
 
-type Todo = InferSelectType<SchemaType['todos']>;
-type InsertTodo = InferInsertType<SchemaType['todos']>;
-type UpdateTodo = InferUpdateType<SchemaType['todos']>;
-
-// type _I = IndexKeyType<SchemaType['todos']>;
-// type _P = PrimaryKeyType<SchemaType['todos']>;
-// type _U = UniqueKeyType<SchemaType['todos']>;
-
-const db = new Locality({
-	dbName: 'todo-db',
-	version: 45,
+export const db = new Locality({
+	dbName: 'locality-demo-db',
+	version: 3,
 	schema,
 });
 
-// Load todos from IndexedDB
-const loadTodos = async () => {
-	const base = db.from('todos');
-
-	const todosS = await base
-		.select({ serial: true, task: true, completed: true, createdAt: true, updatedAt: true })
-		.sortByIndex('serial', 'desc')
-		.findAll();
-
-	const count = await base.count();
-
-	const test1 = await base.where('serial', 8).exists();
-	const test2 = await base.findByPk(1);
-
-	console.info({ count, test1, test2 });
-
-	todos = todosS;
-
-	console.info(todosS);
-
-	const test = await db
-		.from('todos')
-		.select({
-			serial: true,
-			task: true,
-		})
-		.findByIndex('task', 'g');
-
-	console.info({ test });
-
-	const calc = base.select({
-		serial: true,
-		task: true,
-		number: true,
-		completed: true,
-		createdAt: true,
-		updatedAt: true,
-	});
-
-	console.info(await calc.where((t) => t.serial > 9).findAll());
-
-	const sum = await calc.sum('custom.price');
-	const avg = await calc.avg('custom.price');
-
-	const dist = await calc.distinct('custom');
-
-	console.info({ sum, avg });
-
-	console.info({ dist });
-
-	const min = await calc.min('number');
-	const max = await calc.max('number');
-
-	console.info({ min, max });
-
-	renderTodos();
-	updateStats();
+const ui = {
+	dbStatus: document.getElementById('dbStatus') as HTMLSpanElement,
+	versionBadge: document.getElementById('versionBadge') as HTMLSpanElement,
+	dbNameValue: document.getElementById('dbNameValue') as HTMLElement,
+	versionValue: document.getElementById('versionValue') as HTMLElement,
+	tableCountValue: document.getElementById('tableCountValue') as HTMLElement,
+	storeListValue: document.getElementById('storeListValue') as HTMLElement,
+	schemaList: document.getElementById('schemaList') as HTMLUListElement,
+	resultOutput: document.getElementById('resultOutput') as HTMLPreElement,
+	terminalList: document.getElementById('terminalList') as HTMLOListElement,
+	insertUserBtn: document.getElementById('insertUserBtn') as HTMLButtonElement,
+	insertPostBtn: document.getElementById('insertPostBtn') as HTMLButtonElement,
+	seedDemoBtn: document.getElementById('seedDemoBtn') as HTMLButtonElement,
+	updatePostBtn: document.getElementById('updatePostBtn') as HTMLButtonElement,
+	deletePostBtn: document.getElementById('deletePostBtn') as HTMLButtonElement,
+	deleteUserBtn: document.getElementById('deleteUserBtn') as HTMLButtonElement,
+	loadUsersBtn: document.getElementById('loadUsersBtn') as HTMLButtonElement,
+	loadPostsBtn: document.getElementById('loadPostsBtn') as HTMLButtonElement,
+	countBtn: document.getElementById('countBtn') as HTMLButtonElement,
+	existsBtn: document.getElementById('existsBtn') as HTMLButtonElement,
+	aggregateBtn: document.getElementById('aggregateBtn') as HTMLButtonElement,
+	pageBtn: document.getElementById('pageBtn') as HTMLButtonElement,
+	streamBtn: document.getElementById('streamBtn') as HTMLButtonElement,
+	transactionBtn: document.getElementById('transactionBtn') as HTMLButtonElement,
+	exportBtn: document.getElementById('exportBtn') as HTMLButtonElement,
+	importBtn: document.getElementById('importBtn') as HTMLButtonElement,
+	clearAllBtn: document.getElementById('clearAllBtn') as HTMLButtonElement,
+	clearTableBtn: document.getElementById('clearTableBtn') as HTMLButtonElement,
+	dropTableBtn: document.getElementById('dropTableBtn') as HTMLButtonElement,
+	deleteDbBtn: document.getElementById('deleteDbBtn') as HTMLButtonElement,
+	runSuiteBtn: document.getElementById('runSuiteBtn') as HTMLButtonElement,
+	userNameInput: document.getElementById('userNameInput') as HTMLInputElement,
+	userEmailInput: document.getElementById('userEmailInput') as HTMLInputElement,
+	postTitleInput: document.getElementById('postTitleInput') as HTMLInputElement,
+	postUserIdInput: document.getElementById('postUserIdInput') as HTMLInputElement,
+	rowIdInput: document.getElementById('rowIdInput') as HTMLInputElement,
+	likesInput: document.getElementById('likesInput') as HTMLInputElement,
+	tableTargetInput: document.getElementById('tableTargetInput') as HTMLInputElement,
 };
 
-// Render todos to the DOM
-const renderTodos = () => {
-	todoList.innerHTML = '';
+const terminalEntries: TerminalEntry[] = [];
 
-	if (todos.length === 0) {
-		todoList.innerHTML = /*html*/ `
-      <li class="text-center text-gray-400 py-8">No todos yet! Add one to get started!</li>
-    `;
-		return;
+function pushEntry(kind: OperationKind, message: string) {
+	terminalEntries.push({ kind, message });
+	const item = document.createElement('li');
+	item.className = kind;
+	item.textContent = message;
+	ui.terminalList.appendChild(item);
+}
+
+function setResult(payload: unknown) {
+	ui.resultOutput.textContent = JSON.stringify(payload, null, 2);
+}
+
+async function refreshSnapshot() {
+	await db.ready();
+	ui.dbStatus.textContent = 'Ready';
+	ui.versionBadge.textContent = `v${db.version}`;
+	ui.dbNameValue.textContent = db.dbName;
+	ui.versionValue.textContent = String(db.version);
+	ui.tableCountValue.textContent = String(db.tableList.length);
+	ui.storeListValue.textContent = db.tableList.join(', ') || '—';
+
+	ui.schemaList.innerHTML = '';
+	for (const [tableName, table] of Object.entries(schema)) {
+		const item = document.createElement('li');
+		item.textContent = `${tableName}: ${Object.keys(table.columns).join(', ')}`;
+		ui.schemaList.appendChild(item);
 	}
+}
 
-	todos.forEach((todo) => {
-		const li = document.createElement('li');
-		li.className = `flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group`;
+async function ensureSeedData() {
+	const count = await db.from('users').count();
+	if (count > 0) return;
 
-		const checkbox = document.createElement('input');
-		checkbox.type = 'checkbox';
-		checkbox.checked = todo?.completed ?? false;
-		checkbox.className = 'w-5 h-5 cursor-pointer accent-blue-600';
-		checkbox.addEventListener('change', () =>
-			toggleTodo(todo.serial, {
-				completed: !todo.completed,
-				// updatedAt: new Chronos().toLocalISOString(),
-			})
-		);
+	await db.seed('users', [
+		{ name: 'Ada', email: 'ada@example.com', score: 10 },
+		{ name: 'Grace', email: 'grace@example.com', score: 7 },
+	]);
 
-		const span = document.createElement('span');
-		span.textContent = `${todo.task} at ${todo.createdAt}`;
-		span.className = `flex-1 text-gray-800 ${
-			todo.completed ? 'line-through text-green-600' : ''
-		}`;
+	const users = await db.from('users').findAll();
+	await db.seed('posts', [
+		{ userId: users[0].id, title: 'Ref validation', likes: 3 },
+		{ userId: users[1].id, title: 'Transactions', likes: 8 },
+	]);
 
-		const deleteBtn = document.createElement('button');
-		deleteBtn.textContent = 'Delete';
-		deleteBtn.className = `px-3 py-1 text-sm font-semibold bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100`;
+	await db.seed('comments', [
+		{ postId: 1, body: 'Great example' },
+		{ postId: 2, body: 'Works well' },
+	]);
 
-		deleteBtn.addEventListener('click', () => removeTodo(todo.serial));
+	await db.insert('auditLogs').values({ event: 'seed' }).run();
+	pushEntry('success', 'Seeded demo data into users, posts, comments, and auditLogs.');
+}
 
-		li.appendChild(checkbox);
-		li.appendChild(span);
-		li.appendChild(deleteBtn);
-		todoList.appendChild(li);
-	});
-};
+async function reloadViews() {
+	await refreshSnapshot();
+	const [users, posts] = await Promise.all([
+		db.from('users').findAll(),
+		db.from('posts').findAll(),
+	]);
+	setResult({ users, posts });
+}
 
-// Add a new todo
-const handleAddTodo = async () => {
-	const task = todoInput.value.trim();
-
-	if (!task) {
-		alert('Please enter a task!');
-		return;
-	}
-
-	const newTodo: InsertTodo = {
-		task,
-		timestamp: null,
+async function handleInsertUser() {
+	const payload: InsertUser = {
+		name: ui.userNameInput.value.trim(),
+		email: ui.userEmailInput.value.trim(),
+		score: 1,
 	};
 
-	// await addTodo(newTodo);
+	const inserted = await db.insert('users').values(payload).run();
+	setResult(inserted);
+	pushEntry('success', `Inserted user ${inserted.name}`);
+	await reloadViews();
+}
 
-	try {
-		const inserted = await db.insert('todos').values(newTodo).run();
+async function handleInsertPost() {
+	const payload: InsertPost = {
+		userId: Number(ui.postUserIdInput.value),
+		title: ui.postTitleInput.value.trim(),
+		likes: 1,
+	};
 
-		console.dir(inserted);
-	} catch (error) {
-		if (error instanceof Error) {
-			alert(error.message);
-		}
+	const inserted = await db.insert('posts').values(payload).run();
+	setResult(inserted);
+	pushEntry('success', `Inserted post ${inserted.title}`);
+	await reloadViews();
+}
 
-		console.error(error);
-	}
-
-	todoInput.value = '';
-	await loadTodos();
-};
-
-// Toggle todo completion status
-const toggleTodo = async (id: Maybe<number>, update: UpdateTodo) => {
-	// const updatedTodo = { completed: !update.completed };
-	// await updateTodo(updatedTodo);
-	try {
-		await db
-			.update('todos')
-			// .set({ serial: 0 })
-			.set((row) => {
-				console.table([row]);
-				return {
-					number: (row.number + 1) * 2,
-					...update,
-					custom: { price: row.custom.price + 5 },
-				};
-			})
-			.where((t) => t.serial === id)
-			.run();
-	} catch (error) {
-		if (error instanceof Error) {
-			alert(error.message);
-		}
-
-		console.error(error);
-	}
-
-	await loadTodos();
-};
-
-// Remove a todo
-const removeTodo = async (id: Maybe<number>) => {
-	// await deleteTodo(id);
-	await db
-		.delete('todos')
-		.where((t) => t.serial === id)
+async function handleUpdatePost() {
+	const id = Number(ui.rowIdInput.value);
+	const likes = Number(ui.likesInput.value);
+	const updated = await db
+		.update('posts')
+		.set({ likes })
+		.where((row) => row.id === id)
 		.run();
-	await loadTodos();
-};
+	setResult({ updated });
+	pushEntry('success', `Updated ${updated} post rows.`);
+	await reloadViews();
+}
 
-// Clear all completed todos
-const handleClearCompleted = async () => {
-	const completedTodos = todos.filter((t) => t.completed);
-	for (const todo of completedTodos) {
-		// await deleteTodo(todo.id!);
-		await db
-			.delete('todos')
-			.where((t) => t.serial === todo.serial)
-			.run();
-	}
-	await loadTodos();
-};
+async function handleDeletePost() {
+	const id = Number(ui.rowIdInput.value);
+	const deleted = await db
+		.delete('posts')
+		.where((row) => row.id === id)
+		.run();
+	setResult({ deleted });
+	pushEntry('success', `Deleted ${deleted} post row(s).`);
+	await reloadViews();
+}
 
-// Update stats
-const updateStats = () => {
-	const completed = todos.filter((t) => t.completed).length;
-	statsCompleted.textContent = completed.toString();
-	statsTotal.textContent = todos.length.toString();
-};
+async function handleDeleteUser() {
+	const id = Number(ui.rowIdInput.value);
+	const deleted = await db
+		.delete('users')
+		.where((row) => row.id === id)
+		.run();
+	setResult({ deleted });
+	pushEntry('success', `Deleted ${deleted} user row(s).`);
+	await reloadViews();
+}
 
-// Event listeners
-addBtn.addEventListener('click', handleAddTodo);
-todoInput.addEventListener('keypress', (e) => {
-	if (e.key === 'Enter') handleAddTodo();
-});
-
-clearCompletedBtn.addEventListener('click', handleClearCompleted);
-
-const clearStoreBtn = document.getElementById('clearStoreBtn') as HTMLButtonElement;
-const clearDBBtn = document.getElementById('clearDBBtn') as HTMLButtonElement;
-const clearThisDBBtn = document.getElementById('clearThisDBBtn') as HTMLButtonElement;
-const exportDBBtn = document.getElementById('exportDBBtn') as HTMLButtonElement;
-
-const dbNameSelect = document.getElementById('dbNameSelect') as HTMLSelectElement;
-const tableNameSelect = document.getElementById('tableNameSelect') as HTMLSelectElement;
-const storeNameSelect = document.getElementById('storeNameSelect') as HTMLSelectElement;
-
-const prettyPrintInput = document.getElementById('prettyPrint') as HTMLInputElement;
-const includeMetaInput = document.getElementById('includeMeta') as HTMLInputElement;
-
-const populateExportTables = async () => {
-	await db.ready();
-
-	const existing = new Set([...tableNameSelect.options].map((opt) => opt.value.trim()));
-
-	for (const tableName of db.tableList) {
-		if (existing.has(tableName)) continue;
-
-		const option = document.createElement('option');
-
-		option.value = tableName;
-		option.textContent = tableName;
-
-		tableNameSelect.appendChild(option);
-	}
-};
-
-exportDBBtn.addEventListener('click', async () => {
-	const selected = tableNameSelect.value;
-	const tables = selected === '__all__' ? undefined : [selected as keyof SchemaType];
-
-	await db.$export({
-		tables,
-		pretty: prettyPrintInput.checked,
-		includeMetadata: includeMetaInput.checked,
-	});
-});
-
-// Initialize on page load
-window.addEventListener('load', async () => {
-	const dbNames = await db.dbList;
-
-	for (const { name, version } of dbNames) {
-		const option = document.createElement('option');
-
-		option.value = `${name}`;
-		option.textContent = `${name} (v${version})`;
-
-		dbNameSelect.appendChild(option);
-	}
-
-	await populateExportTables();
-
-	clearDBBtn.addEventListener('click', async () => {
-		const dbName = dbNameSelect.value;
-
-		if (!dbName) {
-			alert('Please select a database name!');
-			return;
-		}
-
-		await deleteDB(dbName);
-
-		location.reload();
-	});
-
-	clearThisDBBtn.addEventListener('click', async () => {
-		await db.deleteDB();
-
-		location.reload();
-	});
-
-	for (const storeName of db.tableList) {
-		const option = document.createElement('option');
-
-		option.value = storeName;
-		option.textContent = storeName;
-
-		storeNameSelect.appendChild(option);
-	}
-
-	clearStoreBtn.addEventListener('click', async () => {
-		const storeName = storeNameSelect.value;
-
-		if (!storeName) {
-			alert('Please select a store name!');
-			return;
-		}
-
-		await db.clearTable(storeName as keyof SchemaType);
-
-		await loadTodos();
-	});
-
-	await loadTodos();
-
-	const experiments = await db.from('experiments').findAll();
-
-	if (!isValidArray(experiments)) {
-		await db.seed('experiments', [
-			{ name: 'Aeto', email: 'nazmul@yahoo.com' },
-			{ name: 'Beto', url: 'https://example.com' },
-			{ name: 'Ceto' },
-			{ name: 'Deto' },
-			{ name: 'Eeto' },
-			{ name: 'Feto' },
-			{ name: 'Geto' },
-			{ name: 'Heto' },
-			{ name: 'Ieto' },
-			{ name: 'Jeto' },
-			{ name: 'Keto' },
-			{ name: 'Leto' },
-			{ name: 'Meto' },
-			{ name: 'Neto' },
-			{ name: 'Oeto' },
-			{ name: 'Peto' },
-			{ name: 'Qeto' },
-			{ name: 'Reto' },
-			{ name: 'Seto' },
-			{ name: 'Teto' },
-			{ name: 'Ueto' },
-			{ name: 'Veto' },
-			{ name: 'Weto' },
-			{ name: 'Xeto' },
-			{ name: 'Yeto' },
-			{ name: 'Zeto' },
-		]);
-	}
-
-	// console.table(experiments);
-
-	const ex1 = await db
-		.from('experiments')
-		.select({ id: true, name: true })
-		// .select({ id: true })
+async function runQueryDemo() {
+	const users = await db
+		.from('users')
+		.where((row) => row.email.includes('@'))
+		.select({ id: true, name: true, email: true })
 		.findAll();
-
-	const ex2 = await db
-		.from('experiments')
-		// .where((a) => a.name === 'Beto')
-		.select({ id: true, name: true })
-		.where('id', IDBKeyRange.bound(20, 29))
-		// .sortByIndex('id', 'asc')
+	const posts = await db
+		.from('posts')
+		.where((row) => row.likes > 0)
+		.select({ id: true, title: true, likes: true })
 		.findAll();
+	setResult({ users, posts });
+	pushEntry('info', 'Executed where/select queries against users and posts.');
+}
 
-	const ex3 = await db
-		.from('experiments')
-		.select({ id: true, name: true })
-		.findByIndex('name', IDBKeyRange.bound('A', 'B'));
+async function runCountExists() {
+	const [count, exists] = await Promise.all([
+		db.from('posts').count(),
+		db
+			.from('users')
+			.where((row) => row.email === 'ada@example.com')
+			.exists(),
+	]);
+	setResult({ count, exists });
+	pushEntry('info', 'Ran count() and exists() for the current dataset.');
+}
 
-	console.info({ ex1, ex2, ex3 });
-	// await db.deleteTable('experiments');
+async function runAggregation() {
+	const [sum, avg, distinct, min, max] = await Promise.all([
+		db.from('posts').sum('likes'),
+		db.from('posts').avg('likes'),
+		db.from('posts').distinct('title'),
+		db.from('posts').min('likes'),
+		db.from('posts').max('likes'),
+	]);
+	setResult({ sum, avg, distinct, min, max });
+	pushEntry('info', 'Computed aggregation helpers over the posts table.');
+}
 
-	const testWithToDo = await db.from('todos').where('task', 'hello').exists();
+async function runPagination() {
+	const page = await db.from('posts').sortByIndex('id').page({ limit: 2 });
+	setResult(page);
+	pushEntry('info', 'Paged through the posts table with page().');
+}
 
-	console.info(testWithToDo);
-
-	console.info(await db.dbList);
-	console.info(await Locality.getDatabaseList());
-
-	const page1 = await db
-		.from('experiments')
-		.select({ id: true, name: true })
-		// .orderBy('id', 'desc')
+async function runStream() {
+	const streamed: string[] = [];
+	await db
+		.from('posts')
 		.sortByIndex('id')
-		.page({ limit: 7 });
-
-	const page2 = await db
-		.from('experiments')
-		.select({ id: true, name: true })
-		// .orderBy('id', 'desc')
-		.sortByIndex('id')
-		.page({
-			limit: 5,
-			cursor: page1.nextCursor,
+		.stream((row) => {
+			streamed.push(row.title);
 		});
+	setResult({ streamed });
+	pushEntry('info', 'Streamed rows from the posts store.');
+}
 
-	console.info({ page1, page2 });
-	console.info(uuidV4());
-
-	// await db
-	// 	.from('experiments')
-	// 	.sortByIndex('id')
-	// 	.where('id', IDBKeyRange.lowerBound(8))
-	// 	.select({ name: true })
-	// 	.stream(async (row, idx) => {
-	// 		console.info(row, idx);
-	// 	});
-
-	await db.delete('todos').where('task', 'ff').run();
-
-	const exported = await db.exportToObject({
-		includeMetadata: true,
+async function runTransaction() {
+	await db.transaction(['users', 'posts'], async (ctx) => {
+		const insertedUser = await ctx
+			.insert('users')
+			.values({ name: 'Nova', email: 'nova@example.com', score: 3 })
+			.run();
+		await ctx
+			.insert('posts')
+			.values({ userId: insertedUser.id, title: 'Transaction demo', likes: 4 })
+			.run();
 	});
+	setResult({ message: 'Transaction committed successfully' });
+	pushEntry(
+		'success',
+		'Committed a multi-table transaction with insert() from the transaction context.'
+	);
+	await reloadViews();
+}
 
-	console.info(exported);
+async function runExportImport() {
+	const exported = await db.exportToObject({ includeMetadata: true });
+	await db.clearAll();
+	await db.$import(exported.data, { mode: 'replace' });
+	setResult(exported);
+	pushEntry('success', 'Exported data and restored it through $import().');
+	await reloadViews();
+}
 
-	// await db.import(exported.data, { mode: 'replace', tables: ['experiments'] });
+async function handleClearAll() {
+	await db.clearAll();
+	pushEntry('success', 'Cleared all rows from every table.');
+	await reloadViews();
+}
 
-	// await db.dropTable('experiments');
+async function handleClearTable() {
+	const tableName = ui.tableTargetInput.value.trim() || 'posts';
+	await db.clearTable(tableName as keyof typeof schema);
+	pushEntry('success', `Cleared table ${tableName}.`);
+	await reloadViews();
+}
 
-	// Add test button event listener
-	const runTestsBtn = document.getElementById('runTestsBtn') as HTMLButtonElement;
-	runTestsBtn.addEventListener('click', async () => {
-		Stylog.green.bold.log('🚀 Starting feature tests...');
-		await runAllTests();
+async function handleDropTable() {
+	await db.dropTable('auditLogs');
+	pushEntry('success', 'Dropped the auditLogs table.');
+	await reloadViews();
+}
+
+async function handleDeleteDb() {
+	await db.deleteDB();
+	await deleteDB(db.dbName);
+	pushEntry('info', 'Deleted the database from IndexedDB.');
+	window.location.reload();
+}
+
+async function handleAppInit() {
+	await refreshSnapshot();
+	await ensureSeedData();
+	await reloadViews();
+	pushEntry('info', 'Locality demo loaded and ready.');
+}
+
+function bindTabs() {
+	for (const button of document.querySelectorAll<HTMLButtonElement>('.tab-btn')) {
+		button.addEventListener('click', () => {
+			for (const tab of document.querySelectorAll<HTMLElement>('.panel')) {
+				tab.classList.toggle('active', tab.id === `${button.dataset.target}`);
+			}
+			for (const tabButton of document.querySelectorAll<HTMLButtonElement>('.tab-btn')) {
+				tabButton.classList.toggle('active', tabButton === button);
+			}
+		});
+	}
+}
+
+function bindEvents() {
+	ui.insertUserBtn.addEventListener('click', () => {
+		void handleInsertUser();
 	});
-});
+	ui.insertPostBtn.addEventListener('click', () => {
+		void handleInsertPost();
+	});
+	ui.seedDemoBtn.addEventListener('click', () => {
+		void ensureSeedData();
+	});
+	ui.updatePostBtn.addEventListener('click', () => {
+		void handleUpdatePost();
+	});
+	ui.deletePostBtn.addEventListener('click', () => {
+		void handleDeletePost();
+	});
+	ui.deleteUserBtn.addEventListener('click', () => {
+		void handleDeleteUser();
+	});
+	ui.loadUsersBtn.addEventListener('click', () => {
+		void runQueryDemo();
+	});
+	ui.loadPostsBtn.addEventListener('click', () => {
+		void runQueryDemo();
+	});
+	ui.countBtn.addEventListener('click', () => {
+		void runCountExists();
+	});
+	ui.existsBtn.addEventListener('click', () => {
+		void runCountExists();
+	});
+	ui.aggregateBtn.addEventListener('click', () => {
+		void runAggregation();
+	});
+	ui.pageBtn.addEventListener('click', () => {
+		void runPagination();
+	});
+	ui.streamBtn.addEventListener('click', () => {
+		void runStream();
+	});
+	ui.transactionBtn.addEventListener('click', () => {
+		void runTransaction();
+	});
+	ui.exportBtn.addEventListener('click', () => {
+		void runExportImport();
+	});
+	ui.importBtn.addEventListener('click', () => {
+		void runExportImport();
+	});
+	ui.clearAllBtn.addEventListener('click', () => {
+		void handleClearAll();
+	});
+	ui.clearTableBtn.addEventListener('click', () => {
+		void handleClearTable();
+	});
+	ui.dropTableBtn.addEventListener('click', () => {
+		void handleDropTable();
+	});
+	ui.deleteDbBtn.addEventListener('click', () => {
+		void handleDeleteDb();
+	});
+	ui.runSuiteBtn.addEventListener('click', () => {
+		void runDemoSuite(db, pushEntry, setResult, reloadViews, refreshSnapshot);
+	});
+}
+
+void (async () => {
+	bindTabs();
+	bindEvents();
+	try {
+		await handleAppInit();
+		pushEntry('info', `Validation helper: ${validateColumnType('int', 3)}`);
+	} catch (error) {
+		pushEntry(
+			'error',
+			error instanceof Error ? error.message : 'Unexpected failure during initialization.'
+		);
+	}
+})();

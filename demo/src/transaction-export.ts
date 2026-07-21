@@ -1,4 +1,4 @@
-import type { InferInsertType, InferSelectType, Timestamp } from 'locality';
+import type { InferInsertType, InferSelectType } from 'locality';
 import { column, defineSchema, Locality } from 'locality';
 import { Chronos } from 'nhb-toolbox/chronos';
 
@@ -8,21 +8,21 @@ const testSchema = defineSchema({
 		id: column.int().pk().auto(),
 		name: column.text(),
 		email: column.text().unique(),
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
+		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
 	},
 	posts: {
 		id: column.int().pk().auto(),
 		userId: column.int().index(),
 		title: column.text(),
 		content: column.text(),
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
+		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
 	},
 	comments: {
 		id: column.int().pk().auto(),
 		postId: column.int().index(),
 		userId: column.int().index(),
 		text: column.text(),
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString() as Timestamp),
+		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
 	},
 });
 
