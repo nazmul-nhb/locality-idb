@@ -1,4 +1,4 @@
-import { IsNullable, IsOptional, IsPrimaryKey, RefMeta } from '../symbols';
+import { ColumnType, IsNullable, IsOptional, IsPrimaryKey, RefMeta } from '../symbols';
 import type { GenericObject, Maybe, RefOptions, SchemaDefinition } from '../types';
 
 /**
@@ -57,6 +57,34 @@ export function getRefWorkflowTables(schema: Maybe<SchemaDefinition>, tableName:
 
 	for (const relation of getRefRelations(schema, tableName)) {
 		tables.add(relation.childTable);
+	}
+
+	return [...tables];
+}
+
+/**
+ * @internal Private function for getting referenced target tables for a table
+ * @param schema The schema definition
+ * @param tableName The table name
+ * @returns Array of target table names
+ */
+export function getRefTargetTables(schema: Maybe<SchemaDefinition>, tableName: string) {
+	const tables = new Set<string>([tableName]);
+
+	const table = schema?.[tableName];
+
+	if (!table) return [...tables];
+
+	for (const column of Object.values(table.columns)) {
+		const refMeta = column[RefMeta];
+
+		if (!refMeta) continue;
+
+		const [targetTable] = refMeta.refPath.split('.');
+
+		if (targetTable) {
+			tables.add(targetTable);
+		}
 	}
 
 	return [...tables];
@@ -179,6 +207,69 @@ function updateRowsByColumn(
 			});
 		})
 	);
+}
+
+/**
+ * Applies the insert referential integrity workflow
+ * @param schema The schema definition
+ * @param tableName The table name
+ * @param rows The rows to insert
+ * @param transaction The transaction
+ */
+export async function applyInsertRefWorkflow(
+	schema: Maybe<SchemaDefinition>,
+	tableName: string,
+	rows: GenericObject[],
+	transaction: IDBTransaction
+) {
+	if (!schema || rows.length === 0) return;
+
+	const table = schema[tableName];
+
+	if (!table) return;
+
+	for (const row of rows) {
+		for (const [columnName, column] of Object.entries(table.columns)) {
+			const refMeta = column[RefMeta];
+
+			if (!refMeta) continue;
+
+			const value = row[columnName];
+
+			if (value == null) continue;
+
+			const [targetTable, targetColumn] = refMeta.refPath.split('.');
+			const targetColumnDefinition = schema?.[targetTable]?.columns?.[targetColumn];
+
+			if (!targetColumnDefinition) {
+				throw new Error(
+					`Cannot resolve reference '${refMeta.refPath}' for '${tableName}.${columnName}'.`
+				);
+			}
+
+			const sourceType = column[ColumnType];
+			const targetType = targetColumnDefinition[ColumnType];
+
+			if (sourceType !== targetType) {
+				throw new Error(
+					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' has type '${sourceType}' but '${targetTable}.${targetColumn}' has type '${targetType}'.`
+				);
+			}
+
+			const relatedRows = await getRowsByValue(
+				transaction,
+				targetTable,
+				targetColumn,
+				value
+			);
+
+			if (relatedRows.length === 0) {
+				throw new Error(
+					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' references '${targetTable}.${targetColumn}' value '${String(value)}' that does not exist.`
+				);
+			}
+		}
+	}
 }
 
 /**

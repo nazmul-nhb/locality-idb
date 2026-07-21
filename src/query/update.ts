@@ -14,7 +14,7 @@ import type {
 	WherePredicate,
 } from '../types';
 import { _validateAndPrepareData } from '../validators';
-import { applyUpdateRefWorkflow } from './_ref';
+import { applyUpdateRefWorkflow, getRefWorkflowTables } from './_ref';
 
 /** @class Update query builder. */
 export class UpdateQuery<Row extends GenericObject, T extends Table> {
@@ -39,8 +39,8 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
 		keyPath?: string,
-		transaction?: IDBTransaction,
-		schema?: SchemaDefinition
+		schema?: SchemaDefinition,
+		transaction?: IDBTransaction
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
@@ -80,7 +80,7 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 		}
 
 		// Primary keys use store directly, indexes use store.index()
-		return isPK ? store : store.index(this.#whereIndexName as string);
+		return isPK ? store : this.#whereIndexName ? store.index(this.#whereIndexName) : null;
 	}
 
 	/**
@@ -148,7 +148,8 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 		const dataToUpdate = this.#dataToUpdate;
 
 		return new Promise((resolve, reject) => {
-			const trx = this.#trx ?? this.#dbGetter().transaction(this.#table, 'readwrite');
+			const tables = getRefWorkflowTables(this.#schema, this.#table);
+			const trx = this.#trx ?? this.#dbGetter().transaction(tables, 'readwrite');
 			const store = trx.objectStore(this.#table);
 
 			let request: IDBRequest<Row[]>;

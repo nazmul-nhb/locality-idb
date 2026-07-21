@@ -10,7 +10,7 @@ import type {
 	SchemaDefinition,
 	WherePredicate,
 } from '../types';
-import { applyDeleteRefWorkflow } from './_ref';
+import { applyDeleteRefWorkflow, getRefWorkflowTables } from './_ref';
 
 /** @class Delete query builder. */
 export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T extends Table> {
@@ -30,8 +30,8 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
 		keyField: Key,
-		transaction?: IDBTransaction,
-		schema?: SchemaDefinition
+		schema?: SchemaDefinition,
+		transaction?: IDBTransaction
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
@@ -114,8 +114,10 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 		await this.#readyPromise;
 
 		return new Promise((resolve, reject) => {
-			const trx = this.#trx ?? this.#dbGetter().transaction(this.#table, 'readwrite');
+			const tables = getRefWorkflowTables(this.#schema, this.#table);
+			const trx = this.#trx ?? this.#dbGetter().transaction(tables, 'readwrite');
 			const store = trx.objectStore(this.#table);
+
 			let request: IDBRequest<Row[]>;
 
 			if (this.#whereIndexName && this.#whereIndexQuery != null) {

@@ -51,7 +51,7 @@ export class SelectQuery<
 	#limitCount?: number;
 	#useIndexCursor?: boolean;
 
-	#transaction?: IDBTransaction;
+	#trx?: IDBTransaction;
 
 	declare [Selected]?: Sel;
 
@@ -65,7 +65,7 @@ export class SelectQuery<
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 
-		this.#transaction = transaction;
+		this.#trx = transaction;
 	}
 
 	/** @internal Clone this query into a new instance with all current state */
@@ -74,7 +74,7 @@ export class SelectQuery<
 			this.#table,
 			this.#dbGetter,
 			this.#readyPromise,
-			this.#transaction
+			this.#trx
 		);
 
 		query[Selected] = this[Selected];
@@ -135,10 +135,9 @@ export class SelectQuery<
 
 	/** @internal Create a readonly transaction and return the store */
 	#getStore(): { transaction: IDBTransaction; store: IDBObjectStore } {
-		const transaction =
-			this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readonly');
-		const store = transaction.objectStore(this.#table);
-		return { transaction, store };
+		const trx = this.#trx ?? this.#dbGetter().transaction(this.#table, 'readonly');
+		const store = trx.objectStore(this.#table);
+		return { transaction: trx, store };
 	}
 
 	/** @internal Check if key is an index on the store for the `#whereIndexName` */
@@ -170,7 +169,7 @@ export class SelectQuery<
 		}
 
 		// Primary keys use store directly, indexes use store.index()
-		return isPK ? store : store.index(this.#whereIndexName as string);
+		return isPK ? store : this.#whereIndexName ? store.index(this.#whereIndexName) : null;
 	}
 
 	/** @internal Sort data in memory if needed */

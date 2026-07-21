@@ -219,7 +219,8 @@ export class Locality<
 			() => this.#db,
 			this.#readyPromise,
 			this.#schema[table].columns,
-			this.#keyPaths[table]
+			this.#keyPaths[table],
+			this.#schema
 		);
 	}
 
@@ -234,7 +235,6 @@ export class Locality<
 			this.#readyPromise,
 			this.#schema[table].columns,
 			this.#keyPaths[table],
-			undefined,
 			this.#schema
 		);
 	}
@@ -249,7 +249,6 @@ export class Locality<
 			() => this.#db,
 			this.#readyPromise,
 			this.#extractTablePk<T, Row>(table),
-			undefined,
 			this.#schema
 		);
 	}
@@ -332,7 +331,8 @@ export class Locality<
 			() => this.#db,
 			this.#readyPromise,
 			this.#schema[table].columns,
-			this.#keyPaths[table]
+			this.#keyPaths[table],
+			this.#schema
 		);
 
 		return await insertQuery.values(data).run();
@@ -395,6 +395,7 @@ export class Locality<
 					this.#readyPromise,
 					this.#schema[table].columns,
 					this.#keyPaths[table],
+					this.#schema,
 					transaction
 				);
 			},
@@ -406,8 +407,8 @@ export class Locality<
 					this.#readyPromise,
 					this.#schema[table].columns,
 					this.#keyPaths[table],
-					transaction,
-					this.#schema
+					this.#schema,
+					transaction
 				);
 			},
 
@@ -419,8 +420,8 @@ export class Locality<
 					() => this.#db,
 					this.#readyPromise,
 					this.#extractTablePk<T, Row>(table),
-					transaction,
-					this.#schema
+					this.#schema,
+					transaction
 				);
 			},
 		};

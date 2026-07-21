@@ -1,7 +1,8 @@
 import { _abortTransaction } from '../helpers';
 import { IsArray } from '../symbols';
-import type { ColumnDefinition, GenericObject, IDBGetter } from '../types';
+import type { ColumnDefinition, GenericObject, IDBGetter, SchemaDefinition } from '../types';
 import { _validateAndPrepareData } from '../validators';
+import { applyInsertRefWorkflow, getRefTargetTables } from './_ref';
 
 /** @class Insert query builder. */
 export class InsertQuery<
@@ -15,10 +16,11 @@ export class InsertQuery<
 	#readyPromise: Promise<void>;
 	#dataToInsert: Ins[] = [];
 	#columns?: ColumnDefinition;
+	#schema?: SchemaDefinition;
 	// TODO: Handle multiple primary keys later
 	#keyPath?: string;
 
-	#transaction?: IDBTransaction;
+	#trx?: IDBTransaction;
 
 	declare [IsArray]: boolean;
 
@@ -28,15 +30,17 @@ export class InsertQuery<
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
 		keyPath?: string,
+		schema?: SchemaDefinition,
 		transaction?: IDBTransaction
 	) {
 		this.#table = table;
 		this.#dbGetter = dbGetter;
 		this.#readyPromise = readyPromise;
 		this.#columns = columns;
+		this.#schema = schema;
 		this.#keyPath = keyPath;
 
-		this.#transaction = transaction;
+		this.#trx = transaction;
 	}
 
 	/**
@@ -64,28 +68,37 @@ export class InsertQuery<
 			return (this[IsArray] ? [] : {}) as Return;
 		}
 
-		return new Promise((resolve, reject) => {
-			const transaction =
-				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
-			const store = transaction.objectStore(this.#table);
+		const tables = getRefTargetTables(this.#schema, this.#table);
+		const trx = this.#trx ?? this.#dbGetter().transaction(tables, 'readwrite');
+		const store = trx.objectStore(this.#table);
 
+		const preparedData = toBeInserted.map((data) =>
+			_validateAndPrepareData(data, this.#columns, this.#keyPath, this.#table)
+		);
+
+		try {
+			await applyInsertRefWorkflow(this.#schema, this.#table, preparedData, trx);
+		} catch (error) {
+			trx.abort();
+			throw error;
+		}
+
+		return new Promise((resolve, reject) => {
 			const insertedDocs: Data[] = [];
 			const insertedKeys: IDBValidKey[] = [];
 			let insertCompleted = 0;
 
 			// Start all insert operations
-			for (const data of toBeInserted) {
-				const request = store.add(
-					_validateAndPrepareData(data, this.#columns, this.#keyPath, this.#table)
-				);
+			for (const data of preparedData) {
+				const request = store.add(data);
 
 				request.onsuccess = () => {
 					insertedKeys.push(request.result);
 					insertCompleted++;
 
 					// When all inserts complete, read the data back
-					if (insertCompleted === toBeInserted.length) {
-						if (this.#transaction) {
+					if (insertCompleted === preparedData.length) {
+						if (this.#trx) {
 							// In transaction context: read from same transaction
 							let readCompleted = 0;
 
@@ -116,8 +129,8 @@ export class InsertQuery<
 			}
 
 			// If not in a transaction context, wait for transaction to complete and then read
-			if (!this.#transaction) {
-				transaction.oncomplete = () => {
+			if (!this.#trx) {
+				trx.oncomplete = () => {
 					// Retrieve all inserted documents after successful transaction
 					const readTx = this.#dbGetter().transaction(this.#table, 'readonly');
 					const readStore = readTx.objectStore(this.#table);
@@ -144,9 +157,9 @@ export class InsertQuery<
 			}
 
 			// Handle transaction abort (happens on errors like unique constraint violations)
-			transaction.onabort = () => _abortTransaction(transaction.error, reject);
+			trx.onabort = () => _abortTransaction(trx.error, reject);
 
-			transaction.onerror = () => reject(transaction.error);
+			trx.onerror = () => reject(trx.error);
 		});
 	}
 }
