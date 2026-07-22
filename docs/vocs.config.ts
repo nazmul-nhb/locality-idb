@@ -118,7 +118,7 @@ export default defineConfig({
 				{ text: 'Schema Functions', link: '/reference/schema-fns' },
 				{ text: 'Column Modifiers', link: '/reference/modifiers' },
 				{ text: 'Query Builders', link: '/reference/queries' },
-				{ text: 'Utilities', link: '/reference/utilities' },
+				{ text: 'Utility Functions', link: '/reference/utilities' },
 				{ text: 'Validation Rules', link: '/reference/validation' },
 			],
 		},

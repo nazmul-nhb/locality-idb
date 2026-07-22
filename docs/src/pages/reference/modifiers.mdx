@@ -52,11 +52,15 @@ column.bool().default(true)
 column.text().default('N/A')
 ```
 
-## `default(callback)`
+### `default(callback)`
 Sets a default value for the column using a callback function. The callback is executed at insert time, allowing for dynamic default values based on the current context or other factors.
 
 ```typescript
-column.timestamp().default(() => new Date().toISOString())
+column.string().default(() => {
+  const timestamp = new Date().toISOString();
+  // Do some logic to generate a default value based on the current timestamp or other factors
+  return `Created at ${timestamp}`;
+})
 ```
 
 ### `validate(validator)`

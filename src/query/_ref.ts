@@ -240,6 +240,9 @@ export async function applyInsertRefWorkflow(
 			if (value == null) continue;
 
 			const [targetTable, targetColumn] = refMeta.refPath.split('.');
+
+			console.log({ tableName, targetTable });
+
 			const targetColumnDefinition = schema?.[targetTable]?.columns?.[targetColumn];
 
 			if (!targetColumnDefinition) {
