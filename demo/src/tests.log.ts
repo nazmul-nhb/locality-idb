@@ -1,7 +1,7 @@
 import type { InferInsertType, InferSelectType } from 'locality';
 import { column, defineSchema, Locality } from 'locality';
 import { Stylog } from 'toolbox-x/stylog';
-import { errorMessage } from './codes';
+import { errorMessage } from './utils';
 
 // Test schema
 const testSchema = defineSchema({

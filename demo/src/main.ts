@@ -5,8 +5,6 @@ import { EditorState } from '@codemirror/state';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import {
-	column,
-	defineSchema,
 	type Email,
 	getTimestamp,
 	type ImportMode,
@@ -18,42 +16,19 @@ import {
 	uuidV4,
 	validateColumnType,
 } from 'locality';
-import { errorMessage, getValueOf, type Operation, operations, testFiles } from './codes';
+import { type Operation, operations, testFiles } from './codes';
+import { db, getRows, schema, type TableName } from './db';
+import {
+	errorMessage,
+	escapeHtml,
+	fileIcon,
+	getValueOf,
+	json,
+	requiredElement,
+	showToast,
+} from './utils';
 
-const schema = defineSchema({
-	users: {
-		id: column.int().pk().auto(),
-		name: column.text(),
-		email: column.email().unique(),
-		score: column.int().default(0).index(),
-		createdAt: column.timestamp().index(),
-	},
-	posts: {
-		id: column.int().pk().auto(),
-		userId: column
-			.int()
-			.ref('users.id', { onDelete: 'cascade', onUpdate: 'cascade' })
-			.index(),
-		title: column.text(),
-		likes: column.int().default(0).index(),
-		createdAt: column.timestamp().index(),
-	},
-	comments: {
-		id: column.int().pk().auto(),
-		postId: column.int().ref('posts.id', { onDelete: 'cascade' }).index(),
-		body: column.text(),
-		createdAt: column.timestamp(),
-	},
-	auditLogs: {
-		id: column.int().pk().auto(),
-		event: column.text(),
-		createdAt: column.timestamp(),
-	},
-});
-
-export const db = new Locality({ dbName: 'locality-api-lab', version: 4, schema });
-type TableName = keyof typeof schema;
-type Tone = 'success' | 'error' | 'info';
+export type Tone = 'success' | 'error' | 'info';
 
 let activeOperation = operations[0].id;
 let activeFile = Object.keys(operations[0].files)[0];
@@ -63,12 +38,6 @@ let testEditor: EditorView;
 let testLog: { tone: Tone; title: string; detail: string }[] = [];
 let lastResult: unknown = { message: 'Select an API surface, then run its live example.' };
 
-function requiredElement<T extends Element>(selector: string): T {
-	const element = document.querySelector<T>(selector);
-	if (!element) throw new Error(`Expected ${selector} to exist.`);
-	return element;
-}
-
 const app = requiredElement<HTMLDivElement>('#app');
 const dialog = requiredElement<HTMLDialogElement>('#confirmDialog');
 const dialogTitle = requiredElement<HTMLElement>('#dialogTitle');
@@ -76,37 +45,8 @@ const dialogDescription = requiredElement<HTMLElement>('#dialogDescription');
 
 let activeWorkspace: 'interact' | 'tests' = 'interact';
 
-function escapeHtml(value: string) {
-	return value.replace(
-		/[&<>'"]/g,
-		(char) =>
-			({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char] ??
-			char
-	);
-}
-
-function json(value: unknown) {
-	return JSON.stringify(
-		value,
-		(_key, item) => (typeof item === 'bigint' ? `${item}n` : item),
-		2
-	);
-}
-
 function currentOperation() {
 	return operations.find((operation) => operation.id === activeOperation) ?? operations[0];
-}
-
-function fileIcon(name: string) {
-	return name.endsWith('.test.ts') ? '◉' : '◆';
-}
-
-function showToast(tone: Tone, message: string) {
-	const toast = document.createElement('div');
-	toast.className = `toast ${tone}`;
-	toast.textContent = message;
-	requiredElement('#toastRegion').append(toast);
-	setTimeout(() => toast.remove(), 4600);
 }
 
 function updateResult(value: unknown) {
@@ -146,16 +86,13 @@ function choices(
 	);
 }
 
-async function getRows(table: TableName) {
-	return await db.from(table).sortByIndex('id').findAll();
-}
-
 async function refreshSelects() {
 	const [users, posts, dbs] = await Promise.all([
 		getRows('users'),
 		getRows('posts'),
 		db.dbList,
 	]);
+
 	for (const element of document.querySelectorAll<HTMLSelectElement>('[data-users]'))
 		element.innerHTML = choices(users, (user) => `#${user.id} · ${user.name}`);
 	for (const element of document.querySelectorAll<HTMLSelectElement>('[data-posts]'))
@@ -181,7 +118,13 @@ function groupedOperations() {
 					.filter((operation) => operation.group === group)
 					.map(
 						(operation, index) =>
-							/* html*/ `<button class="operation-button ${operation.id === activeOperation ? 'active' : ''}" data-operation="${operation.id}"><span class="op-tag">${String(index + 1).padStart(2, '0')}</span>${operation.title}</button>`
+							/* html*/ `
+						<button
+							class="operation-button ${operation.id === activeOperation ? 'active' : ''}"
+							data-operation="${operation.id}"
+						>
+							<span class="op-tag">${String(index + 1).padStart(2, '0')}</span>${operation.title}
+						</button>`
 					)
 					.join('')}`
 		)
@@ -191,15 +134,44 @@ function groupedOperations() {
 function controlsFor(operation: Operation) {
 	const run = (label: string, id = 'runOperation', danger = false) =>
 		/* html*/ `<button class="button ${danger ? 'button-danger' : 'button-primary'}" data-action="${id}">${label}</button>`;
+
 	const select = (label: string, attr: string, id: string) =>
 		/* html*/ `<label class="field">${label}<select id="${id}" ${attr}></select></label>`;
+
 	switch (operation.control) {
 		case 'snapshot':
 			return /* html*/ `<div class="control-card">${run('Refresh live snapshot')}</div>`;
 		case 'details':
 			return /* html*/ `<div class="control-card">${run('Inspect connection')}</div>`;
 		case 'insert':
-			return /* html*/ `<div class="control-card"><label class="field">Target table<select id="insertTable"><option value="users">users</option><option value="posts">posts</option></select></label><label class="field" data-user-field>Name<input id="insertName" value="Linus" /></label><label class="field" data-user-field>Email<input id="insertEmail" value="linus@locality.dev" type="email" /></label><label class="field" data-user-field>Score<input id="insertScore" value="5" type="number" /></label><label class="field" data-post-field hidden>Author<select id="insertUserId" data-users></select></label><label class="field" data-post-field hidden>Title<input id="insertTitle" value="A new post" /></label><label class="field" data-post-field hidden>Likes<input id="insertLikes" value="1" type="number" /></label>${run('Insert row')}</div>`;
+			return /* html*/ `
+			<div class="control-card">
+				<label class="field">Target table
+					<select id="insertTable">
+						<option value="users">users</option>
+						<option value="posts">posts</option>
+					</select>
+				</label>
+				<label class="field" data-user-field>Name
+					<input id="insertName" value="Linus" />
+				</label>
+				<label class="field" data-user-field>Email
+					<input id="insertEmail" value="linus@locality.dev" type="email" />
+				</label>
+				<label class="field" data-user-field>Score
+					<input id="insertScore" value="5" type="number" />
+				</label>
+				<label class="field" data-post-field hidden>Author
+					<select id="insertUserId" data-users></select>
+				</label>
+				<label class="field" data-post-field hidden>Title
+					<input id="insertTitle" value="A new post" />
+				</label>
+				<label class="field" data-post-field hidden>Likes
+					<input id="insertLikes" value="1" type="number" />
+				</label>
+				${run('Insert row')}
+			</div>`;
 		case 'batch':
 			return /* html*/ `<div class="control-card">${run('Insert sample batch')}<div class="detail-note">Run this after a clear or with fresh emails. The Tests workspace demonstrates the failing duplicate batch.</div></div>`;
 		case 'seed':
@@ -217,27 +189,86 @@ function controlsFor(operation: Operation) {
 		case 'update':
 			return /* html*/ `<div class="control-card">${select('User to increment', 'data-users', 'updateUser')}${select('Post to update', 'data-posts', 'updatePost')}<label class="field">New post likes<input id="updateLikes" value="21" type="number" /></label>${run('Run both updates')}</div>`;
 		case 'delete':
-			return /* html*/ `<div class="control-card"><label class="field">Delete target table<select id="deleteTable"><option value="users">users</option><option value="posts">posts</option></select></label><label class="field" data-delete-users>Selected user<select id="deleteUser" data-users></select></label><label class="field" data-delete-posts hidden>Selected post<select id="deletePost" data-posts></select></label>${run('Delete selected row', 'runOperation', true)}<div class="detail-note">Deleting a user cascades through posts and comments by design.</div></div>`;
+			return /* html*/ `
+			<div class="control-card">
+				<label class="field">Delete target table
+					<select id="deleteTable">
+						<option value="users">users</option>
+						<option value="posts">posts</option>
+					</select>
+				</label>
+				<label class="field" data-delete-users>Selected user<select id="deleteUser" data-users>
+					</select>
+				</label>
+				<label class="field" data-delete-posts hidden>Selected post
+					<select id="deletePost" data-posts>
+					</select>
+				</label>
+				${run('Delete selected row', 'runOperation', true)}
+				<div class="detail-note">Deleting a user cascades through posts and comments by design.</div>
+			</div>`;
 		case 'reference':
 			return /* html*/ `<div class="control-card">${run('Attempt invalid insert')}<div class="detail-note">Expected result: a readable reference error and no new post.</div></div>`;
 		case 'transaction':
-			return /* html*/ `<div class="control-card">${run('Commit an example transaction')}<button class="button button-quiet" data-action="rollback">Run rollback example</button></div>`;
+			return /* html*/ `
+			<div class="control-card">
+				${run('Commit an example transaction')}
+				<button class="button button-quiet" data-action="rollback">
+					Run rollback example
+				</button>
+			</div>`;
 		case 'export-object':
 			return /* html*/ `<div class="control-card">${run('Create export object')}</div>`;
 		case 'export-file':
-			return /* html*/ `<div class="control-card">${run('Download JSON backup')}<div class="detail-note">Your browser controls the download location.</div></div>`;
+			return /* html*/ `
+			<div class="control-card">
+				${run('Download JSON backup')}
+				<div class="detail-note">
+					Your browser controls the download location.
+				</div>
+			</div>`;
 		case 'import':
-			return /* html*/ `<div class="control-card"><label class="field">Import mode<select id="importMode"><option value="replace">replace</option><option value="upsert">upsert</option></select></label>${run('Round-trip current snapshot')}</div>`;
+			return /* html*/ `
+			<div class="control-card">
+				<label class="field">Import mode
+					<select id="importMode">
+						<option value="replace">replace</option>
+						<option value="upsert">upsert</option>
+					</select>
+				</label>
+				${run('Round-trip current snapshot')}
+			</div>`;
 		case 'maintenance':
-			return /* html*/ `<div class="control-card space-x-2 space-y-2">${select('Table to clear', 'data-tables', 'maintenanceTable')}<button class="button button-danger" data-action="clear-table">Clear selected table</button><button class="button button-quiet" data-action="clear-all">Clear all tables</button></div>`;
+			return /* html*/ `
+			<div class="control-card space-x-2 space-y-2">
+				${select('Table to clear', 'data-tables', 'maintenanceTable')}
+				<button class="button button-danger" data-action="clear-table">
+					Clear selected table
+				</button>
+				<button class="button button-quiet" data-action="clear-all">
+					Clear all tables
+				</button>
+			</div>`;
 		case 'lifecycle':
-			return /* html*/ `<div class="control-card space-x-2 space-y-2">${select('Database', 'data-databases', 'lifecycleDb')}<button class="button button-danger" data-action="delete-db">Delete selected database</button><button class="button button-quiet" disabled>dropTable() — documented above</button><button class="button button-quiet" disabled>close() — documented above</button></div>`;
+			return /* html*/ `
+			<div class="control-card space-x-2 space-y-2">
+				${select('Database', 'data-databases', 'lifecycleDb')}
+				<button class="button button-danger" data-action="delete-db">
+					Delete selected database
+				</button>
+				<button class="button button-quiet" disabled>
+					dropTable() — documented above
+				</button>
+				<button class="button button-quiet" disabled>
+					close() — documented above
+				</button>
+			</div>`;
 
 		case 'utilities':
 			return /* html */ `
-		<div class="control-card">
-			${run('Run validation & helpers')}
-		</div>
+			<div class="control-card">
+				${run('Run validation & helpers')}
+			</div>
 	`;
 		default:
 			return '';
@@ -248,34 +279,120 @@ function renderApp() {
 	const op = currentOperation();
 	const fileNames = Object.keys(op.files);
 	if (!op.files[activeFile]) activeFile = fileNames[0];
-	app.innerHTML = /* html*/ `<main class="shell"><header class="topbar"><div class="brand"><div class="brand-mark"><img src="./locality-icon.png" /></div><div><h1>Locality IDB / API Lab</h1><p>Executable reference for the browser-native database toolkit</p></div></div><div class="status"><span class="dot"></span><span id="connectionState">Opening IndexedDB…</span></div></header><section class="hero"><div><p class="eyebrow">Interactive documentation</p><h2>See the exact Locality code, then run it against a real database.</h2><p class="hero-copy">Every control is paired with its implementation snippet. The lab uses indexes, schema validation, foreign-key-style refs, transaction contexts, backups, and lifecycle APIs—not a mock data layer.</p></div><div class="hero-stats"><div class="metric"><b id="metricTables">4</b><span>tables</span></div><div class="metric"><b id="metricVersion">v1</b><span>version</span></div><div class="metric"><b>2</b><span>workspaces</span></div></div></section><nav class="workspace-nav"><div class="tabs"><button
-	class="main-tab ${activeWorkspace === 'interact' ? 'active' : ''}"
-	data-workspace="interact"
->
-	Interact From UI
-</button>
 
-<button
-	class="main-tab ${activeWorkspace === 'tests' ? 'active' : ''}"
-	data-workspace="tests"
->
-	Tests
-</button></div><button class="button nav-action" data-action="console-tests">↗ Run transaction-export.ts in console</button></nav><section
-	id="interactPanel"
-	class="panel ${activeWorkspace === 'interact' ? 'active' : ''}"
-><div class="lab"><aside class="ops-sidebar"><div class="side-title">API surface · ${operations.length} examples</div><div class="operation-list">${groupedOperations()}</div></aside><section class="editor-pane"><div class="file-tabs">${fileNames.map((name) => `<button class="file-tab ${name === activeFile ? 'active' : ''}" data-file="${name}"><span class="ts-dot">${fileIcon(name)}</span>${name}</button>`).join('')}</div><div class="code-meta"><span><strong>${activeFile}</strong> · read only</span><span>CodeMirror</span></div><div class="editor" id="codeEditor"></div></section><aside class="detail-pane"><div class="sticky"><p class="detail-kicker">${op.group}</p><h3>${op.title}</h3><p class="detail-description">${op.description}</p>${controlsFor(op)}${op.note ? `<p class="detail-note">${op.note}</p>` : ''}<div class="result-card"><div class="result-head"><span>LIVE RESULT</span><button class="button button-quiet" data-action="copy-result">Copy</button></div><pre id="resultOutput" class="result-output">${escapeHtml(json(lastResult))}</pre></div></div></aside></div></section><section
-	id="testsPanel"
-	class="panel ${activeWorkspace === 'tests' ? 'active' : ''}"
-><div class="lab test-lab"><section class="editor-pane"><div class="file-tabs">${Object.keys(
-		testFiles
-	)
-		.map(
-			(name) =>
-				/* html*/ `<button class="file-tab ${name === activeTestFile ? 'active' : ''}" data-test-file="${name}"><span class="ts-dot">${fileIcon(name)}</span>${name}</button>`
-		)
-		.join(
-			''
-		)}</div><div class="code-meta"><span><strong>${activeTestFile}</strong> · expected behavior</span><span>Read only</span></div><div class="editor" id="testEditor"></div></section><aside class="test-output"><p class="detail-kicker">Verification</p><h3>Executable API cases</h3><p>Runs isolated checks for atomic batch writes, expected errors, optimized query paths, rollback, and backup restoration.</p><div class="test-actions"><button class="button button-primary" data-action="run-tests">Run all checks</button><button class="button button-quiet" data-action="clear-tests">Clear output</button></div><div id="testLog" class="test-log">${renderTestLog()}</div></aside></div></section></main>`;
+	app.innerHTML = /* html*/ `
+	<main class="shell">
+		<header class="topbar">
+			<div class="brand">
+				<div class="brand-mark"><img src="./locality-icon.png" /></div>
+				<div>
+					<h1>Locality IDB / API Lab</h1>
+					<p>Executable reference for the browser-native database toolkit</p>
+				</div>
+			</div>
+			<div class="status"><span class="dot"></span><span id="connectionState">Opening IndexedDB…</span></div>
+		</header>
+		<section class="hero">
+			<div>
+				<p class="eyebrow">Interactive documentation</p>
+				<h2>See the exact Locality code, then run it against a real database.</h2>
+				<p class="hero-copy">Every control is paired with its implementation snippet. The lab uses indexes, schema
+					validation, foreign-key-style refs, transaction contexts, backups, and lifecycle APIs—not a mock data
+					layer.</p>
+			</div>
+			<div class="hero-stats">
+				<div class="metric"><b id="metricTables">4</b><span>tables</span></div>
+				<div class="metric"><b id="metricVersion">v1</b><span>version</span></div>
+				<div class="metric"><b>2</b><span>workspaces</span></div>
+			</div>
+		</section>
+		<nav class="workspace-nav">
+			<div class="tabs"><button class="main-tab ${activeWorkspace === 'interact' ? 'active' : ''}"
+					data-workspace="interact">
+					Interact From UI
+				</button>
+	
+				<button class="main-tab ${activeWorkspace === 'tests' ? 'active' : ''}" data-workspace="tests">
+					Tests
+				</button>
+			</div>
+			<button class="button nav-action" data-action="console-tests">
+				↗ Run Transaction & Export Tests in the Console
+			</button>
+		</nav>
+		<section id="interactPanel" class="panel ${activeWorkspace === 'interact' ? 'active' : ''}">
+			<div class="lab">
+				<aside class="ops-sidebar">
+					<div class="side-title">API surface · ${operations.length} examples</div>
+					<div class="operation-list">${groupedOperations()}</div>
+				</aside>
+				<section class="editor-pane">
+					<div class="file-tabs">${fileNames
+						.map(
+							(name) => /* html */ `
+								<button class="file-tab ${name === activeFile ? 'active' : ''}" data-file="${name}">
+									<span class="ts-dot">${fileIcon(name)}</span>${name}
+								</button>`
+						)
+						.join('')}
+					</div>
+					<div class="code-meta">
+						<span><strong>${activeFile}</strong> · read only</span>
+						<span>CodeMirror</span>
+					</div>
+					<div class="editor" id="codeEditor"></div>
+				</section>
+				<aside class="detail-pane">
+					<div class="sticky">
+						<p class="detail-kicker">${op.group}</p>
+						<h3>${op.title}</h3>
+						<p class="detail-description">${op.description}</p>
+							${controlsFor(op)}${op.note ? /* html */ `<p class="detail-note">${op.note}</p>` : ''}
+						<div class="result-card">
+							<div class="result-head">
+								<span>LIVE RESULT</span>
+								<button class="button button-quiet" data-action="copy-result">Copy</button>
+							</div>
+							<pre id="resultOutput" class="result-output">${escapeHtml(json(lastResult))}</pre>
+						</div>
+					</div>
+				</aside>
+			</div>
+		</section>
+		<section id="testsPanel" class="panel ${activeWorkspace === 'tests' ? 'active' : ''}">
+			<div class="lab test-lab">
+				<section class="editor-pane">
+					<div class="file-tabs">${Object.keys(testFiles)
+						.map(
+							(name) =>
+								/* html*/ `
+							<button class="file-tab ${name === activeTestFile ? 'active' : ''}" data-test-file="${name}">
+								<span class="ts-dot">${fileIcon(name)}</span>${name}
+							</button>`
+						)
+						.join('')}
+					</div>
+					<div class="code-meta">
+						<span><strong>${activeTestFile}</strong> · expected behavior</span>
+						<span>Read only</span>
+					</div>
+					<div class="editor" id="testEditor"></div>
+				</section>
+				<aside class="test-output">
+					<p class="detail-kicker">Verification</p>
+					<h3>Executable API cases</h3>
+					<p>
+						Runs isolated checks for atomic batch writes, expected errors, optimized query paths, rollback, and backup restoration.
+					</p>
+					<div class="test-actions">
+						<button class="button button-primary" data-action="run-tests">Run all checks</button>
+						<button class="button button-quiet" data-action="clear-tests">Clear output</button>
+					</div>
+					<div id="testLog" class="test-log">${renderTestLog()}</div>
+				</aside>
+			</div>
+		</section>
+	</main>`;
 	editor = renderEditor(requiredElement('#codeEditor'), op.files[activeFile], editor);
 	testEditor = renderEditor(
 		requiredElement('#testEditor'),
@@ -290,10 +407,20 @@ function renderTestLog() {
 		? testLog
 				.map(
 					(entry) =>
-						/* html*/ `<article class="test-row"><b class="${entry.tone === 'success' ? 'pass' : entry.tone === 'error' ? 'fail' : 'info'}">${escapeHtml(entry.title)}</b><p>${escapeHtml(entry.detail)}</p></article>`
+						/* html*/ `
+					<article class="test-row">
+						<b class="${entry.tone === 'success' ? 'pass' : entry.tone === 'error' ? 'fail' : 'info'}">
+							${escapeHtml(entry.title)}
+						</b>
+						<p>${escapeHtml(entry.detail)}</p>
+					</article>`
 				)
 				.join('')
-		: '<article class="test-row"><b class="info">Awaiting a run</b><p>Choose “Run all checks” to populate expected outputs.</p></article>';
+		: /* html*/ `
+			<article class="test-row">
+				<b class="info">Awaiting a run</b>
+				<p>Choose “Run all checks” to populate expected outputs.</p>
+			</article>`;
 }
 
 async function hydrate() {
@@ -336,6 +463,7 @@ async function confirmAction(title: string, description: string) {
 	dialogTitle.textContent = title;
 	dialogDescription.textContent = description;
 	dialog.showModal();
+
 	return await new Promise<boolean>((resolve) =>
 		dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), {
 			once: true,
@@ -344,7 +472,8 @@ async function confirmAction(title: string, description: string) {
 }
 
 async function runCurrentOperation() {
-	const control = currentOperation().control;
+	const { control } = currentOperation();
+
 	try {
 		let result: unknown;
 		switch (control) {
@@ -632,6 +761,7 @@ async function runRollback() {
 		console.error(error);
 	}
 }
+
 async function runMaintenance(action: 'clear-table' | 'clear-all') {
 	const table = getValueOf('maintenanceTable') as TableName;
 	const description =
@@ -653,6 +783,7 @@ async function runMaintenance(action: 'clear-table' | 'clear-all') {
 	showToast('success', 'Maintenance action complete.');
 	await refreshSelects();
 }
+
 async function runDeleteDatabase() {
 	const name = getValueOf('lifecycleDb');
 	if (!name) return;
@@ -679,14 +810,18 @@ async function runDeleteDatabase() {
 		console.error(error);
 	}
 }
+
 function logTest(tone: Tone, title: string, detail: string) {
 	testLog.push({ tone, title, detail });
 	const host = document.querySelector('#testLog');
 	if (host) host.innerHTML = renderTestLog();
 }
+
 async function runTests() {
 	testLog = [];
+
 	logTest('info', 'Suite started', 'Each case clears or seeds its own state.');
+
 	try {
 		await db.clearAll();
 		try {
@@ -846,16 +981,17 @@ document.addEventListener('click', (event) => {
 			?.writeText(json(lastResult))
 			.then(() => showToast('success', 'Result copied to clipboard.'));
 	if (action === 'console-tests')
-		void import('./transaction-export')
+		void import('./tests.log')
 			.then(({ runAllTests }) => runAllTests())
 			.then(() =>
 				showToast(
 					'info',
-					'transaction-export.ts ran. Open DevTools → Console to inspect its logs.'
+					`Transaction & Export tests ran. Open DevTools → Console to inspect.`
 				)
 			)
 			.catch((error) => showToast('error', errorMessage(error)));
 });
+
 document.addEventListener('change', (event) => {
 	const target = event.target as HTMLSelectElement;
 	if (target.id === 'insertTable') {

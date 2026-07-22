@@ -41,12 +41,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": [
-		"dist",
-		"LICENSE",
-		"README.md",
-		"package.json"
-	],
+	"files": ["dist", "LICENSE", "README.md", "package.json"],
 	"keywords": [
 		"indexeddb",
 		"indexed-db",

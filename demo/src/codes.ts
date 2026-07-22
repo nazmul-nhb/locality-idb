@@ -1,5 +1,7 @@
 /** biome-ignore-all lint/suspicious/noTemplateCurlyInString: written in code snippets */
 
+import { code } from './utils';
+
 export type Operation = {
 	id: string;
 	group: string;
@@ -9,16 +11,6 @@ export type Operation = {
 	files: Record<string, string>;
 	control: string;
 };
-
-export const code = (lines: string[]) => lines.join('\n');
-
-export function errorMessage(error: unknown) {
-	return error instanceof Error ? error.message : String(error);
-}
-
-export function getValueOf(id: string) {
-	return document.querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`)?.value ?? '';
-}
 
 export const operations: Operation[] = [
 	{

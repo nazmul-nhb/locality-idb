@@ -182,7 +182,7 @@ export interface LocalityConfig<
 > {
 	/** Database name */
 	dbName: DB;
-	/** Database version */
+	/** Database schema version */
 	version?: V;
 	/** Database schema */
 	schema: S;
