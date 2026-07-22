@@ -227,7 +227,7 @@ function renderApp() {
 	const op = currentOperation();
 	const fileNames = Object.keys(op.files);
 	if (!op.files[activeFile]) activeFile = fileNames[0];
-	app.innerHTML = /* html*/ `<main class="shell"><header class="topbar"><div class="brand"><div class="brand-mark">L</div><div><h1>Locality IDB / API Lab</h1><p>Executable reference for the browser-native database toolkit</p></div></div><div class="status"><span class="dot"></span><span id="connectionState">Opening IndexedDB…</span></div></header><section class="hero"><div><p class="eyebrow">Interactive documentation</p><h2>See the exact Locality code, then run it against a real database.</h2><p class="hero-copy">Every control is paired with its implementation snippet. The lab uses indexes, schema validation, foreign-key-style refs, transaction contexts, backups, and lifecycle APIs—not a mock data layer.</p></div><div class="hero-stats"><div class="metric"><b id="metricTables">4</b><span>tables</span></div><div class="metric"><b id="metricVersion">v1</b><span>schema version</span></div><div class="metric"><b>2</b><span>workspaces</span></div></div></section><nav class="workspace-nav"><div class="tabs"><button class="main-tab active" data-workspace="interact">Interact From UI</button><button class="main-tab" data-workspace="tests">Tests</button></div><button class="button nav-action" data-action="console-tests">↗ Run transaction-export.ts in console</button></nav><section id="interactPanel" class="panel active"><div class="lab"><aside class="ops-sidebar"><div class="side-title">API surface · ${operations.length} examples</div><div class="operation-list">${groupedOperations()}</div></aside><section class="editor-pane"><div class="file-tabs">${fileNames.map((name) => `<button class="file-tab ${name === activeFile ? 'active' : ''}" data-file="${name}"><span class="ts-dot">${fileIcon(name)}</span>${name}</button>`).join('')}</div><div class="code-meta"><span><strong>${activeFile}</strong> · read only</span><span>CodeMirror</span></div><div class="editor" id="codeEditor"></div></section><aside class="detail-pane"><div class="sticky"><p class="detail-kicker">${op.group}</p><h3>${op.title}</h3><p class="detail-description">${op.description}</p>${controlsFor(op)}${op.note ? `<p class="detail-note">${op.note}</p>` : ''}<div class="result-card"><div class="result-head"><span>LIVE RESULT</span><button class="button button-quiet" data-action="copy-result">Copy</button></div><pre id="resultOutput" class="result-output">${escapeHtml(json(lastResult))}</pre></div></div></aside></div></section><section id="testsPanel" class="panel"><div class="lab test-lab"><section class="editor-pane"><div class="file-tabs">${Object.keys(
+	app.innerHTML = /* html*/ `<main class="shell"><header class="topbar"><div class="brand"><div class="brand-mark"><img src="./locality-icon.png" /></div><div><h1>Locality IDB / API Lab</h1><p>Executable reference for the browser-native database toolkit</p></div></div><div class="status"><span class="dot"></span><span id="connectionState">Opening IndexedDB…</span></div></header><section class="hero"><div><p class="eyebrow">Interactive documentation</p><h2>See the exact Locality code, then run it against a real database.</h2><p class="hero-copy">Every control is paired with its implementation snippet. The lab uses indexes, schema validation, foreign-key-style refs, transaction contexts, backups, and lifecycle APIs—not a mock data layer.</p></div><div class="hero-stats"><div class="metric"><b id="metricTables">4</b><span>tables</span></div><div class="metric"><b id="metricVersion">v1</b><span>schema version</span></div><div class="metric"><b>2</b><span>workspaces</span></div></div></section><nav class="workspace-nav"><div class="tabs"><button class="main-tab active" data-workspace="interact">Interact From UI</button><button class="main-tab" data-workspace="tests">Tests</button></div><button class="button nav-action" data-action="console-tests">↗ Run transaction-export.ts in console</button></nav><section id="interactPanel" class="panel active"><div class="lab"><aside class="ops-sidebar"><div class="side-title">API surface · ${operations.length} examples</div><div class="operation-list">${groupedOperations()}</div></aside><section class="editor-pane"><div class="file-tabs">${fileNames.map((name) => `<button class="file-tab ${name === activeFile ? 'active' : ''}" data-file="${name}"><span class="ts-dot">${fileIcon(name)}</span>${name}</button>`).join('')}</div><div class="code-meta"><span><strong>${activeFile}</strong> · read only</span><span>CodeMirror</span></div><div class="editor" id="codeEditor"></div></section><aside class="detail-pane"><div class="sticky"><p class="detail-kicker">${op.group}</p><h3>${op.title}</h3><p class="detail-description">${op.description}</p>${controlsFor(op)}${op.note ? `<p class="detail-note">${op.note}</p>` : ''}<div class="result-card"><div class="result-head"><span>LIVE RESULT</span><button class="button button-quiet" data-action="copy-result">Copy</button></div><pre id="resultOutput" class="result-output">${escapeHtml(json(lastResult))}</pre></div></div></aside></div></section><section id="testsPanel" class="panel"><div class="lab test-lab"><section class="editor-pane"><div class="file-tabs">${Object.keys(
 		testFiles
 	)
 		.map(
@@ -263,6 +263,7 @@ async function hydrate() {
 		requiredElement('#metricVersion').textContent = `v${db.version}`;
 		await refreshSelects();
 	} catch (error) {
+		console.error(error);
 		showToast('error', errorMessage(error));
 	}
 }
@@ -564,6 +565,7 @@ async function runCurrentOperation() {
 	} catch (error) {
 		updateResult({ error: errorMessage(error) });
 		showToast('error', errorMessage(error));
+		console.error(error);
 	}
 }
 function getValueOf(id: string) {
@@ -588,6 +590,7 @@ async function runRollback() {
 			verified: 'The transaction was aborted; the inserted user was not committed.',
 		});
 		showToast('success', 'Rollback behaved as expected.');
+		console.error(error);
 	}
 }
 async function runMaintenance(action: 'clear-table' | 'clear-all') {
@@ -634,6 +637,7 @@ async function runDeleteDatabase() {
 	} catch (error) {
 		updateResult({ error: errorMessage(error) });
 		showToast('error', errorMessage(error));
+		console.error(error);
 	}
 }
 function logTest(tone: Tone, title: string, detail: string) {
@@ -666,6 +670,7 @@ async function runTests() {
 				'Batch atomicity',
 				`Expected error: ${errorMessage(error)} · persisted users: ${count}`
 			);
+			console.error(error);
 		}
 		await ensureSeeded();
 		try {
@@ -680,6 +685,7 @@ async function runTests() {
 			);
 		} catch (error) {
 			logTest('success', 'Reference validation', errorMessage(error));
+			console.error(error);
 		}
 		const ada = (await db.from('users').findByIndex('email', 'ada@locality.dev'))[0];
 		const indexed = await db.from('users').where('email', 'ada@locality.dev').findAll();
@@ -698,6 +704,7 @@ async function runTests() {
 			);
 		} catch (error) {
 			logTest('success', 'Pagination constraint', errorMessage(error));
+			console.error(error);
 		}
 		const preRollback = await db.from('users').count();
 		try {
@@ -712,8 +719,9 @@ async function runTests() {
 					.run();
 				throw new Error('intentional rollback');
 			});
-		} catch {
+		} catch (error) {
 			/* expected */
+			console.error(error);
 		}
 		const postRollback = await db.from('users').count();
 		logTest(
@@ -736,6 +744,7 @@ async function runTests() {
 		});
 	} catch (error) {
 		logTest('error', 'Unexpected suite failure', errorMessage(error));
+		console.error(error);
 	}
 	await refreshSelects();
 }

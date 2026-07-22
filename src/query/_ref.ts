@@ -13,6 +13,24 @@ export interface RefRelation {
 	options?: RefOptions;
 }
 
+function throwSelfRefError(
+	mode: 'insert' | 'update' | 'delete',
+	opts: Omit<RefRelation, 'options'>
+): never {
+	const { childColumn, childTable, targetColumn, targetTable } = opts || {};
+
+	const actionMsg =
+		mode === 'insert'
+			? 'insert row into'
+			: mode === 'update'
+				? 'update row in'
+				: 'delete row from';
+
+	throw new ReferenceError(
+		`Cannot ${actionMsg} '${targetTable}' because '${childTable}.${childColumn}' references back to its own column '${targetTable}.${targetColumn}'.`
+	);
+}
+
 /**
  * @internal Private function for getting reference relations
  * @param schema The schema definition
@@ -137,6 +155,7 @@ function getRowsByValue(
 	columnName: string,
 	value: unknown
 ) {
+	console.log({ tableName, trx });
 	return new Promise<GenericObject[]>((resolve, reject) => {
 		const store = trx.objectStore(tableName);
 		const request = store.getAll() as IDBRequest<GenericObject[]>;
@@ -168,7 +187,6 @@ function deleteRowsByPrimaryKey(
 	if (!keyName) {
 		return Promise.resolve();
 	}
-
 	return Promise.all(
 		rows.map((row) => {
 			return new Promise<void>((resolve, reject) => {
@@ -241,12 +259,19 @@ export async function applyInsertRefWorkflow(
 
 			const [targetTable, targetColumn] = refMeta.refPath.split('.');
 
-			console.log({ tableName, targetTable });
+			if (tableName === targetTable) {
+				throwSelfRefError('insert', {
+					childTable: tableName,
+					childColumn: columnName,
+					targetTable,
+					targetColumn,
+				});
+			}
 
 			const targetColumnDefinition = schema?.[targetTable]?.columns?.[targetColumn];
 
 			if (!targetColumnDefinition) {
-				throw new Error(
+				throw new ReferenceError(
 					`Cannot resolve reference '${refMeta.refPath}' for '${tableName}.${columnName}'.`
 				);
 			}
@@ -255,7 +280,7 @@ export async function applyInsertRefWorkflow(
 			const targetType = targetColumnDefinition[ColumnType];
 
 			if (sourceType !== targetType) {
-				throw new Error(
+				throw new ReferenceError(
 					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' has type '${sourceType}' but '${targetTable}.${targetColumn}' has type '${targetType}'.`
 				);
 			}
@@ -265,7 +290,7 @@ export async function applyInsertRefWorkflow(
 			if (relatedRows.length === 0) {
 				const strVal = `'${isString(value) ? value : JSON.stringify(value)}'`;
 
-				throw new Error(
+				throw new ReferenceError(
 					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' references '${targetTable}.${targetColumn}' value ${strVal} that does not exist.`
 				);
 			}
@@ -291,11 +316,18 @@ export async function applyDeleteRefWorkflow(
 	const relations = getRefRelations(schema, tableName);
 
 	for (const relation of relations) {
-		const { childColumn, childTable, targetColumn, options } = relation;
+		const { childColumn, childTable, targetColumn, targetTable, options } = relation;
 
-		const targetValues = rows
-			.map((row) => row[targetColumn])
-			.filter((value) => value !== undefined && value !== null);
+		if (childTable === targetTable) {
+			throwSelfRefError('delete', {
+				childTable,
+				childColumn,
+				targetTable,
+				targetColumn,
+			});
+		}
+
+		const targetValues = rows.map((row) => row[targetColumn]).filter((v) => v != null);
 
 		for (const value of new Set(targetValues)) {
 			const relatedRows = await getRowsByValue(trx, childTable, childColumn, value);
@@ -314,7 +346,7 @@ export async function applyDeleteRefWorkflow(
 				}
 
 				case 'restrict': {
-					throw new Error(
+					throw new ReferenceError(
 						`Cannot delete row from '${tableName}' because '${childTable}.${childColumn}' has a restrict reference.`
 					);
 				}
@@ -327,7 +359,7 @@ export async function applyDeleteRefWorkflow(
 					);
 
 					if (!setNull && !makeOptional) {
-						throw new Error(
+						throw new TypeError(
 							`Cannot set null/undefined for '${childTable}.${childColumn}' because the column is not nullable or optional.`
 						);
 					}
@@ -369,7 +401,16 @@ export async function applyUpdateRefWorkflow(
 	const relations = getRefRelations(schema, tableName);
 
 	for (const relation of relations) {
-		const { childColumn, childTable, targetColumn, options } = relation;
+		const { childColumn, childTable, targetColumn, targetTable, options } = relation;
+
+		if (childTable === targetTable) {
+			throwSelfRefError('update', {
+				childTable,
+				childColumn,
+				targetTable,
+				targetColumn,
+			});
+		}
 
 		const oldValue = currentRow[targetColumn];
 		const newValue = updatedRow[targetColumn];
@@ -387,7 +428,7 @@ export async function applyUpdateRefWorkflow(
 			}
 
 			case 'restrict': {
-				throw new Error(
+				throw new ReferenceError(
 					`Cannot update row in '${tableName}' because '${childTable}.${childColumn}' has a restrict reference.`
 				);
 			}
@@ -396,7 +437,7 @@ export async function applyUpdateRefWorkflow(
 				const { setNull, makeOptional } = canSetNull(schema, childTable, childColumn);
 
 				if (!setNull && !makeOptional) {
-					throw new Error(
+					throw new TypeError(
 						`Cannot set null/undefined for '${childTable}.${childColumn}' because the column is not nullable or optional.`
 					);
 				}
