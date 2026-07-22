@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.4/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -207,7 +207,7 @@
 			}
 		},
 		{
-			"includes": ["src/**/*types.ts", "src/**/types/*.ts", "**/*.extensions.ts"],
+			"includes": ["src/**/*types.ts", "src/**/types/*.ts"],
 			"linter": {
 				"rules": {
 					"complexity": {
@@ -217,7 +217,7 @@
 			}
 		},
 		{
-			"includes": ["__ideas__/**/*.ts", "__*.ts", "src/**/*log.ts"],
+			"includes": ["__ideas__/**/*.ts", "__*.ts"],
 			"linter": {
 				"rules": {
 					"correctness": {
@@ -266,11 +266,11 @@
 			}
 		},
 		{
-			"includes": ["**/*/plugins/*.ts"],
+			"includes": ["src/query/*.ts"],
 			"linter": {
 				"rules": {
 					"complexity": {
-						"useArrowFunction": "off"
+						"noUselessConstructor": "off"
 					}
 				}
 			}

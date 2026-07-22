@@ -1,81 +1,37 @@
-import { isFunction, isNonEmptyString, isNotEmptyObject } from 'toolbox-x/guards';
+import { isFunction, isNotEmptyObject } from 'toolbox-x/guards';
 import type { Table } from '../core';
 import { _abortTransaction } from '../helpers';
 import type {
-	$InferIndex,
-	$InferPrimaryKey,
 	ColumnDefinition,
 	GenericObject,
 	IDBGetter,
 	InferUpdateType,
-	RejectFn,
+	SchemaDefinition,
 	UpdateCallback,
-	WherePredicate,
 } from '../types';
 import { _validateAndPrepareData } from '../validators';
+import { applyUpdateRefWorkflow, getRefWorkflowTables } from './_ref';
+import { BaseQuery } from './base';
 
 /** @class Update query builder. */
-export class UpdateQuery<Row extends GenericObject, T extends Table> {
-	#table: string;
-	#dbGetter: IDBGetter;
-	#readyPromise: Promise<void>;
-	#dataToUpdate?: InferUpdateType<T>;
-	#whereCondition?: WherePredicate<Row>;
-	#updateCallback?: UpdateCallback<Row, T, InferUpdateType<T>>;
-	#whereIndexName?: string;
-	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
-	#columns?: ColumnDefinition;
-	// TODO: Handle multiple primary keys later
+export class UpdateQuery<Row extends GenericObject, T extends Table> extends BaseQuery<Row, T> {
 	#keyPath?: string;
 
-	#transaction?: IDBTransaction;
+	#dataToUpdate?: InferUpdateType<T>;
+	#updateCallback?: UpdateCallback<Row, T, InferUpdateType<T>>;
 
 	constructor(
-		table: string,
+		tableName: string,
 		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
 		columns?: ColumnDefinition,
 		keyPath?: string,
+		schema?: SchemaDefinition,
 		transaction?: IDBTransaction
 	) {
-		this.#table = table;
-		this.#dbGetter = dbGetter;
-		this.#readyPromise = readyPromise;
-		this.#columns = columns;
+		super(tableName, dbGetter, readyPromise, transaction, schema, columns);
+
 		this.#keyPath = keyPath;
-		this.#transaction = transaction;
-	}
-
-	/** @internal Check if key is an index on the store for the `#whereIndexName` */
-	#isIndexKey(store: IDBObjectStore): boolean {
-		return (
-			isNonEmptyString(this.#whereIndexName) &&
-			store.indexNames.contains(this.#whereIndexName)
-		);
-	}
-
-	/** @internal Check if key is the primary key on the store for the `#whereIndexName` */
-	#isPrimaryKey(store: IDBObjectStore): boolean {
-		return isNonEmptyString(this.#whereIndexName) && store.keyPath === this.#whereIndexName;
-	}
-
-	/** @internal Build indexed store (primary key or index) for where queries */
-	#buildIndexedStore(store: IDBObjectStore, reject: RejectFn) {
-		const isPK = this.#isPrimaryKey(store);
-		const isIndex = this.#isIndexKey(store);
-
-		if (!isPK && !isIndex) {
-			reject(
-				new RangeError(
-					`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
-				)
-			);
-
-			return null;
-		}
-
-		// Primary keys use store directly, indexes use store.index()
-		return isPK ? store : store.index(this.#whereIndexName as string);
 	}
 
 	/**
@@ -101,60 +57,27 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 	}
 
 	/**
-	 * @instance Filter rows to update
-	 * @param predicate Filtering function
-	 */
-	where(predicate: WherePredicate<Row>): this;
-
-	/**
-	 * @instance Filter rows to update by index
-	 * @param indexName Index name to query
-	 * @param query Key value or {@link IDBKeyRange} to search for
-	 */
-	where<IdxKey extends $InferPrimaryKey<T['columns']> | $InferIndex<T['columns']>>(
-		indexName: IdxKey,
-		query: IDBKeyRange | Row[IdxKey]
-	): this;
-
-	where<IdxKey extends $InferPrimaryKey<T['columns']> | $InferIndex<T['columns']>>(
-		condition: WherePredicate<Row> | IdxKey,
-		query?: IDBKeyRange | Row[IdxKey]
-	): this {
-		if (isFunction(condition)) {
-			this.#whereCondition = condition;
-			this.#whereIndexName = undefined;
-			this.#whereIndexQuery = undefined;
-		} else if (isNonEmptyString(condition) && query != null) {
-			this.#whereIndexName = condition;
-			this.#whereIndexQuery = query;
-			this.#whereCondition = undefined;
-		}
-
-		return this;
-	}
-
-	/**
 	 * @instance Executes the update query
 	 * @returns Number of records updated
 	 */
 	async run(): Promise<number> {
-		await this.#readyPromise;
+		await this.$readyPromise;
 
-		let dataToUpdate = this.#dataToUpdate;
+		const dataToUpdate = this.#dataToUpdate;
 
 		return new Promise((resolve, reject) => {
-			const transaction =
-				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
-			const store = transaction.objectStore(this.#table);
+			const tables = getRefWorkflowTables(this.$schema, this.$table, 'update');
+			const trx = this.$trx ?? this.$dbGetter().transaction(tables, 'readwrite');
+			const store = trx.objectStore(this.$table);
 
 			let request: IDBRequest<Row[]>;
 
-			if (this.#whereIndexName && this.#whereIndexQuery != null) {
-				const source = this.#buildIndexedStore(store, reject);
+			if (this.$whereIndexName && this.$whereIndexQuery != null) {
+				const source = this.$buildIndexedStore(store, reject);
 
 				if (!source) return;
 
-				request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
+				request = source.getAll(this.$whereIndexQuery) as IDBRequest<Row[]>;
 			} else {
 				request = store.getAll() as IDBRequest<Row[]>;
 			}
@@ -164,48 +87,69 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> {
 			request.onsuccess = () => {
 				let rows = request.result;
 
-				if (this.#whereCondition) {
-					rows = rows.filter(this.#whereCondition);
+				if (this.$whereCondition) {
+					rows = rows.filter(this.$whereCondition);
 				}
 
-				const updatePromises = rows.map((row) => {
-					if (isFunction(this.#updateCallback)) {
-						dataToUpdate = this.#updateCallback(row);
+				const processUpdate = async () => {
+					try {
+						const updatePromises = rows.map(async (row) => {
+							let rowDataToUpdate = dataToUpdate;
+
+							if (isFunction(this.#updateCallback)) {
+								rowDataToUpdate = this.#updateCallback(row);
+							}
+
+							if (!isNotEmptyObject(rowDataToUpdate)) {
+								throw new Error('No values set for update!');
+							}
+
+							const updatedRow = _validateAndPrepareData<Row>(
+								{ ...row, ...rowDataToUpdate },
+								this.$columns,
+								this.#keyPath,
+								this.$table,
+								true
+							);
+
+							await applyUpdateRefWorkflow(
+								this.$schema,
+								this.$table,
+								row,
+								updatedRow,
+								trx
+							);
+
+							await new Promise<void>((res, rej) => {
+								const putRequest = store.put(updatedRow);
+
+								putRequest.onsuccess = () => {
+									updateCount++;
+									res();
+								};
+
+								putRequest.onerror = () => rej(putRequest.error);
+							});
+						});
+
+						await Promise.all(updatePromises);
+						resolve(updateCount);
+					} catch (err) {
+						trx.abort();
+						reject(err);
 					}
+				};
 
-					if (!isNotEmptyObject(dataToUpdate)) {
-						throw new Error('No values set for update!');
-					}
-
-					return new Promise<void>((res, rej) => {
-						const updatedRow = _validateAndPrepareData<Row>(
-							{ ...row, ...dataToUpdate },
-							this.#columns,
-							this.#keyPath,
-							this.#table,
-							true
-						);
-
-						const putRequest = store.put(updatedRow);
-
-						putRequest.onsuccess = () => {
-							updateCount++;
-							res();
-						};
-
-						putRequest.onerror = () => rej(putRequest.error);
-					});
-				});
-
-				Promise.all(updatePromises)
-					.then(() => resolve(updateCount))
-					.catch((err) => reject(err));
+				void processUpdate();
 			};
 
-			request.onerror = () => reject(request.error);
+			request.onerror = () => {
+				trx.abort();
+				reject(request.error);
+			};
 
 			// Handle transaction abort (happens on errors)
-			transaction.onabort = () => _abortTransaction(transaction.error, reject);
+			trx.onabort = () => _abortTransaction(trx.error, reject);
 		});
 	}
 }

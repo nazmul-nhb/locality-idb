@@ -1,104 +1,28 @@
-import { isFunction, isNonEmptyString } from 'toolbox-x/guards';
 import type { Table } from '../core';
 import { _abortTransaction } from '../helpers';
-import type {
-	$InferIndex,
-	$InferPrimaryKey,
-	GenericObject,
-	IDBGetter,
-	RejectFn,
-	WherePredicate,
-} from '../types';
+import type { GenericObject, IDBGetter, SchemaDefinition } from '../types';
+import { applyDeleteRefWorkflow, getRefWorkflowTables } from './_ref';
+import { BaseQuery } from './base';
 
 /** @class Delete query builder. */
-export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T extends Table> {
-	#table: string;
-	#dbGetter: IDBGetter;
-	#readyPromise: Promise<void>;
-	#keyField: Key;
-	#whereCondition?: WherePredicate<Row>;
-	#whereIndexName?: string;
-	#whereIndexQuery?: IDBKeyRange | IDBValidKey;
-
-	#transaction?: IDBTransaction;
+export class DeleteQuery<
+	Row extends GenericObject,
+	Key extends keyof Row,
+	T extends Table,
+> extends BaseQuery<Row, T> {
+	#primaryKey: Key;
 
 	constructor(
-		table: string,
+		tableName: string,
 		dbGetter: IDBGetter,
 		readyPromise: Promise<void>,
-		keyField: Key,
+		primaryKey: Key,
+		schema?: SchemaDefinition,
 		transaction?: IDBTransaction
 	) {
-		this.#table = table;
-		this.#dbGetter = dbGetter;
-		this.#readyPromise = readyPromise;
-		this.#keyField = keyField;
-		this.#transaction = transaction;
-	}
+		super(tableName, dbGetter, readyPromise, transaction, schema);
 
-	/** @internal Check if key is an index on the store for the `#whereIndexName` */
-	#isIndexKey(store: IDBObjectStore): boolean {
-		return (
-			isNonEmptyString(this.#whereIndexName) &&
-			store.indexNames.contains(this.#whereIndexName)
-		);
-	}
-
-	/** @internal Check if key is the primary key on the store for the `#whereIndexName` */
-	#isPrimaryKey(store: IDBObjectStore): boolean {
-		return isNonEmptyString(this.#whereIndexName) && store.keyPath === this.#whereIndexName;
-	}
-
-	/** @internal Build indexed store (primary key or index) for where queries */
-	#buildIndexedStore(store: IDBObjectStore, reject: RejectFn) {
-		const isPK = this.#isPrimaryKey(store);
-		const isIndex = this.#isIndexKey(store);
-
-		if (!isPK && !isIndex) {
-			reject(
-				new RangeError(
-					`Index '${this.#whereIndexName}' does not exist on table '${this.#table}'`
-				)
-			);
-
-			return null;
-		}
-
-		// Primary keys use store directly, indexes use store.index()
-		return isPK ? store : store.index(this.#whereIndexName as string);
-	}
-
-	/**
-	 * @instance Filter rows to delete
-	 * @param predicate Filtering function
-	 */
-	where(predicate: WherePredicate<Row>): this;
-
-	/**
-	 * @instance Filter rows to delete by index
-	 * @param indexName Index name to query
-	 * @param query Key value or {@link IDBKeyRange} to search for
-	 */
-	where<IdxKey extends $InferPrimaryKey<T['columns']> | $InferIndex<T['columns']>>(
-		indexName: IdxKey,
-		query: IDBKeyRange | Row[IdxKey]
-	): this;
-
-	where<IdxKey extends $InferPrimaryKey<T['columns']> | $InferIndex<T['columns']>>(
-		condition: WherePredicate<Row> | IdxKey,
-		query?: IDBKeyRange | Row[IdxKey]
-	): this {
-		if (isFunction(condition)) {
-			this.#whereCondition = condition;
-			this.#whereIndexName = undefined;
-			this.#whereIndexQuery = undefined;
-		} else if (isNonEmptyString(condition) && query != null) {
-			this.#whereIndexName = condition;
-			this.#whereIndexQuery = query;
-			this.#whereCondition = undefined;
-		}
-
-		return this;
+		this.#primaryKey = primaryKey;
 	}
 
 	/**
@@ -106,25 +30,21 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 	 * @returns Number of records deleted
 	 */
 	async run(): Promise<number> {
-		await this.#readyPromise;
-		return new Promise((resolve, reject) => {
-			const transaction =
-				this.#transaction ?? this.#dbGetter().transaction(this.#table, 'readwrite');
-			const store = transaction.objectStore(this.#table);
-			let request: IDBRequest<Row[]> | IDBRequest<IDBValidKey[]>;
-			let useKeysOnly = false;
+		await this.$readyPromise;
 
-			if (this.#whereIndexName && this.#whereIndexQuery != null) {
-				const source = this.#buildIndexedStore(store, reject);
+		return new Promise((resolve, reject) => {
+			const tables = getRefWorkflowTables(this.$schema, this.$table, 'delete');
+			const trx = this.$trx ?? this.$dbGetter().transaction(tables, 'readwrite');
+			const store = trx.objectStore(this.$table);
+
+			let request: IDBRequest<Row[]>;
+
+			if (this.$whereIndexName && this.$whereIndexQuery != null) {
+				const source = this.$buildIndexedStore(store, reject);
 
 				if (!source) return;
 
-				if (this.#whereCondition) {
-					request = source.getAll(this.#whereIndexQuery) as IDBRequest<Row[]>;
-				} else {
-					useKeysOnly = true;
-					request = source.getAllKeys(this.#whereIndexQuery);
-				}
+				request = source.getAll(this.$whereIndexQuery) as IDBRequest<Row[]>;
 			} else {
 				request = store.getAll() as IDBRequest<Row[]>;
 			}
@@ -132,43 +52,49 @@ export class DeleteQuery<Row extends GenericObject, Key extends keyof Row, T ext
 			let deleteCount = 0;
 
 			request.onsuccess = () => {
-				const results = request.result;
-				let keys: IDBValidKey[] = [];
+				let rows = request.result;
 
-				if (useKeysOnly) {
-					keys = results as IDBValidKey[];
-				} else {
-					let rows = results as Row[];
-
-					if (this.#whereCondition) {
-						rows = rows.filter(this.#whereCondition);
-					}
-
-					keys = rows.map((row) => row[this.#keyField]);
+				if (this.$whereCondition) {
+					rows = rows.filter(this.$whereCondition);
 				}
 
-				const deletePromises = keys.map((key) => {
-					return new Promise<void>((res, rej) => {
-						const delRequest = store.delete(key);
+				const processDelete = async () => {
+					try {
+						await applyDeleteRefWorkflow(this.$schema, this.$table, rows, trx);
 
-						delRequest.onsuccess = () => {
-							deleteCount++;
-							res();
-						};
+						const deletePromises = rows.map((row) => {
+							const key = row[this.#primaryKey];
 
-						delRequest.onerror = () => rej(delRequest.error);
-					});
-				});
+							return new Promise<void>((res, rej) => {
+								const delRequest = store.delete(key);
 
-				Promise.all(deletePromises)
-					.then(() => resolve(deleteCount))
-					.catch((err) => reject(err));
+								delRequest.onsuccess = () => {
+									deleteCount++;
+									res();
+								};
+
+								delRequest.onerror = () => rej(delRequest.error);
+							});
+						});
+
+						await Promise.all(deletePromises);
+						resolve(deleteCount);
+					} catch (err) {
+						trx.abort();
+						reject(err);
+					}
+				};
+
+				void processDelete();
 			};
 
-			request.onerror = () => reject(request.error);
+			request.onerror = () => {
+				trx.abort();
+				reject(request.error);
+			};
 
 			// Handle transaction abort (happens on errors)
-			transaction.onabort = () => _abortTransaction(transaction.error, reject);
+			trx.onabort = () => _abortTransaction(trx.error, reject);
 		});
 	}
 }

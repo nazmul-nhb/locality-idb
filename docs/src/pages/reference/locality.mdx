@@ -36,6 +36,32 @@ Returns an array of table (store) names defined in the schema.
 ### `dbList: Promise<IDBDatabaseInfo[]>`
 Asynchronously returns information about all IndexedDB databases matching the current origin.
 
+## Relationships and refs
+
+Locality also supports foreign-key-style relationships through `ref()` on a column. This is useful when you want to enforce that a child row points to a real parent row without leaving the relationship implicit.
+
+```typescript
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+  },
+  posts: {
+    id: column.int().pk().auto(),
+    userId: column.int().ref('users.id', {
+      onDelete: 'cascade',
+      onUpdate: 'restrict',
+    }),
+    title: column.text(),
+  },
+});
+```
+
+Behavior is enforced automatically:
+- inserts fail when the referenced row does not exist
+- inserts fail when the source and target columns use different types
+- updates and deletes follow the configured `onUpdate` and `onDelete` policy
+
 ## Instance Methods
 
 ### `ready(): Promise<void>`

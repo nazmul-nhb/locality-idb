@@ -41,12 +41,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": [
-		"dist",
-		"LICENSE",
-		"README.md",
-		"package.json"
-	],
+	"files": ["dist", "LICENSE", "README.md", "package.json"],
 	"keywords": [
 		"indexeddb",
 		"indexed-db",
@@ -69,13 +64,15 @@
 	],
 	"scripts": {
 		"build": "tsdown",
-		"dev:pkg": "tsdown --watch",
-		"dev:demo": "pnpm --dir demo run dev",
-		"dev": "pnpm --filter locality-docs run dev",
+		"build:demo": "pnpm --filter locality-demo run build",
 		"build:docs": "pnpm --filter locality-docs run build",
-		"install:demo": "pnpm --dir demo install",
-		"build:demo": "pnpm --dir demo run build",
-		"preview": "pnpm --dir demo run preview",
+		"dev:pkg": "tsdown --watch",
+		"dev:demo": "pnpm --filter locality-demo run dev",
+		"dev": "pnpm --filter locality-docs run dev",
+		"install:demo": "pnpm --filter locality-demo install",
+		"install:docs": "pnpm --filter locality-docs install",
+		"preview": "pnpm --filter locality-demo run preview",
+		"preview:docs": "pnpm --filter locality-docs run preview",
 		"typecheck": "tsc --noEmit",
 		"prepublishOnly": "pnpm run build",
 		"commit": "nhb-commit",
@@ -88,16 +85,16 @@
 		"changelog:docs": "pnpm --filter locality-docs changelog"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.4",
+		"@biomejs/biome": "^2.5.5",
 		"@types/node": "^26.1.1",
 		"nhb-scripts": "^1.9.2",
-		"toolbox-x": "^2.6.6",
-		"tsdown": "^0.22.9",
+		"toolbox-x": "^2.6.16",
+		"tsdown": "^0.22.13",
 		"typescript": "^6.0.3"
 	},
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
 	"inlinedDependencies": {
-		"toolbox-x": "2.6.6"
+		"toolbox-x": "2.6.16"
 	}
 }

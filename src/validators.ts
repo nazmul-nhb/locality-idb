@@ -45,7 +45,7 @@ export function validateColumnType<T extends TypeName>(
 	type: T,
 	value: unknown
 ): Nullable<string> {
-	const strVal = isString(value) ? JSON.stringify(value) : `'${JSON.stringify(value)}'`;
+	const strVal = `'${isString(value) ? value : JSON.stringify(value)}'`;
 
 	switch (type) {
 		case 'int':

@@ -11,10 +11,12 @@ import type {
 	Timestamp,
 	Tuple,
 	URLString,
+	ValidateRefs,
 } from './types';
 
 /**
  * * Defines a database schema from a given schema definition.
+ *
  * @param schema An object defining the schema, where each key is a table name and each value is a record of {@link column} definitions.
  * @returns An object mapping each table name to its corresponding {@link Table} instance.
  *
@@ -45,7 +47,7 @@ import type {
  * type InsertPost = InferInsertType<typeof schema.posts>;
  * type UpdatePost = InferUpdateType<typeof schema.posts>;
  */
-export function defineSchema<S extends ColumnRecord>(schema: S): Schema<S> {
+export function defineSchema<S extends ColumnRecord>(schema: ValidateRefs<S>): Schema<S> {
 	const result: GenericObject = {};
 
 	for (const [tableName, columns] of Object.entries(schema)) {
@@ -56,10 +58,16 @@ export function defineSchema<S extends ColumnRecord>(schema: S): Schema<S> {
 }
 
 /**
- * * Factory function to create a new {@link Table} instance.
+ * @deprecated Use the {@link defineSchema} function instead to define the entire schema at once.
+ *
+ * @description Factory function to create a new {@link Table} instance.
+ *
  * @param name The name of the table.
  * @param columns An object defining the columns of the table using {@link column} definitions.
  * @returns A new {@link Table} instance representing the table schema.
+ *
+ * @remarks It has been deprecated in favor of {@link defineSchema} for defining the entire schema at once,
+ * 			which provides better type inference and validation.
  *
  * @example
  * const userTable = table('users', {

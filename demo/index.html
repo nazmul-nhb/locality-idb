@@ -2,184 +2,34 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<link rel="icon" type="image/svg+xml" href="/typescript.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="shortcut icon" href="favicon.png" type="image/png" />
 		<link rel="stylesheet" href="/src/style.css" />
-		<title>Practice IndexedDB</title>
+		<title>Locality IDB — API Lab</title>
 	</head>
-	<body class="bg-linear-to-br from-blue-50 to-indigo-100 min-h-screen p-4 sm:p-6">
-		<main class="max-w-2xl mx-auto">
-			<!-- Header -->
-			<div class="text-center mb-8">
-				<h1 class="text-4xl sm:text-5xl font-bold text-gray-800 mb-2">My Tasks</h1>
-				<p class="text-gray-600">Stay organized with IndexedDB</p>
-			</div>
-
-			<!-- Stats Card -->
-			<div class="grid grid-cols-2 gap-4 mb-8">
-				<div class="bg-white rounded-xl shadow-md p-6 text-center">
-					<div class="text-3xl font-bold text-blue-600" id="statsTotal">0</div>
-					<div class="text-gray-600 text-sm mt-1">Total Tasks</div>
-				</div>
-				<div class="bg-white rounded-xl shadow-md p-6 text-center">
-					<div class="text-3xl font-bold text-green-600" id="statsCompleted">0</div>
-					<div class="text-gray-600 text-sm mt-1">Completed</div>
-				</div>
-			</div>
-
-			<!-- Input Card -->
-			<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-				<div class="flex gap-3">
-					<input
-						id="todoInput"
-						type="text"
-						placeholder="Add a new task..."
-						class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					/>
+	<body>
+		<div id="app"></div>
+		<dialog id="confirmDialog" class="dialog">
+			<form method="dialog" class="dialog-card">
+				<div class="dialog-icon">!</div>
+				<h2 id="dialogTitle">Confirm action</h2>
+				<p id="dialogDescription"></p>
+				<div class="dialog-actions">
+					<button type="submit" class="button button-quiet" value="cancel">
+						Cancel
+					</button>
 					<button
-						id="addBtn"
-						type="button"
-						class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg cursor-pointer hover:bg-blue-700 transition-colors active:scale-95"
+						type="submit"
+						id="dialogConfirm"
+						class="button button-danger"
+						value="confirm"
 					>
-						Add
+						Continue
 					</button>
 				</div>
-			</div>
-
-			<div class="flex justify-end mb-4">
-				<button
-					id="clearCompleted"
-					class="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
-					type="button"
-				>
-					Clear Completed
-				</button>
-			</div>
-
-			<!-- Todos List -->
-			<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-				<ul id="todoList" class="space-y-3">
-					<!-- Todos will be rendered here -->
-				</ul>
-			</div>
-
-			<!-- Button to Clear a specific database -->
-			<div
-				class="flex flex-col gap-4 items-center mb-6 bg-white/60 backdrop-blur-sm border border-white/70 rounded-xl p-4 shadow-sm"
-			>
-				<div class="flex justify-center items-center gap-4">
-					<select
-						id="dbNameSelect"
-						class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					>
-						<option value="" disabled selected hidden>Select a Database</option>
-						<!-- ! Options will be populated dynamically based on available tables -->
-					</select>
-
-					<button
-						id="clearDBBtn"
-						class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
-						type="button"
-					>
-						Clear Database
-					</button>
-				</div>
-
-				<button
-					id="clearThisDBBtn"
-					class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
-					type="button"
-				>
-					Or Delete This Database
-				</button>
-
-				<!-- Button to Clear a specific store (column) -->
-				<div class="flex justify-center items-center gap-4 mb-6">
-					<select
-						id="storeNameSelect"
-						class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					>
-						<option value="" disabled selected hidden>Select a Table/Store</option>
-						<!-- ! Options will be populated dynamically based on available tables -->
-					</select>
-
-					<button
-						id="clearStoreBtn"
-						class="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
-						type="button"
-					>
-						Clear Store
-					</button>
-				</div>
-			</div>
-
-			<!-- Button to Export a specific database or all -->
-			<div
-				class="flex flex-col gap-4 items-center mb-6 bg-white/60 backdrop-blur-sm border border-white/70 rounded-xl p-4 shadow-sm"
-			>
-				<select
-					id="tableNameSelect"
-					class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-				>
-					<option value="__all__">Export Entire Database</option>
-					<!-- ! Options will be populated dynamically based on available tables -->
-				</select>
-				<div class="flex flex-col flex-wrap gap-4 items-center select-none">
-					<label
-						for="prettyPrint"
-						class="inline-flex items-center gap-2 text-sm text-gray-700"
-					>
-						<input
-							type="checkbox"
-							name="prettyPrint"
-							id="prettyPrint"
-							class="accent-blue-600"
-							checked
-						/>
-						Pretty Print JSON
-					</label>
-					<label
-						for="includeMeta"
-						class="inline-flex items-center gap-2 text-sm text-gray-700"
-					>
-						<input
-							type="checkbox"
-							name="includeMeta"
-							id="includeMeta"
-							class="accent-blue-600"
-							checked
-						/>
-						Include Metadata
-					</label>
-				</div>
-				<button
-					type="button"
-					id="exportDBBtn"
-					class="px-4 py-2 bg-teal-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-teal-600 transition-colors active:scale-95"
-				>
-					Export Database
-				</button>
-			</div>
-
-			<!-- Footer Actions -->
-			<div class="text-center space-y-3">
-				<div class="mt-4 pt-4 border-t border-gray-300">
-					<h3 class="text-lg font-semibold text-gray-700 mb-3">
-						🧪 New Features Testing
-					</h3>
-					<button
-						id="runTestsBtn"
-						class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg cursor-pointer hover:bg-purple-700 transition-colors active:scale-95"
-						type="button"
-					>
-						Run Feature Tests
-					</button>
-					<p class="text-xs text-gray-500 mt-2">
-						Tests: Bulk Insert Atomicity, Transactions, and Export
-					</p>
-				</div>
-			</div>
-		</main>
+			</form>
+		</dialog>
+		<div id="toastRegion" class="toast-region" aria-live="polite"></div>
 		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>

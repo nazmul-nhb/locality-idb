@@ -19,6 +19,7 @@ import type {
 	IsOptional,
 	IsPrimaryKey,
 	IsUnique,
+	RefMeta,
 } from './symbols';
 
 export type {
@@ -181,14 +182,14 @@ export interface LocalityConfig<
 > {
 	/** Database name */
 	dbName: DB;
-	/** Database version */
+	/** Database schema version */
 	version?: V;
 	/** Database schema */
 	schema: S;
 }
 
 /** Column definition type - preserves both Column generics */
-export type ColumnDefinition = Record<string, Column<any, string>>;
+export type ColumnDefinition = Record<string, Column<any, TypeName>>;
 
 /** Validated column definition with single PK constraint */
 export type ValidatedColumnDefinition<T extends ColumnDefinition = ColumnDefinition> =
@@ -543,3 +544,77 @@ export type NumericDotKey<T> = T extends AdvancedTypes
 export type ResolveValue<T extends GenericObject, U extends keyof T> = Prettify<
 	{ [K in U]: T[K] }[U]
 >;
+
+/** Actions on delete or update for reference columns (foreign keys) */
+export type RefAction = 'noAction' | 'cascade' | 'restrict' | 'setNull/Undefined';
+
+/** Options for reference columns (foreign keys) */
+export interface RefOptions {
+	/** Action to take on delete of the referenced row */
+	onDelete?: RefAction;
+	/** Action to take on update of the referenced row */
+	onUpdate?: RefAction;
+}
+
+/** Runtime shape for ref metadata attached to a Column instance */
+export interface RefMetadata<RefPath extends string> {
+	/** Reference path in the format 'table.column' */
+	refPath: RefPath;
+
+	/**
+	 * Optional actions on delete or update
+	 *
+	 * @default "noAction"
+	 */
+	options?: RefOptions;
+}
+
+/** Type to extract the reference path from a Column instance */
+export type ExtractRef<C> = C extends { [RefMeta]: RefMetadata<infer R> } ? R : never;
+
+/**
+ * Ensures that a reference path is valid within a given schema.
+ * - If the reference path is valid, returns `true`.
+ * - If the reference path is invalid, returns a descriptive error tuple.
+ *
+ * @typeParam S - The schema to validate against.
+ * @typeParam R - The reference path in the format `'TableName.ColumnName'`.
+ */
+export type EnsureRefIsValid<S extends ColumnRecord, R> = R extends never
+	? true
+	: R extends `${infer T}.${infer K}`
+		? T extends keyof S
+			? K extends keyof S[T]
+				? true
+				: ['Invalid column', R, T]
+			: ['Invalid table', R]
+		: ['Invalid format', R];
+
+/**
+ * Validates all references in a schema.
+ * - If all references are valid, returns the original schema `S`.
+ * - If any reference is invalid, returns a descriptive error object.
+ *
+ * @typeParam S - The schema to validate.
+ */
+export type RefValidationMap<S extends ColumnRecord> = {
+	[Table in keyof S]: {
+		[Col in keyof S[Table]]: EnsureRefIsValid<S, ExtractRef<S[Table][Col]>>;
+	};
+};
+
+/**
+ * Validates that all references in a schema are valid.
+ * - If all references are valid, returns the original schema `S`.
+ * - If any reference is invalid, returns a descriptive error object.
+ *
+ * @typeParam S - The schema to validate.
+ */
+export type ValidateRefs<S extends ColumnRecord> =
+	RefValidationMap<S> extends {
+		[Table in keyof S]: { [Col in keyof S[Table]]: true };
+	}
+		? S
+		: {
+				Error: `Invalid reference(s) found in table ${Extract<keyof S, string>}`;
+			};

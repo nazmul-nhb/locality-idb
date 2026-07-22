@@ -27,6 +27,37 @@ const schema = defineSchema({
 });
 ```
 
+## Referential integrity with `ref()`
+
+You can attach foreign-key-like metadata to a column with `ref(refPath, options)`.
+
+```typescript
+import { column, defineSchema } from 'locality-idb';
+
+const schema = defineSchema({
+  users: {
+    id: column.int().pk().auto(),
+    name: column.text(),
+  },
+  posts: {
+    id: column.int().pk().auto(),
+    userId: column.int().ref('users.id', {
+      onDelete: 'cascade',
+      onUpdate: 'restrict',
+    }),
+    title: column.text(),
+  },
+});
+```
+
+Locality IDB applies this behavior automatically during inserts, updates, and deletes:
+- inserts fail if the referenced row does not exist
+- inserts fail if the source and target column types do not match
+- updates honor `onUpdate`
+- deletes honor `onDelete`
+
+This makes it possible to build relational-style schemas while still using IndexedDB as the storage backend.
+
 ## `table`
 
 An alternative function to define a single table in isolation.

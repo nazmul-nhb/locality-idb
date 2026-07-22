@@ -12,12 +12,15 @@ export const IsNullable = Symbol('IsNullable');
 export const IsIndexed = Symbol('IsIndexed');
 /** Symbol key for unique marker */
 export const IsUnique = Symbol('IsUnique');
+
 /** Symbol key for default value */
 export const DefaultValue = Symbol('DefaultValue');
 /** Symbol key for custom validation function */
 export const ValidateFn = Symbol('ValidateFn');
 /** Symbol key for on update marker */
 export const OnUpdate = Symbol('OnUpdate');
+/** Symbol key to store runtime ref metadata on Column instances */
+export const RefMeta = Symbol('RefMeta');
 
 /** Symbol for type extraction (exists only in type system) */
 export const Selected = Symbol('Selected');

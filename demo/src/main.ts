@@ -1,506 +1,1010 @@
 import './style.css';
 
-import './test';
-
-import type { InferInsertType, InferSelectType, InferUpdateType, Maybe } from 'locality';
+import { javascript } from '@codemirror/lang-javascript';
+import { EditorState } from '@codemirror/state';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { EditorView } from '@codemirror/view';
 import {
-	column,
-	defineSchema,
-	deleteDB,
-	// getTimestamp,
+	type Email,
+	getTimestamp,
+	type ImportMode,
+	isEmail,
+	isTimestamp,
+	isURL,
+	isUUID,
 	Locality,
-	table,
 	uuidV4,
+	validateColumnType,
 } from 'locality';
-import { getTimestamp, isValidArray } from 'nhb-toolbox';
-import { uuid } from 'nhb-toolbox/hash';
-import { Stylog } from 'nhb-toolbox/stylog';
-import { runAllTests } from './transaction-export';
+import { type Operation, operations, testFiles } from './codes';
+import { db, getRows, schema, type TableName } from './db';
+import {
+	errorMessage,
+	escapeHtml,
+	fileIcon,
+	getValueOf,
+	json,
+	requiredElement,
+	showToast,
+} from './utils';
 
-let todos: Partial<Todo>[] = [];
+export type Tone = 'success' | 'error' | 'info';
 
-const todoInput = document.getElementById('todoInput') as HTMLInputElement;
-const addBtn = document.getElementById('addBtn') as HTMLButtonElement;
-const todoList = document.getElementById('todoList') as HTMLUListElement;
-const clearCompletedBtn = document.getElementById('clearCompleted') as HTMLButtonElement;
-const statsCompleted = document.getElementById('statsCompleted') as HTMLSpanElement;
-const statsTotal = document.getElementById('statsTotal') as HTMLSpanElement;
+let activeOperation = operations[0].id;
+let activeFile = Object.keys(operations[0].files)[0];
+let activeTestFile = Object.keys(testFiles)[0];
+let editor: EditorView;
+let testEditor: EditorView;
+let testLog: { tone: Tone; title: string; detail: string }[] = [];
+let lastResult: unknown = { message: 'Select an API surface, then run its live example.' };
 
-const customSchema = {
-	test: table('test', {
-		serial: column.int().pk().auto(),
-		task: column.string().index(),
-		completed: column.bool().default(false),
-		uuid: column.uuid().default(uuid({ version: 'v6' })),
-		timestamp: column
-			.timestamp()
-			.optional()
-			.onUpdate((p) => (p ? p : undefined))
-			.validate((v) => v),
-		createdAt: column.timestamp(),
-		test: column.tuple<0 | 9>(),
-	}),
-};
+const app = requiredElement<HTMLDivElement>('#app');
+const dialog = requiredElement<HTMLDialogElement>('#confirmDialog');
+const dialogTitle = requiredElement<HTMLElement>('#dialogTitle');
+const dialogDescription = requiredElement<HTMLElement>('#dialogDescription');
 
-export type _Test1 = InferSelectType<typeof customSchema.test>;
-export type _Test2 = InferInsertType<typeof customSchema.test>;
-export type _Test3 = InferUpdateType<typeof customSchema.test>;
+let activeWorkspace: 'interact' | 'tests' = 'interact';
 
-const schema = defineSchema({
-	todos: {
-		serial: column.int().pk().auto(),
-		task: column.text().unique(),
-		completed: column.bool().default(false),
-		uuid: column.uuid().default(uuid({ version: 'v6' })),
-		timestamp: column.timestamp().nullable(),
-		number: column.number().default(0),
-		custom: column.custom<{ price: number }>().default({ price: 0 }),
-		createdAt: column.timestamp(),
-		updatedAt: column.timestamp().onUpdate(() => getTimestamp()),
-		url: column.url().nullable(),
-	},
-	experiments: {
-		id: column.float().pk().auto(),
-		name: column.text().index(),
-		active: column
-			.bool()
-			.default(true)
-			.validate((v) => (v ? null : 'Active must be true')),
-		email: column.email().optional(),
-		url: column.url().optional(),
-	},
+function currentOperation() {
+	return operations.find((operation) => operation.id === activeOperation) ?? operations[0];
+}
 
-	test1: customSchema.test.columns,
-});
+function updateResult(value: unknown) {
+	lastResult = value;
+	const output = document.querySelector('#resultOutput');
+	if (output) output.textContent = json(value);
+}
 
-// schema.todos.columns.serial
-
-type SchemaType = typeof schema;
-
-type Todo = InferSelectType<SchemaType['todos']>;
-type InsertTodo = InferInsertType<SchemaType['todos']>;
-type UpdateTodo = InferUpdateType<SchemaType['todos']>;
-
-// type _I = IndexKeyType<SchemaType['todos']>;
-// type _P = PrimaryKeyType<SchemaType['todos']>;
-// type _U = UniqueKeyType<SchemaType['todos']>;
-
-const db = new Locality({
-	dbName: 'todo-db',
-	version: 45,
-	schema,
-});
-
-// Load todos from IndexedDB
-const loadTodos = async () => {
-	const base = db.from('todos');
-
-	const todosS = await base
-		.select({ serial: true, task: true, completed: true, createdAt: true, updatedAt: true })
-		.sortByIndex('serial', 'desc')
-		.findAll();
-
-	const count = await base.count();
-
-	const test1 = await base.where('serial', 8).exists();
-	const test2 = await base.findByPk(1);
-
-	console.info({ count, test1, test2 });
-
-	todos = todosS;
-
-	console.info(todosS);
-
-	const test = await db
-		.from('todos')
-		.select({
-			serial: true,
-			task: true,
-		})
-		.findByIndex('task', 'g');
-
-	console.info({ test });
-
-	const calc = base.select({
-		serial: true,
-		task: true,
-		number: true,
-		completed: true,
-		createdAt: true,
-		updatedAt: true,
+function renderEditor(host: HTMLElement, source: string, previous?: EditorView) {
+	previous?.destroy();
+	return new EditorView({
+		state: EditorState.create({
+			doc: source,
+			extensions: [
+				javascript({ typescript: true }),
+				oneDark,
+				EditorState.readOnly.of(true),
+				EditorView.editable.of(false),
+				EditorView.lineWrapping,
+			],
+		}),
+		parent: host,
 	});
+}
 
-	console.info(await calc.where((t) => t.serial > 9).findAll());
+function choices(
+	rows: Array<Record<string, unknown>>,
+	label: (row: Record<string, unknown>) => string
+) {
+	return (
+		rows
+			.map(
+				(row) =>
+					/* html*/ `<option value="${row.id}">${escapeHtml(label(row))}</option>`
+			)
+			.join('') || /* html*/ `<option value="">No rows yet — seed first</option>`
+	);
+}
 
-	const sum = await calc.sum('custom.price');
-	const avg = await calc.avg('custom.price');
+async function refreshSelects() {
+	const [users, posts, dbs] = await Promise.all([
+		getRows('users'),
+		getRows('posts'),
+		db.dbList,
+	]);
 
-	const dist = await calc.distinct('custom');
+	for (const element of document.querySelectorAll<HTMLSelectElement>('[data-users]'))
+		element.innerHTML = choices(users, (user) => `#${user.id} · ${user.name}`);
+	for (const element of document.querySelectorAll<HTMLSelectElement>('[data-posts]'))
+		element.innerHTML = choices(posts, (post) => `#${post.id} · ${post.title}`);
+	for (const element of document.querySelectorAll<HTMLSelectElement>('[data-tables]'))
+		element.innerHTML = db.tableList
+			.map((table) => /* html*/ `<option value="${table}">${table}</option>`)
+			.join('');
+	for (const element of document.querySelectorAll<HTMLSelectElement>('[data-databases]'))
+		element.innerHTML = dbs
+			.map(
+				(database) =>
+					/* html*/ `<option value="${database.name}">${database.name} · v${database.version ?? '?'}</option>`
+			)
+			.join('');
+}
 
-	console.info({ sum, avg });
+function groupedOperations() {
+	return [...new Set(operations.map((operation) => operation.group))]
+		.map(
+			(group) =>
+				/* html*/ `<div class="op-group">${group}</div>${operations
+					.filter((operation) => operation.group === group)
+					.map(
+						(operation, index) =>
+							/* html*/ `
+						<button
+							class="operation-button ${operation.id === activeOperation ? 'active' : ''}"
+							data-operation="${operation.id}"
+						>
+							<span class="op-tag">${String(index + 1).padStart(2, '0')}</span>${operation.title}
+						</button>`
+					)
+					.join('')}`
+		)
+		.join('');
+}
 
-	console.info({ dist });
+function controlsFor(operation: Operation) {
+	const run = (label: string, id = 'runOperation', danger = false) =>
+		/* html*/ `<button class="button ${danger ? 'button-danger' : 'button-primary'}" data-action="${id}">${label}</button>`;
 
-	const min = await calc.min('number');
-	const max = await calc.max('number');
+	const select = (label: string, attr: string, id: string) =>
+		/* html*/ `<label class="field">${label}<select id="${id}" ${attr}></select></label>`;
 
-	console.info({ min, max });
+	switch (operation.control) {
+		case 'snapshot':
+			return /* html*/ `<div class="control-card">${run('Refresh live snapshot')}</div>`;
+		case 'details':
+			return /* html*/ `<div class="control-card">${run('Inspect connection')}</div>`;
+		case 'insert':
+			return /* html*/ `
+			<div class="control-card">
+				<label class="field">Target table
+					<select id="insertTable">
+						<option value="users">users</option>
+						<option value="posts">posts</option>
+					</select>
+				</label>
+				<label class="field" data-user-field>Name
+					<input id="insertName" value="Linus" />
+				</label>
+				<label class="field" data-user-field>Email
+					<input id="insertEmail" value="linus@locality.dev" type="email" />
+				</label>
+				<label class="field" data-user-field>Score
+					<input id="insertScore" value="5" type="number" />
+				</label>
+				<label class="field" data-post-field hidden>Author
+					<select id="insertUserId" data-users></select>
+				</label>
+				<label class="field" data-post-field hidden>Title
+					<input id="insertTitle" value="A new post" />
+				</label>
+				<label class="field" data-post-field hidden>Likes
+					<input id="insertLikes" value="1" type="number" />
+				</label>
+				${run('Insert row')}
+			</div>`;
+		case 'batch':
+			return /* html*/ `<div class="control-card">${run('Insert sample batch')}<div class="detail-note">Run this after a clear or with fresh emails. The Tests workspace demonstrates the failing duplicate batch.</div></div>`;
+		case 'seed':
+			return /* html*/ `<div class="control-card">${run('Seed four tables')}<div class="detail-note">Creates users first, then their posts, comments, and an audit entry. Safe to run only when the lab is empty.</div></div>`;
+		case 'read':
+			return /* html*/ `<div class="control-card">${run('Run read examples')}</div>`;
+		case 'lookup':
+			return /* html*/ `<div class="control-card">${select('User record', 'data-users', 'lookupUser')}${run('Run primary key & index lookups')}</div>`;
+		case 'sort':
+			return /* html*/ `<div class="control-card">${run('Run sort & limit')}</div>`;
+		case 'aggregate':
+			return /* html*/ `<div class="control-card">${run('Calculate post statistics')}</div>`;
+		case 'cursor':
+			return /* html*/ `<div class="control-card">${run('Page and stream posts')}</div>`;
+		case 'update':
+			return /* html*/ `<div class="control-card">${select('User to increment', 'data-users', 'updateUser')}${select('Post to update', 'data-posts', 'updatePost')}<label class="field">New post likes<input id="updateLikes" value="21" type="number" /></label>${run('Run both updates')}</div>`;
+		case 'delete':
+			return /* html*/ `
+			<div class="control-card">
+				<label class="field">Delete target table
+					<select id="deleteTable">
+						<option value="users">users</option>
+						<option value="posts">posts</option>
+					</select>
+				</label>
+				<label class="field" data-delete-users>Selected user<select id="deleteUser" data-users>
+					</select>
+				</label>
+				<label class="field" data-delete-posts hidden>Selected post
+					<select id="deletePost" data-posts>
+					</select>
+				</label>
+				${run('Delete selected row', 'runOperation', true)}
+				<div class="detail-note">Deleting a user cascades through posts and comments by design.</div>
+			</div>`;
+		case 'reference':
+			return /* html*/ `<div class="control-card">${run('Attempt invalid insert')}<div class="detail-note">Expected result: a readable reference error and no new post.</div></div>`;
+		case 'transaction':
+			return /* html*/ `
+			<div class="control-card">
+				${run('Commit an example transaction')}
+				<button class="button button-quiet" data-action="rollback">
+					Run rollback example
+				</button>
+			</div>`;
+		case 'export-object':
+			return /* html*/ `<div class="control-card">${run('Create export object')}</div>`;
+		case 'export-file':
+			return /* html*/ `
+			<div class="control-card">
+				${run('Download JSON backup')}
+				<div class="detail-note">
+					Your browser controls the download location.
+				</div>
+			</div>`;
+		case 'import':
+			return /* html*/ `
+			<div class="control-card">
+				<label class="field">Import mode
+					<select id="importMode">
+						<option value="replace">replace</option>
+						<option value="upsert">upsert</option>
+					</select>
+				</label>
+				${run('Round-trip current snapshot')}
+			</div>`;
+		case 'maintenance':
+			return /* html*/ `
+			<div class="control-card space-x-2 space-y-2">
+				${select('Table to clear', 'data-tables', 'maintenanceTable')}
+				<button class="button button-danger" data-action="clear-table">
+					Clear selected table
+				</button>
+				<button class="button button-quiet" data-action="clear-all">
+					Clear all tables
+				</button>
+			</div>`;
+		case 'lifecycle':
+			return /* html*/ `
+			<div class="control-card space-x-2 space-y-2">
+				${select('Database', 'data-databases', 'lifecycleDb')}
+				<button class="button button-danger" data-action="delete-db">
+					Delete selected database
+				</button>
+				<button class="button button-quiet" disabled>
+					dropTable() — documented above
+				</button>
+				<button class="button button-quiet" disabled>
+					close() — documented above
+				</button>
+			</div>`;
 
-	renderTodos();
-	updateStats();
-};
-
-// Render todos to the DOM
-const renderTodos = () => {
-	todoList.innerHTML = '';
-
-	if (todos.length === 0) {
-		todoList.innerHTML = /*html*/ `
-      <li class="text-center text-gray-400 py-8">No todos yet! Add one to get started!</li>
-    `;
-		return;
+		case 'utilities':
+			return /* html */ `
+			<div class="control-card">
+				${run('Run validation & helpers')}
+			</div>
+	`;
+		default:
+			return '';
 	}
+}
 
-	todos.forEach((todo) => {
-		const li = document.createElement('li');
-		li.className = `flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group`;
+function renderApp() {
+	const op = currentOperation();
+	const fileNames = Object.keys(op.files);
+	if (!op.files[activeFile]) activeFile = fileNames[0];
 
-		const checkbox = document.createElement('input');
-		checkbox.type = 'checkbox';
-		checkbox.checked = todo?.completed ?? false;
-		checkbox.className = 'w-5 h-5 cursor-pointer accent-blue-600';
-		checkbox.addEventListener('change', () =>
-			toggleTodo(todo.serial, {
-				completed: !todo.completed,
-				// updatedAt: new Chronos().toLocalISOString(),
-			})
-		);
+	app.innerHTML = /* html*/ `
+	<main class="shell">
+		<header class="topbar">
+			<div class="brand">
+				<div class="brand-mark"><img src="./locality-icon.png" /></div>
+				<div>
+					<h1>Locality IDB / API Lab</h1>
+					<p>Executable reference for the browser-native database toolkit</p>
+				</div>
+			</div>
+			<div class="status"><span class="dot"></span><span id="connectionState">Opening IndexedDB…</span></div>
+		</header>
+		<section class="hero">
+			<div>
+				<p class="eyebrow">Interactive documentation</p>
+				<h2>See the exact Locality code, then run it against a real database.</h2>
+				<p class="hero-copy">Every control is paired with its implementation snippet. The lab uses indexes, schema
+					validation, foreign-key-style refs, transaction contexts, backups, and lifecycle APIs—not a mock data
+					layer.</p>
+			</div>
+			<div class="hero-stats">
+				<div class="metric"><b id="metricTables">4</b><span>tables</span></div>
+				<div class="metric"><b id="metricVersion">v1</b><span>version</span></div>
+				<div class="metric"><b>2</b><span>workspaces</span></div>
+			</div>
+		</section>
+		<nav class="workspace-nav">
+			<div class="tabs"><button class="main-tab ${activeWorkspace === 'interact' ? 'active' : ''}"
+					data-workspace="interact">
+					Interact From UI
+				</button>
+	
+				<button class="main-tab ${activeWorkspace === 'tests' ? 'active' : ''}" data-workspace="tests">
+					Tests
+				</button>
+			</div>
+			<button class="button nav-action" data-action="console-tests">
+				↗ Run Transaction & Export Tests in the Console
+			</button>
+		</nav>
+		<section id="interactPanel" class="panel ${activeWorkspace === 'interact' ? 'active' : ''}">
+			<div class="lab">
+				<aside class="ops-sidebar">
+					<div class="side-title">API surface · ${operations.length} examples</div>
+					<div class="operation-list">${groupedOperations()}</div>
+				</aside>
+				<section class="editor-pane">
+					<div class="file-tabs">${fileNames
+						.map(
+							(name) => /* html */ `
+								<button class="file-tab ${name === activeFile ? 'active' : ''}" data-file="${name}">
+									<span class="ts-dot">${fileIcon(name)}</span>${name}
+								</button>`
+						)
+						.join('')}
+					</div>
+					<div class="code-meta">
+						<span><strong>${activeFile}</strong> · read only</span>
+						<span>CodeMirror</span>
+					</div>
+					<div class="editor" id="codeEditor"></div>
+				</section>
+				<aside class="detail-pane">
+					<div class="sticky">
+						<p class="detail-kicker">${op.group}</p>
+						<h3>${op.title}</h3>
+						<p class="detail-description">${op.description}</p>
+							${controlsFor(op)}${op.note ? /* html */ `<p class="detail-note">${op.note}</p>` : ''}
+						<div class="result-card">
+							<div class="result-head">
+								<span>LIVE RESULT</span>
+								<button class="button button-quiet" data-action="copy-result">Copy</button>
+							</div>
+							<pre id="resultOutput" class="result-output">${escapeHtml(json(lastResult))}</pre>
+						</div>
+					</div>
+				</aside>
+			</div>
+		</section>
+		<section id="testsPanel" class="panel ${activeWorkspace === 'tests' ? 'active' : ''}">
+			<div class="lab test-lab">
+				<section class="editor-pane">
+					<div class="file-tabs">${Object.keys(testFiles)
+						.map(
+							(name) =>
+								/* html*/ `
+							<button class="file-tab ${name === activeTestFile ? 'active' : ''}" data-test-file="${name}">
+								<span class="ts-dot">${fileIcon(name)}</span>${name}
+							</button>`
+						)
+						.join('')}
+					</div>
+					<div class="code-meta">
+						<span><strong>${activeTestFile}</strong> · expected behavior</span>
+						<span>Read only</span>
+					</div>
+					<div class="editor" id="testEditor"></div>
+				</section>
+				<aside class="test-output">
+					<p class="detail-kicker">Verification</p>
+					<h3>Executable API cases</h3>
+					<p>
+						Runs isolated checks for atomic batch writes, expected errors, optimized query paths, rollback, and backup restoration.
+					</p>
+					<div class="test-actions">
+						<button class="button button-primary" data-action="run-tests">Run all checks</button>
+						<button class="button button-quiet" data-action="clear-tests">Clear output</button>
+					</div>
+					<div id="testLog" class="test-log">${renderTestLog()}</div>
+				</aside>
+			</div>
+		</section>
+	</main>`;
+	editor = renderEditor(requiredElement('#codeEditor'), op.files[activeFile], editor);
+	testEditor = renderEditor(
+		requiredElement('#testEditor'),
+		testFiles[activeTestFile],
+		testEditor
+	);
+	void hydrate();
+}
 
-		const span = document.createElement('span');
-		span.textContent = `${todo.task} at ${todo.createdAt}`;
-		span.className = `flex-1 text-gray-800 ${
-			todo.completed ? 'line-through text-green-600' : ''
-		}`;
+function renderTestLog() {
+	return testLog.length
+		? testLog
+				.map(
+					(entry) =>
+						/* html*/ `
+					<article class="test-row">
+						<b class="${entry.tone === 'success' ? 'pass' : entry.tone === 'error' ? 'fail' : 'info'}">
+							${escapeHtml(entry.title)}
+						</b>
+						<p>${escapeHtml(entry.detail)}</p>
+					</article>`
+				)
+				.join('')
+		: /* html*/ `
+			<article class="test-row">
+				<b class="info">Awaiting a run</b>
+				<p>Choose “Run all checks” to populate expected outputs.</p>
+			</article>`;
+}
 
-		const deleteBtn = document.createElement('button');
-		deleteBtn.textContent = 'Delete';
-		deleteBtn.className = `px-3 py-1 text-sm font-semibold bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100`;
-
-		deleteBtn.addEventListener('click', () => removeTodo(todo.serial));
-
-		li.appendChild(checkbox);
-		li.appendChild(span);
-		li.appendChild(deleteBtn);
-		todoList.appendChild(li);
-	});
-};
-
-// Add a new todo
-const handleAddTodo = async () => {
-	const task = todoInput.value.trim();
-
-	if (!task) {
-		alert('Please enter a task!');
-		return;
-	}
-
-	const newTodo: InsertTodo = {
-		task,
-		timestamp: null,
-	};
-
-	// await addTodo(newTodo);
-
+async function hydrate() {
 	try {
-		const inserted = await db.insert('todos').values(newTodo).run();
-
-		console.dir(inserted);
+		await db.ready();
+		requiredElement('#connectionState').textContent = `${db.dbName} ready`;
+		requiredElement('#metricTables').textContent = String(db.tableList.length);
+		requiredElement('#metricVersion').textContent = `v${db.version}`;
+		await refreshSelects();
 	} catch (error) {
-		if (error instanceof Error) {
-			alert(error.message);
-		}
-
 		console.error(error);
+		showToast('error', errorMessage(error));
 	}
+}
 
-	todoInput.value = '';
-	await loadTodos();
-};
-
-// Toggle todo completion status
-const toggleTodo = async (id: Maybe<number>, update: UpdateTodo) => {
-	// const updatedTodo = { completed: !update.completed };
-	// await updateTodo(updatedTodo);
-	try {
-		await db
-			.update('todos')
-			// .set({ serial: 0 })
-			.set((row) => {
-				console.table([row]);
-				return {
-					number: (row.number + 1) * 2,
-					...update,
-					custom: { price: row.custom.price + 5 },
-				};
-			})
-			.where((t) => t.serial === id)
-			.run();
-	} catch (error) {
-		if (error instanceof Error) {
-			alert(error.message);
-		}
-
-		console.error(error);
-	}
-
-	await loadTodos();
-};
-
-// Remove a todo
-const removeTodo = async (id: Maybe<number>) => {
-	// await deleteTodo(id);
-	await db
-		.delete('todos')
-		.where((t) => t.serial === id)
-		.run();
-	await loadTodos();
-};
-
-// Clear all completed todos
-const handleClearCompleted = async () => {
-	const completedTodos = todos.filter((t) => t.completed);
-	for (const todo of completedTodos) {
-		// await deleteTodo(todo.id!);
-		await db
-			.delete('todos')
-			.where((t) => t.serial === todo.serial)
-			.run();
-	}
-	await loadTodos();
-};
-
-// Update stats
-const updateStats = () => {
-	const completed = todos.filter((t) => t.completed).length;
-	statsCompleted.textContent = completed.toString();
-	statsTotal.textContent = todos.length.toString();
-};
-
-// Event listeners
-addBtn.addEventListener('click', handleAddTodo);
-todoInput.addEventListener('keypress', (e) => {
-	if (e.key === 'Enter') handleAddTodo();
-});
-
-clearCompletedBtn.addEventListener('click', handleClearCompleted);
-
-const clearStoreBtn = document.getElementById('clearStoreBtn') as HTMLButtonElement;
-const clearDBBtn = document.getElementById('clearDBBtn') as HTMLButtonElement;
-const clearThisDBBtn = document.getElementById('clearThisDBBtn') as HTMLButtonElement;
-const exportDBBtn = document.getElementById('exportDBBtn') as HTMLButtonElement;
-
-const dbNameSelect = document.getElementById('dbNameSelect') as HTMLSelectElement;
-const tableNameSelect = document.getElementById('tableNameSelect') as HTMLSelectElement;
-const storeNameSelect = document.getElementById('storeNameSelect') as HTMLSelectElement;
-
-const prettyPrintInput = document.getElementById('prettyPrint') as HTMLInputElement;
-const includeMetaInput = document.getElementById('includeMeta') as HTMLInputElement;
-
-const populateExportTables = async () => {
-	await db.ready();
-
-	const existing = new Set([...tableNameSelect.options].map((opt) => opt.value.trim()));
-
-	for (const tableName of db.tableList) {
-		if (existing.has(tableName)) continue;
-
-		const option = document.createElement('option');
-
-		option.value = tableName;
-		option.textContent = tableName;
-
-		tableNameSelect.appendChild(option);
-	}
-};
-
-exportDBBtn.addEventListener('click', async () => {
-	const selected = tableNameSelect.value;
-	const tables = selected === '__all__' ? undefined : [selected as keyof SchemaType];
-
-	await db.$export({
-		tables,
-		pretty: prettyPrintInput.checked,
-		includeMetadata: includeMetaInput.checked,
-	});
-});
-
-// Initialize on page load
-window.addEventListener('load', async () => {
-	const dbNames = await db.dbList;
-
-	for (const { name, version } of dbNames) {
-		const option = document.createElement('option');
-
-		option.value = `${name}`;
-		option.textContent = `${name} (v${version})`;
-
-		dbNameSelect.appendChild(option);
-	}
-
-	await populateExportTables();
-
-	clearDBBtn.addEventListener('click', async () => {
-		const dbName = dbNameSelect.value;
-
-		if (!dbName) {
-			alert('Please select a database name!');
-			return;
-		}
-
-		await deleteDB(dbName);
-
-		location.reload();
-	});
-
-	clearThisDBBtn.addEventListener('click', async () => {
-		await db.deleteDB();
-
-		location.reload();
-	});
-
-	for (const storeName of db.tableList) {
-		const option = document.createElement('option');
-
-		option.value = storeName;
-		option.textContent = storeName;
-
-		storeNameSelect.appendChild(option);
-	}
-
-	clearStoreBtn.addEventListener('click', async () => {
-		const storeName = storeNameSelect.value;
-
-		if (!storeName) {
-			alert('Please select a store name!');
-			return;
-		}
-
-		await db.clearTable(storeName as keyof SchemaType);
-
-		await loadTodos();
-	});
-
-	await loadTodos();
-
-	const experiments = await db.from('experiments').findAll();
-
-	if (!isValidArray(experiments)) {
-		await db.seed('experiments', [
-			{ name: 'Aeto', email: 'nazmul@yahoo.com' },
-			{ name: 'Beto', url: 'https://example.com' },
-			{ name: 'Ceto' },
-			{ name: 'Deto' },
-			{ name: 'Eeto' },
-			{ name: 'Feto' },
-			{ name: 'Geto' },
-			{ name: 'Heto' },
-			{ name: 'Ieto' },
-			{ name: 'Jeto' },
-			{ name: 'Keto' },
-			{ name: 'Leto' },
-			{ name: 'Meto' },
-			{ name: 'Neto' },
-			{ name: 'Oeto' },
-			{ name: 'Peto' },
-			{ name: 'Qeto' },
-			{ name: 'Reto' },
-			{ name: 'Seto' },
-			{ name: 'Teto' },
-			{ name: 'Ueto' },
-			{ name: 'Veto' },
-			{ name: 'Weto' },
-			{ name: 'Xeto' },
-			{ name: 'Yeto' },
-			{ name: 'Zeto' },
+async function ensureSeeded() {
+	if (!(await db.from('users').count()))
+		await db.seed('users', [
+			{ name: 'Ada', email: 'ada@locality.dev', score: 12 },
+			{ name: 'Grace', email: 'grace@locality.dev', score: 8 },
 		]);
+	const users = await getRows('users');
+	if (!(await db.from('posts').count()))
+		await db.seed('posts', [
+			{ userId: users[0].id, title: 'Index-friendly queries', likes: 7 },
+			{
+				userId: users[Math.min(1, users.length - 1)].id,
+				title: 'Atomic transactions',
+				likes: 13,
+			},
+		]);
+	const posts = await getRows('posts');
+	if (!(await db.from('comments').count()) && posts[0])
+		await db.seed('comments', [{ postId: posts[0].id, body: 'A real ref relationship.' }]);
+	if (!(await db.from('auditLogs').count()))
+		await db.insert('auditLogs').values({ event: 'Demo seed created' }).run();
+}
+
+async function confirmAction(title: string, description: string) {
+	dialogTitle.textContent = title;
+	dialogDescription.textContent = description;
+	dialog.showModal();
+
+	return await new Promise<boolean>((resolve) =>
+		dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), {
+			once: true,
+		})
+	);
+}
+
+async function runCurrentOperation() {
+	const { control } = currentOperation();
+
+	try {
+		let result: unknown;
+		switch (control) {
+			case 'snapshot':
+				result = {
+					dbName: db.dbName,
+					version: db.version,
+					tableList: db.tableList,
+					schema: Object.fromEntries(
+						Object.entries(schema).map(([name, table]) => [
+							name,
+							Object.keys(table.columns),
+						])
+					),
+				};
+				break;
+			case 'details': {
+				const raw = await db.getDBInstance();
+				result = {
+					dbName: db.dbName,
+					version: db.version,
+					tableList: db.tableList,
+					raw: {
+						name: raw.name,
+						version: raw.version,
+						stores: [...raw.objectStoreNames],
+					},
+					databases: await db.dbList,
+				};
+				break;
+			}
+			case 'utilities': {
+				const uuid = uuidV4();
+				const timestamp = getTimestamp();
+				result = {
+					int: validateColumnType('int', 42),
+					badInt: validateColumnType('int', 'forty-two'),
+					uuid,
+					timestamp,
+					isEmail: isEmail('ada@locality.dev'),
+					isURL: isURL('https://locality.dev'),
+					isUUID: isUUID(uuid),
+					isTimestamp: isTimestamp(timestamp),
+				};
+				break;
+			}
+			case 'insert': {
+				const table = getValueOf('insertTable');
+				if (table === 'users')
+					result = await db
+						.insert('users')
+						.values({
+							name: getValueOf('insertName'),
+							email: getValueOf('insertEmail') as Email,
+							score: Number(getValueOf('insertScore')),
+						})
+						.run();
+				else
+					result = await db
+						.insert('posts')
+						.values({
+							userId: Number(getValueOf('insertUserId')),
+							title: getValueOf('insertTitle'),
+							likes: Number(getValueOf('insertLikes')),
+						})
+						.run();
+				break;
+			}
+			case 'batch':
+				result = await db
+					.insert('users')
+					.values([
+						{
+							name: 'Batch Alpha',
+							email: `batch-alpha-${Date.now()}@locality.dev`,
+							score: 2,
+						},
+						{
+							name: 'Batch Beta',
+							email: `batch-beta-${Date.now()}@locality.dev`,
+							score: 3,
+						},
+					])
+					.run();
+				break;
+			case 'seed':
+				await ensureSeeded();
+				result = {
+					message: 'Seeded related tables',
+					users: await db.from('users').count(),
+					posts: await db.from('posts').count(),
+					comments: await db.from('comments').count(),
+				};
+				break;
+			case 'read':
+				await ensureSeeded();
+				result = {
+					users: await db
+						.from('users')
+						.where('score', IDBKeyRange.lowerBound(5))
+						.select({ id: true, name: true, score: true })
+						.findAll(),
+					firstPopular: await db
+						.from('posts')
+						.where((post) => post.likes >= 5)
+						.findFirst(),
+				};
+				break;
+			case 'lookup': {
+				await ensureSeeded();
+				const userId = Number(getValueOf('lookupUser'));
+				result = {
+					byPrimaryKey: await db.from('users').findByPk(userId),
+					byEmailIndex: await db
+						.from('users')
+						.findByIndex('email', 'ada@locality.dev'),
+					postsByUserIndex: await db.from('posts').findByIndex('userId', userId),
+				};
+				break;
+			}
+			case 'sort':
+				await ensureSeeded();
+				result = {
+					usersInMemory: await db
+						.from('users')
+						.orderBy('name', 'asc')
+						.limit(3)
+						.findAll(),
+					postsCursor: await db
+						.from('posts')
+						.sortByIndex('likes', 'desc')
+						.limit(3)
+						.findAll(),
+				};
+				break;
+			case 'aggregate':
+				await ensureSeeded();
+				result = {
+					count: await db.from('posts').count(),
+					exists: await db
+						.from('posts')
+						.where('likes', IDBKeyRange.lowerBound(10))
+						.exists(),
+					sum: await db.from('posts').sum('likes'),
+					avg: await db.from('posts').avg('likes'),
+					min: await db.from('posts').min('likes'),
+					max: await db.from('posts').max('likes'),
+					titles: await db.from('posts').distinct('title'),
+				};
+				break;
+			case 'cursor': {
+				await ensureSeeded();
+				const titles: string[] = [];
+				const page = await db.from('posts').sortByIndex('id').page({ limit: 2 });
+				await db
+					.from('posts')
+					.sortByIndex('id')
+					.stream((post, index) => {
+						titles.push(`${index}: ${post.title}`);
+					});
+				result = { page, streamed: titles };
+				break;
+			}
+			case 'update': {
+				await ensureSeeded();
+				const userId = Number(getValueOf('updateUser'));
+				const postId = Number(getValueOf('updatePost'));
+				result = {
+					userRowsUpdated: await db
+						.update('users')
+						.set((user) => ({ score: user.score + 1 }))
+						.where('id', userId)
+						.run(),
+					postRowsUpdated: await db
+						.update('posts')
+						.set({ likes: Number(getValueOf('updateLikes')) })
+						.where('id', postId)
+						.run(),
+				};
+				break;
+			}
+			case 'delete': {
+				const table = getValueOf('deleteTable');
+				const isUser = table === 'users';
+				const id = Number(getValueOf(isUser ? 'deleteUser' : 'deletePost'));
+				if (!id) throw new Error('Seed records before choosing a delete target.');
+				const ok = await confirmAction(
+					`Delete ${table} row?`,
+					isUser
+						? 'This will cascade to the selected user’s posts and comments.'
+						: 'This permanently removes the selected post and its comments.'
+				);
+				if (!ok) return;
+				result = isUser
+					? {
+							deleted: await db.delete('users').where('id', id).run(),
+							cascade: 'Related posts/comments were considered by ref policies.',
+						}
+					: { deleted: await db.delete('posts').where('id', id).run() };
+				break;
+			}
+			case 'reference':
+				await db
+					.insert('posts')
+					.values({ userId: 999_999, title: 'Rejected reference', likes: 1 })
+					.run();
+				break;
+			case 'transaction':
+				await db.transaction(['users', 'posts'], async (ctx) => {
+					const user = await ctx
+						.insert('users')
+						.values({
+							name: 'Transaction user',
+							email: `transaction-${Date.now()}@locality.dev`,
+							score: 4,
+						})
+						.run();
+					await ctx
+						.insert('posts')
+						.values({ userId: user.id, title: 'Committed together', likes: 1 })
+						.run();
+				});
+				result = {
+					message: 'Transaction committed. Both rows were written atomically.',
+				};
+				break;
+			case 'export-object':
+				result = await db.exportToObject({
+					tables: ['users', 'posts'],
+					includeMetadata: true,
+				});
+				break;
+			case 'export-file':
+				await db.$export({
+					tables: ['users', 'posts', 'comments'],
+					filename: 'locality-api-lab.json',
+					pretty: true,
+					includeMetadata: true,
+				});
+				result = { message: 'Download triggered by $export().' };
+				break;
+			case 'import': {
+				const backup = await db.exportToObject({ tables: ['users', 'posts'] });
+				await db.$import(backup, {
+					mode: getValueOf('importMode') as ImportMode,
+				});
+				result = {
+					message: `Imported a live snapshot using ${getValueOf('importMode')}.`,
+					metadata: backup.metadata,
+				};
+				break;
+			}
+			default:
+				return;
+		}
+		updateResult(result);
+		showToast('success', `${currentOperation().title} completed.`);
+		await refreshSelects();
+	} catch (error) {
+		updateResult({ error: errorMessage(error) });
+		showToast('error', errorMessage(error));
+		console.error(error);
 	}
+}
 
-	// console.table(experiments);
+async function runRollback() {
+	try {
+		await db.transaction(['users', 'posts'], async (ctx) => {
+			await ctx
+				.insert('users')
+				.values({
+					name: 'Rollback user',
+					email: `rollback-${Date.now()}@locality.dev`,
+					score: 0,
+				})
+				.run();
+			throw new Error('Intentional rollback');
+		});
+	} catch (error) {
+		updateResult({
+			expectedError: errorMessage(error),
+			verified: 'The transaction was aborted; the inserted user was not committed.',
+		});
+		showToast('success', 'Rollback behaved as expected.');
+		console.error(error);
+	}
+}
 
-	const ex1 = await db
-		.from('experiments')
-		.select({ id: true, name: true })
-		// .select({ id: true })
-		.findAll();
+async function runMaintenance(action: 'clear-table' | 'clear-all') {
+	const table = getValueOf('maintenanceTable') as TableName;
+	const description =
+		action === 'clear-all'
+			? 'This permanently removes all rows from every active table.'
+			: `This permanently removes all rows from ${table}.`;
+	if (
+		!(await confirmAction(
+			action === 'clear-all' ? 'Clear all tables?' : `Clear ${table}?`,
+			description
+		))
+	)
+		return;
+	if (action === 'clear-all') await db.clearAll();
+	else await db.clearTable(table);
+	updateResult({
+		message: action === 'clear-all' ? 'All tables cleared.' : `${table} cleared.`,
+	});
+	showToast('success', 'Maintenance action complete.');
+	await refreshSelects();
+}
 
-	const ex2 = await db
-		.from('experiments')
-		// .where((a) => a.name === 'Beto')
-		.select({ id: true, name: true })
-		.where('id', IDBKeyRange.bound(20, 29))
-		// .sortByIndex('id', 'asc')
-		.findAll();
+async function runDeleteDatabase() {
+	const name = getValueOf('lifecycleDb');
+	if (!name) return;
+	if (
+		!(await confirmAction(
+			`Delete ${name}?`,
+			'The selected IndexedDB database will be permanently removed from this browser origin.'
+		))
+	)
+		return;
+	try {
+		if (name === db.dbName) {
+			await db.deleteDB();
+			updateResult({ message: 'The active lab database was deleted. Reloading…' });
+			location.reload();
+			return;
+		}
+		await Locality.deleteDatabase(name);
+		updateResult({ message: `Deleted ${name}.` });
+		await refreshSelects();
+	} catch (error) {
+		updateResult({ error: errorMessage(error) });
+		showToast('error', errorMessage(error));
+		console.error(error);
+	}
+}
 
-	const ex3 = await db
-		.from('experiments')
-		.select({ id: true, name: true })
-		.findByIndex('name', IDBKeyRange.bound('A', 'B'));
+function logTest(tone: Tone, title: string, detail: string) {
+	testLog.push({ tone, title, detail });
+	const host = document.querySelector('#testLog');
+	if (host) host.innerHTML = renderTestLog();
+}
 
-	console.info({ ex1, ex2, ex3 });
-	// await db.deleteTable('experiments');
+async function runTests() {
+	testLog = [];
 
-	const testWithToDo = await db.from('todos').where('task', 'hello').exists();
+	logTest('info', 'Suite started', 'Each case clears or seeds its own state.');
 
-	console.info(testWithToDo);
+	try {
+		await db.clearAll();
+		try {
+			await db
+				.insert('users')
+				.values([
+					{ name: 'A', email: 'same@locality.dev', score: 1 },
+					{ name: 'B', email: 'same@locality.dev', score: 2 },
+				])
+				.run();
+			logTest(
+				'error',
+				'Batch atomicity',
+				'Unexpected success for duplicate unique email.'
+			);
+		} catch (error) {
+			const count = await db.from('users').count();
+			logTest(
+				count === 0 ? 'success' : 'error',
+				'Batch atomicity',
+				`Expected error: ${errorMessage(error)} · persisted users: ${count}`
+			);
+			console.error(error);
+		}
+		await ensureSeeded();
+		try {
+			await db
+				.insert('posts')
+				.values({ userId: 999_999, title: 'invalid', likes: 1 })
+				.run();
+			logTest(
+				'error',
+				'Reference validation',
+				'Unexpected success for an unknown parent.'
+			);
+		} catch (error) {
+			logTest('success', 'Reference validation', errorMessage(error));
+			console.error(error);
+		}
+		const ada = (await db.from('users').findByIndex('email', 'ada@locality.dev'))[0];
+		const indexed = await db.from('users').where('email', 'ada@locality.dev').findAll();
+		const page = await db.from('posts').sortByIndex('id').page({ limit: 1 });
+		logTest(
+			indexed.length === 1 && page.items.length === 1 ? 'success' : 'error',
+			'Indexed query & page',
+			`findByPk(${ada.id}) → ${Boolean(await db.from('users').findByPk(ada.id))}; index matches: ${indexed.length}; page items: ${page.items.length}`
+		);
+		try {
+			await db.from('posts').orderBy('likes').page({ limit: 1 });
+			logTest(
+				'error',
+				'Pagination constraint',
+				'Unexpectedly allowed page() after orderBy().'
+			);
+		} catch (error) {
+			logTest('success', 'Pagination constraint', errorMessage(error));
+			console.error(error);
+		}
+		const preRollback = await db.from('users').count();
+		try {
+			await db.transaction(['users', 'posts'], async (ctx) => {
+				await ctx
+					.insert('users')
+					.values({
+						name: 'Rollback',
+						email: `rollback-test-${Date.now()}@locality.dev`,
+						score: 0,
+					})
+					.run();
+				throw new Error('Intentional rollback');
+			});
+		} catch (error) {
+			console.error(error);
+		}
+		const postRollback = await db.from('users').count();
+		logTest(
+			preRollback === postRollback ? 'success' : 'error',
+			'Transaction rollback',
+			`Users before: ${preRollback}; after rejected transaction: ${postRollback}`
+		);
+		const backup = await db.exportToObject({ includeMetadata: true });
+		await db.clearAll();
+		await db.$import(backup, { mode: 'replace' });
+		logTest(
+			(await db.from('users').count()) > 0 ? 'success' : 'error',
+			'Export/import restore',
+			`Restored ${backup.metadata?.tables.join(', ')} with replace mode.`
+		);
+		updateResult({
+			suite: 'completed',
+			passed: testLog.filter((entry) => entry.tone === 'success').length,
+			output: testLog,
+		});
+	} catch (error) {
+		logTest('error', 'Unexpected suite failure', errorMessage(error));
+		console.error(error);
+	}
+	await refreshSelects();
+}
 
-	console.info(await db.dbList);
-	console.info(await Locality.getDatabaseList());
+document.addEventListener('click', (event) => {
+	const target = (event.target as HTMLElement).closest<HTMLElement>(
+		'[data-operation], [data-file], [data-test-file], [data-action], [data-workspace]'
+	);
+	if (!target) return;
+	if (target.dataset.operation) {
+		activeOperation = target.dataset.operation;
+		activeFile = Object.keys(currentOperation().files)[0];
+		renderApp();
+		return;
+	}
+	if (target.dataset.file) {
+		activeWorkspace = 'interact';
+		activeFile = target.dataset.file;
+		renderApp();
+		return;
+	}
+	if (target.dataset.testFile) {
+		activeWorkspace = 'tests';
+		activeTestFile = target.dataset.testFile;
+		renderApp();
+		return;
+	}
+	if (target.dataset.workspace) {
+		activeWorkspace = target.dataset.workspace as 'interact' | 'tests';
 
-	const page1 = await db
-		.from('experiments')
-		.select({ id: true, name: true })
-		// .orderBy('id', 'desc')
-		.sortByIndex('id')
-		.page({ limit: 7 });
-
-	const page2 = await db
-		.from('experiments')
-		.select({ id: true, name: true })
-		// .orderBy('id', 'desc')
-		.sortByIndex('id')
-		.page({
-			limit: 5,
-			cursor: page1.nextCursor,
+		document.querySelectorAll('.main-tab').forEach((tab) => {
+			tab.classList.toggle('active', tab === target);
 		});
 
-	console.info({ page1, page2 });
-	console.info(uuidV4());
+		requiredElement('#interactPanel').classList.toggle(
+			'active',
+			target.dataset.workspace === 'interact'
+		);
 
-	// await db
-	// 	.from('experiments')
-	// 	.sortByIndex('id')
-	// 	.where('id', IDBKeyRange.lowerBound(8))
-	// 	.select({ name: true })
-	// 	.stream(async (row, idx) => {
-	// 		console.info(row, idx);
-	// 	});
+		requiredElement('#testsPanel').classList.toggle(
+			'active',
+			target.dataset.workspace === 'tests'
+		);
 
-	await db.delete('todos').where('task', 'ff').run();
-
-	const exported = await db.exportToObject({
-		includeMetadata: true,
-	});
-
-	console.info(exported);
-
-	// await db.import(exported.data, { mode: 'replace', tables: ['experiments'] });
-
-	// await db.dropTable('experiments');
-
-	// Add test button event listener
-	const runTestsBtn = document.getElementById('runTestsBtn') as HTMLButtonElement;
-	runTestsBtn.addEventListener('click', async () => {
-		Stylog.green.bold.log('🚀 Starting feature tests...');
-		await runAllTests();
-	});
+		return;
+	}
+	const action = target.dataset.action;
+	if (action === 'runOperation') void runCurrentOperation();
+	if (action === 'rollback') void runRollback();
+	if (action === 'clear-table' || action === 'clear-all') void runMaintenance(action);
+	if (action === 'delete-db') void runDeleteDatabase();
+	if (action === 'run-tests') void runTests();
+	if (action === 'clear-tests') {
+		testLog = [];
+		const host = document.querySelector('#testLog');
+		if (host) host.innerHTML = renderTestLog();
+	}
+	if (action === 'copy-result')
+		void navigator.clipboard
+			?.writeText(json(lastResult))
+			.then(() => showToast('success', 'Result copied to clipboard.'));
+	if (action === 'console-tests')
+		void import('./tests.log')
+			.then(({ runAllTests }) => runAllTests())
+			.then(() =>
+				showToast(
+					'info',
+					`Transaction & Export tests ran. Open DevTools → Console to inspect.`
+				)
+			)
+			.catch((error) => showToast('error', errorMessage(error)));
 });
+
+document.addEventListener('change', (event) => {
+	const target = event.target as HTMLSelectElement;
+	if (target.id === 'insertTable') {
+		document.querySelectorAll<HTMLElement>('[data-user-field]').forEach((field) => {
+			field.hidden = target.value !== 'users';
+		});
+		document.querySelectorAll<HTMLElement>('[data-post-field]').forEach((field) => {
+			field.hidden = target.value !== 'posts';
+		});
+	}
+	if (target.id === 'deleteTable') {
+		requiredElement<HTMLElement>('[data-delete-users]').hidden = target.value !== 'users';
+		requiredElement<HTMLElement>('[data-delete-posts]').hidden = target.value !== 'posts';
+	}
+});
+
+renderApp();
