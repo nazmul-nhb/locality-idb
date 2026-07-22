@@ -891,10 +891,9 @@ async function runTests() {
 						score: 0,
 					})
 					.run();
-				throw new Error('intentional rollback');
+				throw new Error('Intentional rollback');
 			});
 		} catch (error) {
-			/* expected */
 			console.error(error);
 		}
 		const postRollback = await db.from('users').count();

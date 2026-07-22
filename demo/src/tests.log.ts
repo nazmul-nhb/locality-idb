@@ -153,7 +153,10 @@ export async function testTransaction() {
 					.run();
 
 				const p = await ctx.from('posts').select({ title: true }).findAll();
-				console.info({ p });
+
+				Stylog.info.underline.bold.log('Title Only:');
+				console.table(p);
+
 				// Intentionally throw error to trigger rollback
 				throw new Error('Intentional error to test rollback');
 			});

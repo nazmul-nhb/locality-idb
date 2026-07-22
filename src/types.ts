@@ -189,7 +189,7 @@ export interface LocalityConfig<
 }
 
 /** Column definition type - preserves both Column generics */
-export type ColumnDefinition = Record<string, Column<any, string>>;
+export type ColumnDefinition = Record<string, Column<any, TypeName>>;
 
 /** Validated column definition with single PK constraint */
 export type ValidatedColumnDefinition<T extends ColumnDefinition = ColumnDefinition> =

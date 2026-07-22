@@ -1,10 +1,10 @@
 import { isString } from 'toolbox-x/guards';
+import type { Column } from '../core';
 import { ColumnType, IsNullable, IsOptional, IsPrimaryKey, RefMeta } from '../symbols';
 import type { GenericObject, Maybe, RefOptions, SchemaDefinition } from '../types';
 
-/**
- * @internal Private interface for managing relationships between tables
- */
+type ActionMode = 'insert' | 'update' | 'delete';
+
 export interface RefRelation {
 	childTable: string;
 	childColumn: string;
@@ -13,22 +13,56 @@ export interface RefRelation {
 	options?: RefOptions;
 }
 
-function throwSelfRefError(
-	mode: 'insert' | 'update' | 'delete',
-	opts: Omit<RefRelation, 'options'>
-): never {
+interface RefPathInfo {
+	schema: Maybe<SchemaDefinition>;
+	column: Column;
+	refPath: string;
+	mode: ActionMode;
+	tableName: string;
+	columnName: string;
+}
+
+function actionMsgPrefix(mode: ActionMode) {
+	switch (mode) {
+		case 'insert':
+			return 'insert row into';
+		case 'update':
+			return 'update row in';
+		case 'delete':
+			return 'delete row from';
+	}
+}
+
+function throwSelfRefError(mode: ActionMode, opts: Omit<RefRelation, 'options'>): never {
 	const { childColumn, childTable, targetColumn, targetTable } = opts || {};
 
-	const actionMsg =
-		mode === 'insert'
-			? 'insert row into'
-			: mode === 'update'
-				? 'update row in'
-				: 'delete row from';
-
 	throw new ReferenceError(
-		`Cannot ${actionMsg} '${targetTable}' because '${childTable}.${childColumn}' references back to its own column '${targetTable}.${targetColumn}'.`
+		`Cannot ${actionMsgPrefix(mode)} '${targetTable}' because '${childTable}.${childColumn}' references back to its own column '${targetTable}.${targetColumn}'.`
 	);
+}
+
+function processRefPath(info: RefPathInfo) {
+	const { refPath, schema, column, tableName, columnName, mode } = info;
+	const [targetTable, targetColumn] = refPath.split('.');
+
+	const targetColumnDef = schema?.[targetTable]?.columns?.[targetColumn];
+
+	if (!targetColumnDef) {
+		throw new ReferenceError(
+			`Cannot resolve reference '${refPath}' for '${tableName}.${columnName}'.`
+		);
+	}
+
+	const sourceType = column[ColumnType];
+	const targetType = targetColumnDef[ColumnType];
+
+	if (sourceType !== targetType) {
+		throw new TypeError(
+			`Cannot ${actionMsgPrefix(mode)} '${tableName}' because '${tableName}.${columnName}' has type '${sourceType}' but '${targetTable}.${targetColumn}' has type '${targetType}'.`
+		);
+	}
+
+	return { targetTable, targetColumn };
 }
 
 /**
@@ -37,7 +71,11 @@ function throwSelfRefError(
  * @param tableName The table name
  * @returns Array of reference relations
  */
-function getRefRelations(schema: Maybe<SchemaDefinition>, tableName: string): RefRelation[] {
+function getRefRelations(
+	schema: Maybe<SchemaDefinition>,
+	tableName: string,
+	mode: ActionMode
+): RefRelation[] {
 	if (!schema) return [];
 
 	const relations: RefRelation[] = [];
@@ -48,7 +86,16 @@ function getRefRelations(schema: Maybe<SchemaDefinition>, tableName: string): Re
 
 			if (!refMeta) continue;
 
-			const [targetTable, targetColumn] = refMeta.refPath.split('.');
+			const { refPath, options } = refMeta;
+
+			const { targetTable, targetColumn } = processRefPath({
+				refPath,
+				schema,
+				column,
+				mode,
+				tableName,
+				columnName,
+			});
 
 			if (targetTable === tableName) {
 				relations.push({
@@ -56,7 +103,7 @@ function getRefRelations(schema: Maybe<SchemaDefinition>, tableName: string): Re
 					childColumn: columnName,
 					targetTable,
 					targetColumn,
-					options: refMeta.options,
+					options,
 				});
 			}
 		}
@@ -71,7 +118,11 @@ function getRefRelations(schema: Maybe<SchemaDefinition>, tableName: string): Re
  * @param tableName The table name
  * @returns Array of reference workflow tables
  */
-export function getRefWorkflowTables(schema: Maybe<SchemaDefinition>, tableName: string) {
+export function getRefWorkflowTables(
+	schema: Maybe<SchemaDefinition>,
+	tableName: string,
+	mode: ActionMode
+) {
 	const tables = new Set<string>([tableName]);
 	const queue = [tableName];
 
@@ -80,7 +131,7 @@ export function getRefWorkflowTables(schema: Maybe<SchemaDefinition>, tableName:
 
 		if (!currentTable) continue;
 
-		for (const relation of getRefRelations(schema, currentTable)) {
+		for (const relation of getRefRelations(schema, currentTable, mode)) {
 			if (!tables.has(relation.childTable)) {
 				tables.add(relation.childTable);
 				queue.push(relation.childTable);
@@ -262,11 +313,14 @@ export async function applyInsertRefWorkflow(
 
 			if (!refMeta) continue;
 
-			const value = row[columnName];
-
-			if (value == null) continue;
-
-			const [targetTable, targetColumn] = refMeta.refPath.split('.');
+			const { targetTable, targetColumn } = processRefPath({
+				refPath: refMeta.refPath,
+				schema,
+				mode: 'insert',
+				column,
+				tableName,
+				columnName,
+			});
 
 			if (tableName === targetTable) {
 				throwSelfRefError('insert', {
@@ -277,22 +331,9 @@ export async function applyInsertRefWorkflow(
 				});
 			}
 
-			const targetColumnDefinition = schema?.[targetTable]?.columns?.[targetColumn];
+			const value = row[columnName];
 
-			if (!targetColumnDefinition) {
-				throw new ReferenceError(
-					`Cannot resolve reference '${refMeta.refPath}' for '${tableName}.${columnName}'.`
-				);
-			}
-
-			const sourceType = column[ColumnType];
-			const targetType = targetColumnDefinition[ColumnType];
-
-			if (sourceType !== targetType) {
-				throw new ReferenceError(
-					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' has type '${sourceType}' but '${targetTable}.${targetColumn}' has type '${targetType}'.`
-				);
-			}
+			if (value == null) continue;
 
 			const relatedRows = await getRowsByValue(trx, targetTable, targetColumn, value);
 
@@ -322,7 +363,7 @@ export async function applyDeleteRefWorkflow(
 ) {
 	if (!schema || rows.length === 0) return;
 
-	const relations = getRefRelations(schema, tableName);
+	const relations = getRefRelations(schema, tableName, 'delete');
 
 	for (const relation of relations) {
 		const { childColumn, childTable, targetColumn, targetTable, options } = relation;
@@ -381,8 +422,6 @@ export async function applyDeleteRefWorkflow(
 
 					break;
 				}
-				default:
-					break;
 			}
 		}
 	}
@@ -405,7 +444,7 @@ export async function applyUpdateRefWorkflow(
 ) {
 	if (!schema) return;
 
-	const relations = getRefRelations(schema, tableName);
+	const relations = getRefRelations(schema, tableName, 'update');
 
 	for (const relation of relations) {
 		const { childColumn, childTable, targetColumn, targetTable, options } = relation;
@@ -459,9 +498,6 @@ export async function applyUpdateRefWorkflow(
 
 				break;
 			}
-
-			default:
-				break;
 		}
 	}
 }

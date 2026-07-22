@@ -66,7 +66,7 @@ export class UpdateQuery<Row extends GenericObject, T extends Table> extends Bas
 		const dataToUpdate = this.#dataToUpdate;
 
 		return new Promise((resolve, reject) => {
-			const tables = getRefWorkflowTables(this.$schema, this.$table);
+			const tables = getRefWorkflowTables(this.$schema, this.$table, 'update');
 			const trx = this.$trx ?? this.$dbGetter().transaction(tables, 'readwrite');
 			const store = trx.objectStore(this.$table);
 

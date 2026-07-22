@@ -33,7 +33,7 @@ export class DeleteQuery<
 		await this.$readyPromise;
 
 		return new Promise((resolve, reject) => {
-			const tables = getRefWorkflowTables(this.$schema, this.$table);
+			const tables = getRefWorkflowTables(this.$schema, this.$table, 'delete');
 			const trx = this.$trx ?? this.$dbGetter().transaction(tables, 'readwrite');
 			const store = trx.objectStore(this.$table);
 
