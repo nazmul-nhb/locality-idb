@@ -1,5 +1,7 @@
 import type { InferInsertType, InferSelectType } from 'locality';
 import { column, defineSchema, Locality } from 'locality';
+import { Stylog } from 'toolbox-x/stylog';
+import { errorMessage } from './codes';
 
 // Test schema
 const testSchema = defineSchema({
@@ -38,7 +40,7 @@ const db = new Locality({
 });
 
 export async function testBulkInsertAtomicity() {
-	console.info('\n🧪 Testing Bulk Insert Atomicity...');
+	Stylog.info.bold.log('\n🧪 Testing Bulk Insert Atomicity...');
 
 	try {
 		// Clear existing data
@@ -53,22 +55,23 @@ export async function testBulkInsertAtomicity() {
 
 		try {
 			await db.insert('users').values(users).run();
-			console.error('❌ FAIL: Expected duplicate email error but insert succeeded');
-		} catch (error) {
-			console.info(
-				'✅ Expected error caught:',
-				error instanceof Error ? error.message : error
+			Stylog.cyan.italic.log(
+				'❌ FAIL: Expected duplicate email error but insert succeeded'
 			);
+		} catch (error) {
+			Stylog.cyan.italic.log(`✅ Expected error caught: ${errorMessage(error)}`);
 
 			// Check that NO users were inserted (atomicity)
 			const allUsers = await db.from('users').findAll();
 			if (allUsers.length === 0) {
-				console.info('✅ PASS: All-or-nothing atomicity verified - no users inserted');
-			} else {
-				console.error(
-					`❌ FAIL: Found ${allUsers.length} users - atomicity violated!`,
-					allUsers
+				Stylog.success.bold.log(
+					'✅ PASS: All-or-nothing atomicity verified - no users inserted'
 				);
+			} else {
+				Stylog.cyan.italic.bold.log(
+					`❌ FAIL: Found ${allUsers.length} users - atomicity violated!`
+				);
+				console.table(allUsers);
 			}
 		}
 	} catch (error) {
@@ -77,7 +80,7 @@ export async function testBulkInsertAtomicity() {
 }
 
 export async function testTransaction() {
-	console.info('\n🧪 Testing Transaction Method...');
+	Stylog.info.bold.log('\n🧪 Testing Transaction Method...');
 
 	try {
 		// Clear existing data
@@ -103,18 +106,22 @@ export async function testTransaction() {
 				})
 				.run();
 
-			console.info('✅ Transaction operations completed');
+			Stylog.success.bold.log('✅ Transaction operations completed');
 		});
 
 		const users = await db.from('users').findAll();
 		const posts = await db.from('posts').findAll();
 
 		if (users.length === 1 && posts.length === 1) {
-			console.info('✅ PASS: Transaction committed successfully');
-			console.info('  User:', users[0]);
-			console.info('  Post:', posts[0]);
+			Stylog.success.bold.log('✅ PASS: Transaction committed successfully');
+
+			Stylog.info.underline.bold.log('User:');
+			console.table([users[0]]);
+
+			Stylog.info.underline.bold.log('Post:');
+			console.table([posts[0]]);
 		} else {
-			console.error('❌ FAIL: Expected 1 user and 1 post');
+			Stylog.cyan.bold.log('❌ FAIL: Expected 1 user and 1 post');
 		}
 
 		// Test transaction rollback
@@ -151,23 +158,20 @@ export async function testTransaction() {
 				throw new Error('Intentional error to test rollback');
 			});
 
-			console.error('❌ FAIL: Expected error to be thrown');
+			Stylog.cyan.italic.log('❌ FAIL: Expected error to be thrown');
 		} catch (error) {
-			console.info(
-				'✅ Expected error caught:',
-				error instanceof Error ? error.message : error
-			);
+			Stylog.cyan.italic.log(`✅ Expected error caught: ${errorMessage(error)}`);
 
 			// Verify rollback
 			const usersAfterRollback = await db.from('users').findAll();
 			const postsAfterRollback = await db.from('posts').findAll();
 
 			if (usersAfterRollback.length === 0 && postsAfterRollback.length === 0) {
-				console.info(
+				Stylog.success.bold.log(
 					'✅ PASS: Transaction rolled back successfully - no data inserted'
 				);
 			} else {
-				console.error(
+				Stylog.cyan.italic.log(
 					'❌ FAIL: Data found after rollback - transaction did not rollback!'
 				);
 			}
@@ -178,7 +182,7 @@ export async function testTransaction() {
 }
 
 export async function testExport() {
-	console.info('\n🧪 Testing Export Method...');
+	Stylog.info.bold.log('\n🧪 Testing Export Method...');
 
 	try {
 		// Clear and seed data
@@ -197,29 +201,29 @@ export async function testExport() {
 			{ userId: users[1].id, title: 'Post 2', content: 'Content 2' },
 		]);
 
-		console.info('✅ Data seeded successfully');
+		Stylog.success.bold.log('✅ Data seeded successfully');
 
 		// Export all tables
-		console.info('📦 Triggering export (check downloads folder)...');
+		Stylog.info.bold.log('📦 Triggering export (check downloads folder)...');
 		await db.$export({
 			// filename: 'test-export.json',
 			pretty: true,
 			includeMetadata: true,
 		});
 
-		console.info('✅ PASS: Export method executed successfully');
-		console.info('  Check your downloads for: test-export.json');
+		Stylog.success.bold.log('✅ PASS: Export method executed successfully');
+		Stylog.info.bold.italic.log('  Check your downloads for: test-export.json');
 
 		// Export specific tables
-		console.info('📦 Exporting only users table...');
+		Stylog.info.bold.log('📦 Exporting only users table...');
 		await db.$export({
 			tables: ['users'],
 			// filename: 'test-export-users-only.json',
 			pretty: true,
 		});
 
-		console.info('✅ PASS: Selective export executed successfully');
-		console.info('  Check your downloads for: test-export-users-only.json');
+		Stylog.success.bold.log('✅ PASS: Selective export executed successfully');
+		Stylog.bold.italic.bold.log('  Check your downloads for: test-export-users-only.json');
 	} catch (error) {
 		console.error('❌ Test failed:', error);
 	}
@@ -227,7 +231,7 @@ export async function testExport() {
 
 // Run all tests
 export async function runAllTests() {
-	console.info('🚀 Running New Features Tests...\n');
+	Stylog.yellow.bold.log('🚀 Running New Features Tests...\n');
 
 	await db.ready();
 
@@ -235,10 +239,5 @@ export async function runAllTests() {
 	// await testExport();
 	await testTransaction();
 
-	console.info('\n✨ All tests completed!\n');
+	Stylog.success.bold.log('\n✨ All tests completed!\n');
 }
-
-// // Auto-run if directly loaded
-// if (import.meta.url.includes('test-new-features')) {
-// 	runAllTests().catch(console.error);
-// }

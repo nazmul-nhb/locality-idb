@@ -73,9 +73,19 @@ function getRefRelations(schema: Maybe<SchemaDefinition>, tableName: string): Re
  */
 export function getRefWorkflowTables(schema: Maybe<SchemaDefinition>, tableName: string) {
 	const tables = new Set<string>([tableName]);
+	const queue = [tableName];
 
-	for (const relation of getRefRelations(schema, tableName)) {
-		tables.add(relation.childTable);
+	while (queue.length > 0) {
+		const currentTable = queue.shift();
+
+		if (!currentTable) continue;
+
+		for (const relation of getRefRelations(schema, currentTable)) {
+			if (!tables.has(relation.childTable)) {
+				tables.add(relation.childTable);
+				queue.push(relation.childTable);
+			}
+		}
 	}
 
 	return [...tables];
@@ -155,7 +165,6 @@ function getRowsByValue(
 	columnName: string,
 	value: unknown
 ) {
-	console.log({ tableName, trx });
 	return new Promise<GenericObject[]>((resolve, reject) => {
 		const store = trx.objectStore(tableName);
 		const request = store.getAll() as IDBRequest<GenericObject[]>;
@@ -334,9 +343,7 @@ export async function applyDeleteRefWorkflow(
 
 			if (relatedRows.length === 0) continue;
 
-			const action = options?.onDelete ?? 'noAction';
-
-			switch (action) {
+			switch (options?.onDelete) {
 				case 'cascade': {
 					await applyDeleteRefWorkflow(schema, childTable, relatedRows, trx);
 

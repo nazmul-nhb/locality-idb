@@ -12,6 +12,14 @@ export type Operation = {
 
 export const code = (lines: string[]) => lines.join('\n');
 
+export function errorMessage(error: unknown) {
+	return error instanceof Error ? error.message : String(error);
+}
+
+export function getValueOf(id: string) {
+	return document.querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`)?.value ?? '';
+}
+
 export const operations: Operation[] = [
 	{
 		id: 'initialize',

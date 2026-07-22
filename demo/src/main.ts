@@ -18,7 +18,7 @@ import {
 	uuidV4,
 	validateColumnType,
 } from 'locality';
-import { type Operation, operations, testFiles } from './codes';
+import { errorMessage, getValueOf, type Operation, operations, testFiles } from './codes';
 
 const schema = defineSchema({
 	users: {
@@ -82,6 +82,7 @@ function escapeHtml(value: string) {
 			char
 	);
 }
+
 function json(value: unknown) {
 	return JSON.stringify(
 		value,
@@ -89,12 +90,15 @@ function json(value: unknown) {
 		2
 	);
 }
+
 function currentOperation() {
 	return operations.find((operation) => operation.id === activeOperation) ?? operations[0];
 }
+
 function fileIcon(name: string) {
 	return name.endsWith('.test.ts') ? '◉' : '◆';
 }
+
 function showToast(tone: Tone, message: string) {
 	const toast = document.createElement('div');
 	toast.className = `toast ${tone}`;
@@ -102,11 +106,13 @@ function showToast(tone: Tone, message: string) {
 	requiredElement('#toastRegion').append(toast);
 	setTimeout(() => toast.remove(), 4600);
 }
+
 function updateResult(value: unknown) {
 	lastResult = value;
 	const output = document.querySelector('#resultOutput');
 	if (output) output.textContent = json(value);
 }
+
 function renderEditor(host: HTMLElement, source: string, previous?: EditorView) {
 	previous?.destroy();
 	return new EditorView({
@@ -123,6 +129,7 @@ function renderEditor(host: HTMLElement, source: string, previous?: EditorView) 
 		parent: host,
 	});
 }
+
 function choices(
 	rows: Array<Record<string, unknown>>,
 	label: (row: Record<string, unknown>) => string
@@ -136,9 +143,11 @@ function choices(
 			.join('') || /* html*/ `<option value="">No rows yet — seed first</option>`
 	);
 }
+
 async function getRows(table: TableName) {
 	return await db.from(table).sortByIndex('id').findAll();
 }
+
 async function refreshSelects() {
 	const [users, posts, dbs] = await Promise.all([
 		getRows('users'),
@@ -161,6 +170,7 @@ async function refreshSelects() {
 			)
 			.join('');
 }
+
 function groupedOperations() {
 	return [...new Set(operations.map((operation) => operation.group))]
 		.map(
@@ -175,6 +185,7 @@ function groupedOperations() {
 		)
 		.join('');
 }
+
 function controlsFor(operation: Operation) {
 	const run = (label: string, id = 'runOperation', danger = false) =>
 		/* html*/ `<button class="button ${danger ? 'button-danger' : 'button-primary'}" data-action="${id}">${label}</button>`;
@@ -223,6 +234,7 @@ function controlsFor(operation: Operation) {
 			return '';
 	}
 }
+
 function renderApp() {
 	const op = currentOperation();
 	const fileNames = Object.keys(op.files);
@@ -245,6 +257,7 @@ function renderApp() {
 	);
 	void hydrate();
 }
+
 function renderTestLog() {
 	return testLog.length
 		? testLog
@@ -255,6 +268,7 @@ function renderTestLog() {
 				.join('')
 		: '<article class="test-row"><b class="info">Awaiting a run</b><p>Choose “Run all checks” to populate expected outputs.</p></article>';
 }
+
 async function hydrate() {
 	try {
 		await db.ready();
@@ -267,9 +281,7 @@ async function hydrate() {
 		showToast('error', errorMessage(error));
 	}
 }
-function errorMessage(error: unknown) {
-	return error instanceof Error ? error.message : String(error);
-}
+
 async function ensureSeeded() {
 	if (!(await db.from('users').count()))
 		await db.seed('users', [
@@ -292,6 +304,7 @@ async function ensureSeeded() {
 	if (!(await db.from('auditLogs').count()))
 		await db.insert('auditLogs').values({ event: 'Demo seed created' }).run();
 }
+
 async function confirmAction(title: string, description: string) {
 	dialogTitle.textContent = title;
 	dialogDescription.textContent = description;
@@ -302,6 +315,7 @@ async function confirmAction(title: string, description: string) {
 		})
 	);
 }
+
 async function runCurrentOperation() {
 	const control = currentOperation().control;
 	try {
@@ -568,9 +582,7 @@ async function runCurrentOperation() {
 		console.error(error);
 	}
 }
-function getValueOf(id: string) {
-	return document.querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`)?.value ?? '';
-}
+
 async function runRollback() {
 	try {
 		await db.transaction(['users', 'posts'], async (ctx) => {
