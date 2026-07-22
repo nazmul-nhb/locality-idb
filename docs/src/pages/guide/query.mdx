@@ -1,6 +1,6 @@
 # Querying Records
 
-Locality IDB provides a robust, chainable query builder to fetch data from your tables.
+`Locality IDB` provides a robust, chainable query builder to fetch data from your tables.
 
 ## Basic Queries
 
@@ -25,7 +25,7 @@ const user = await db
 
 ## Filtering with Where
 
-Locality IDB supports two styles of filtering: **predicate-based** (in-memory) and **index-based** (optimized IndexedDB queries).
+`Locality IDB` supports two styles of filtering: **predicate-based** (in-memory) and **index-based** (optimized `IndexedDB` queries).
 
 ### Predicate-based filtering (In-Memory)
 
@@ -40,7 +40,7 @@ const activeUsers = await db
 ```
 
 :::warning[Performance Note]
-Predicate functions filter rows *after* loading them from the store. For large datasets, use index-based queries instead to let IndexedDB filter them at the database engine level.
+Predicate functions filter rows *after* loading them from the store. For large datasets, use index-based queries instead to let `IndexedDB` filter them at the database engine level.
 :::
 
 ### Index-based filtering (Optimized)
@@ -114,7 +114,7 @@ const topTen = await db
 
 ### Find by Primary Key (O(1))
 
-For maximum performance, retrieve a single row using IndexedDB's optimized `get()` lookup via `findByPk()`:
+For maximum performance, retrieve a single row using `IndexedDB's` optimized `get()` lookup via `findByPk()`:
 
 ```typescript
 const user = await db.from('users').findByPk(1);
@@ -136,7 +136,7 @@ const users = await db.from('users').findByIndex('email', 'alice@example.com');
 
 ## Cursor-Based Sorting
 
-Use `sortByIndex()` to sort records using IndexedDB cursors instead of reading everything into memory and sorting in JavaScript.
+Use `sortByIndex()` to sort records using `IndexedDB` cursors instead of reading everything into memory and sorting in JavaScript.
 
 ```typescript
 // Sorted cursor iteration

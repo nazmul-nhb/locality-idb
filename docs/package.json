@@ -7,7 +7,8 @@
 		"dev": "vocs dev --host",
 		"build": "vocs build",
 		"preview": "vocs preview",
-		"changelog": "node scripts/update-changelog.mjs"
+		"changelog": "node scripts/update-changelog.mjs",
+		"future": "node scripts/copy-future-plans.mjs"
 	},
 	"dependencies": {
 		"@types/react": "^19.2.17",

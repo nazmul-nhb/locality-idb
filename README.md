@@ -13,7 +13,7 @@
 [![Bundle Size](https://deno.bundlejs.com/badge?q=locality-idb)](https://bundlejs.com/?q=locality-idb)
 [![License](https://img.shields.io/npm/l/locality-idb)](LICENSE)
 
-[Read the Full Documentation](https://locality.nazmul-nhb.dev) • [Contributing](CONTRIBUTING.md)
+[Official Documentation](https://locality.nazmul-nhb.dev) • [Demo Application](https://locality-idb-demo.vercel.app) • [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -34,6 +34,12 @@ pnpm add locality-idb
 
 # yarn
 yarn add locality-idb
+
+# bun
+bun add locality-idb
+
+# deno
+deno add npm:locality-idb
 ```
 
 ### 2. Usage
@@ -47,6 +53,16 @@ const mySchema = defineSchema({
     id: column.int().pk().auto(),
     name: column.text(),
     email: column.text().unique(),
+    createdAt: column.timestamp(),
+  },
+  posts: {
+    id: column.int().pk().auto(),
+    userId: column.int().ref('users.id', {
+      onDelete: 'cascade',
+      onUpdate: 'cascade',
+    }).index(),
+    title: column.varchar(255),
+    content: column.text(),
     createdAt: column.timestamp(),
   },
 });
@@ -100,7 +116,7 @@ For advanced usages and a complete reference, please visit the documentation web
 
 ## 🎮 Live Demo
 
-Check out the demo application in the [demo/](demo/) directory for selective examples with basic CRUD, transactions, and database export/import.
+Check out the demo application in the [demo/](demo/) directory for selective examples with basic CRUD, transactions, and database export/import and integrity tests.
 
 You can also try the live web demo here:
 
@@ -118,6 +134,7 @@ You can also try the live web demo here:
 
 - **GitHub**: [nazmul-nhb/locality-idb](https://github.com/nazmul-nhb/locality-idb)
 - **Official Docs**: <https://locality.nazmul-nhb.dev>
+- **Demo Application**: <https://locality-idb-demo.vercel.app>
 - **NPM Registry**: [locality-idb](https://www.npmjs.com/package/locality-idb)
 - **Author**: [Nazmul Hassan](https://nazmul-nhb.dev)
 

@@ -1,6 +1,6 @@
 # Import & Export
 
-Locality IDB contains built-in capabilities to backup, migrate, and load data in bulk.
+`Locality IDB` contains built-in capabilities to backup, migrate, and load data in bulk.
 
 ## Exporting Database
 
@@ -62,7 +62,7 @@ The exported backup payload is structured as follows:
 ```
 
 :::tip[Info]
-Export runs in a single readonly IndexedDB transaction to guarantee a consistent snapshot of the data.
+  Export runs in a single readonly `IndexedDB` transaction to guarantee a consistent snapshot of the data.
 :::
 
 ## Exporting to an Object
@@ -92,7 +92,7 @@ await db.$import(exportedData, { mode: 'merge' });
 ```
 
 :::warning[Warning]
-Because `merge` mode uses IndexedDB's `add()` under the hood, any primary key or unique index conflicts will abort the import and roll back changes.
+  Because `merge` mode uses `IndexedDB's` `add()` under the hood, any primary key or unique index conflicts will abort the import and roll back changes.
 :::
 
 ### Replace Mode

@@ -1,14 +1,14 @@
 # FAQ & Common Pitfalls
 
-Frequently asked questions and troubleshooting guides for Locality IDB.
+Frequently asked questions and troubleshooting guides for `Locality IDB`.
 
-## FAQ & Common Pitfalls
+## 💡 FAQ & Common Pitfalls
 
 ### Why are my schema changes not showing up?
-IndexedDB schemas do not update automatically when you edit your code. If you add, rename, or drop a column/store, you **must bump the database `version`** in your `Locality` config. This triggers IndexedDB's internal `onupgradeneeded` handler to run migrations.
+`IndexedDB` schemas do not update automatically when you edit your code. If you add, rename, or drop a column/store, you **must bump the database `version`** in your `Locality` config. This triggers `IndexedDB's` internal `onupgradeneeded` handler to run migrations.
 
 ### My `.where('column', value)` query is throwing a runtime/compile-time error. Why?
-Locality IDB only allows index-based filtering on fields that have an index. To fix this, make sure the column is defined with the `.pk()`, `.index()`, or `.unique()` modifier in your schema. If a column is not indexed, you must use predicate-based filtering:
+`Locality IDB` only allows index-based filtering on fields that have an index. To fix this, make sure the column is defined with the `.pk()`, `.index()`, or `.unique()` modifier in your schema. If a column is not indexed, you must use predicate-based filtering:
 ```typescript
 // ❌ Throws error if 'age' is not indexed:
 db.from('users').where('age', 25);
@@ -18,15 +18,16 @@ db.from('users').where((row) => row.age === 25);
 ```
 
 ### Are predicate filters performant?
-Predicate filters (callbacks passed to `.where(row => ...)`) run **in-memory**. This means Locality IDB must fetch all records from the table and loop through them in JavaScript to filter matching rows. While acceptable for small tables, prefer index-based queries for large datasets.
+Predicate filters (callbacks passed to `.where(row => ...)`) run **in-memory**. This means `Locality IDB` must fetch all records from the table and loop through them in JavaScript to filter matching rows. While acceptable for small tables, prefer index-based queries for large datasets.
 
 ### Can I run Locality IDB on the server (SSR / Next.js)?
-No. IndexedDB is a client-side, browser-native database. Running Locality IDB inside server-side environments (like Node.js, Next.js SSR, etc.) will fail because `window.indexedDB` is undefined. You should check if `typeof window !== 'undefined'` before initializing Locality or wrap initialization in a client-only lifecycle hook.
+No. `IndexedDB` is a client-side, browser-native database. Running `Locality IDB` inside server-side environments (like Node.js, Next.js SSR, etc.) will fail because `window.indexedDB` is undefined. You should check if `typeof window !== 'undefined'` before initializing Locality or wrap initialization in a client-only lifecycle hook.
 
 ## 🔗 Links
 
 - **GitHub**: [nazmul-nhb/locality-idb](https://github.com/nazmul-nhb/locality-idb)
 - **NPM Registry**: [locality-idb](https://www.npmjs.com/package/locality-idb)
+- **Demo Application**: [locality-idb-demo.vercel.app](https://locality-idb-demo.vercel.app)
 - **Author**: [Nazmul Hassan](https://nazmul-nhb.dev)
 - **License**: [MIT](https://github.com/nazmul-nhb/locality-idb/blob/main/LICENSE)
 

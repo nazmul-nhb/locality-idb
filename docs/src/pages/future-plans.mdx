@@ -1,24 +1,9 @@
 # Future Considerations
 
-This page details future feature considerations and architectural plans for Locality IDB.
+This page details future feature considerations and architectural plans for `Locality IDB`.
 
-## 1. References (Foreign Keys)
-Support for declaring foreign keys and referencing other table columns:
+## 1. Better Relation Loading
 
-```typescript
-userId: column
-  .int()
-  .references(() => schema.users.id, {
-    onDelete: 'cascade',
-    onUpdate: 'restrict',
-  })
-```
-This would enable Locality to:
-- Validate foreign key existence.
-- Automatically execute cascade deletions or updates.
-- Set referencing fields to null, restrict deletions, or apply custom behaviors.
-
-## 2. Better Relation Loading
 An API to easily load related resources:
 
 ```typescript
@@ -27,7 +12,9 @@ db.from('posts')
     user: true // Pull post author along with the post
   })
 ```
+
 This would internally execute optimized index queries and return combined results:
+
 ```typescript
 {
   id: 1,
@@ -39,7 +26,8 @@ This would internally execute optimized index queries and return combined result
 }
 ```
 
-## 3. Composite Indexes
+## 2. Composite Indexes
+
 Allow defining indexes on multiple fields combined:
 
 ```typescript
@@ -48,44 +36,33 @@ indexes: [
   ['userId', 'createdAt']
 ]
 ```
+
 This will improve performance for queries filtering or sorting across multiple fields.
 
-## 4. Schema Migrations
-Providing explicit migration support for schema changes:
+## 3. Hooks
+
+Lifecycle hooks triggers for inserts, updates, and deletes:
 
 ```typescript
-migrations: [
-  {
-    version: 2,
-    up(db) {
-      // Modify schema manually
-    }
-  }
-]
+.beforeInsert()
+.afterInsert()
+.beforeDelete()
+.afterDelete()
 ```
 
-## 5. Live Queries
-Real-time database updates for reactive UI bindings:
+## 4. Async Validation
+
+Allow validations to execute asynchronously, useful for checking uniqueness or running remote format checks:
 
 ```typescript
-const unsubscribe = db
-  .from('notes')
-  .watch(notes => {
-    // Triggers whenever 'notes' table changes
-  });
+column.text().validate(async (value) => {
+  const exists = await db.from('users').where('username', value).exists();
+  return exists ? 'Username already taken' : null;
+})
 ```
 
-## 6. React Bindings
-A standalone package (`@locality-idb/react`) containing custom hooks to fetch and watch query states:
+## 5. Better Projections
 
-```typescript
-const { data } = useQuery(db.from('notes'));
-
-// Or using live queries
-const notes = useLiveQuery(db.from('notes'));
-```
-
-## 7. Better Projections
 Allowing computed selection projections:
 
 ```typescript
@@ -101,24 +78,54 @@ Allowing computed selection projections:
 })
 ```
 
-## 8. Full-Text Search
+## 6. Full-Text Search
+
 Built-in indexing and search across text fields:
 
 ```typescript
 .search('content', 'react')
 ```
 
-## 9. Hooks
-Lifecycle hooks triggers for inserts, updates, and deletes:
+## 7. Live Queries
+
+Real-time database updates for reactive UI bindings:
 
 ```typescript
-.beforeInsert()
-.afterInsert()
-.beforeDelete()
-.afterDelete()
+const unsubscribe = db
+  .from('notes')
+  .watch(notes => {
+    // Triggers whenever 'notes' table changes
+  });
+```
+
+## 8. React Bindings
+
+A standalone package (`@locality-idb/react`) containing custom hooks to fetch and watch query states:
+
+```typescript
+const { data } = useQuery(db.from('notes'));
+
+// Or using live queries
+const notes = useLiveQuery(db.from('notes'));
+```
+
+## 9. Schema Migrations
+
+Providing explicit migration support for schema changes:
+
+```typescript
+migrations: [
+  {
+    version: 2,
+    up(db) {
+      // Modify schema manually
+    }
+  }
+]
 ```
 
 ## 10. Query Cancellation
+
 Support for `AbortController` signals to cancel long-running cursor reads:
 
 ```typescript
@@ -129,14 +136,4 @@ await db
   .findAll({
     signal: controller.signal
   });
-```
-
-## 11. Async Validation
-Allow validations to execute asynchronously, useful for checking uniqueness or running remote format checks:
-
-```typescript
-column.text().validate(async (value) => {
-  const exists = await db.from('users').where('username', value).exists();
-  return exists ? 'Username already taken' : null;
-})
 ```

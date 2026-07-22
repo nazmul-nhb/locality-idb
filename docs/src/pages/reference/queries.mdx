@@ -20,7 +20,7 @@ where((row) => row.age >= 18)
 ```
 
 ### `.where(indexName, valueOrKeyRange)`
-Filters results using an indexed column (or primary key) using IndexedDB keys.
+Filters results using an indexed column (or primary key) using `IndexedDB` keys.
 ```typescript
 where('email', 'alice@example.com')
 where('age', IDBKeyRange.bound(18, 30))
@@ -81,7 +81,7 @@ findByIndex('email', 'alice@example.com'): Promise<T[]>
 ```
 
 ### `.count()`
-Counts matching rows. Uses optimized IndexedDB counts if indices are used.
+Counts matching rows. Uses optimized `IndexedDB` counts if indices are used.
 ```typescript
 count(): Promise<number>
 ```

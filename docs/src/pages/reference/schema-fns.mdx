@@ -1,6 +1,6 @@
 # Schema Functions Reference
 
-Locality IDB provides declarative builders to set up schemas.
+`Locality IDB` provides declarative builders to set up schemas.
 
 ## `defineSchema`
 
@@ -27,7 +27,7 @@ const schema = defineSchema({
 });
 ```
 
-## Referential integrity with `ref()`
+### Referential integrity with `ref()`
 
 You can attach foreign-key-like metadata to a column with `ref(refPath, options)`.
 
@@ -50,15 +50,15 @@ const schema = defineSchema({
 });
 ```
 
-Locality IDB applies this behavior automatically during inserts, updates, and deletes:
+`Locality IDB` applies this behavior automatically during inserts, updates, and deletes:
 - inserts fail if the referenced row does not exist
 - inserts fail if the source and target column types do not match
 - updates honor `onUpdate`
 - deletes honor `onDelete`
 
-This makes it possible to build relational-style schemas while still using IndexedDB as the storage backend.
+This makes it possible to build relational-style schemas while still using `IndexedDB` as the storage backend.
 
-## `table`
+## `table` [:badge[deprecated]{danger}]
 
 An alternative function to define a single table in isolation.
 
@@ -85,10 +85,11 @@ const idb = new Locality({
 });
 ```
 
-:::danger[Warning]
+:::danger[Deprecated]
+This function is **deprecated**. It is recommended to use `defineSchema()` instead. In the next major release, `table()` will be removed entirely.
 In most cases, prefer `defineSchema()` over `table()`. It keeps your schema in a single place, improves readability, and eliminates the possibility of table name mismatches.
 
-When using `table()`, the table name passed to the function **must exactly match** the corresponding key in the `schema` object passed to `Locality` Constructor. TypeScript infers table names from the schema object keys, while Locality IDB uses the name passed to `table()` at runtime. If the two differ, your code may compile incorrectly or fail at runtime.
+When using `table()`, the table name passed to the function **must exactly match** the corresponding key in the `schema` object passed to `Locality` Constructor. TypeScript infers table names from the schema object keys, while `Locality IDB` uses the name passed to `table()` at runtime. If the two differ, your code may compile incorrectly or fail at runtime.
 
 Example:
 
@@ -115,7 +116,7 @@ const idb = new Locality({
 });
 ```
 
-In this example, TypeScript recognizes the table as `'posts'`, but Locality IDB looks for `'postsMany'` at runtime.
+In this example, TypeScript recognizes the table as `'posts'`, but `Locality IDB` looks for `'postsMany'` at runtime.
 
 ```typescript
 await idb.from('posts').findAll(); // Compiles, but throws at runtime.

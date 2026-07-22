@@ -1,10 +1,10 @@
 # Validation Rules
 
-Locality IDB performs format and type validation during database insertion and update operations.
+`Locality IDB` performs format and type validation during database insertion and update operations.
 
 ## Automatic Validation
 
-When calling `.run()` on inserts or updates, Locality IDB checks that your payloads match their column type restrictions. If type matching fails, it throws a `TypeError` before calling IndexedDB.
+When calling `.run()` on inserts or updates, `Locality IDB` checks that your payloads match their column type restrictions. If type matching fails, it throws a `TypeError` before calling `IndexedDB`.
 
 ```typescript
 const schema = defineSchema({
@@ -35,21 +35,21 @@ validateColumnType('numeric', '3.14');  // null (valid)
 
 The following validation checks are applied automatically to each column type:
 
-| Column Type | Validation Rule |
-| :--- | :--- |
-| `int` | Must be a valid integer. |
-| `float` / `number` | Must be a valid number. |
-| `numeric` | Must be a number or a numeric string (e.g. `42` or `"42"`). |
-| `bigint` | Must be a BigInt. |
-| `text` / `string` | Must be a string. |
-| `char(n)` | Must be a string with exactly `n` characters. |
-| `varchar(n)` | Must be a string with at most `n` characters. |
-| `bool` / `boolean` | Must be a boolean. |
-| `uuid` | Must be a valid UUID format. |
-| `timestamp` | Must be a valid ISO 8601 timestamp string. |
-| `date` | Must be a Date object. |
-| `array` / `list` / `tuple` | Must be an array. |
-| `set` | Must be a Set. |
-| `map` | Must be a Map. |
-| `object` | Must be an object. |
-| `custom` | No validation (always passes). Custom validations can be implemented using the `.validate(fn)` modifier. |
+| Column Type                | Validation Rule                                                                                      |
+| :------------------------- | :--------------------------------------------------------------------------------------------------- |
+| `int`                      | Must be a valid integer.                                                                             |
+| `float` / `number`         | Must be a valid number.                                                                              |
+| `numeric`                  | Must be a number or a numeric string (e.g. `42` or `"42"`).                                          |
+| `bigint`                   | Must be a BigInt.                                                                                    |
+| `text` / `string`          | Must be a string.                                                                                    |
+| `char(n)`                  | Must be a string with exactly `n` characters.                                                        |
+| `varchar(n)`               | Must be a string with at most `n` characters.                                                        |
+| `bool` / `boolean`         | Must be a boolean.                                                                                   |
+| `uuid`                     | Must be a valid UUID format.                                                                         |
+| `timestamp`                | Must be a valid ISO 8601 timestamp string.                                                           |
+| `date`                     | Must be a Date object.                                                                               |
+| `array` / `list` / `tuple` | Must be an array.                                                                                    |
+| `set`                      | Must be a Set.                                                                                       |
+| `map`                      | Must be a Map.                                                                                       |
+| `object`                   | Must be an object.                                                                                   |
+| `custom`                   | No validation (always passes). Custom validations can be implemented using `.validate(fn)` modifier. |

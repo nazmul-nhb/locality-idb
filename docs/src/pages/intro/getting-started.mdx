@@ -51,7 +51,10 @@ const mySchema = defineSchema({
   },
   posts: {
     id: column.int().pk().auto(),
-    userId: column.int().index(),
+    userId: column.int().ref('users.id', {
+      onDelete: 'cascade',
+      onUpdate: 'cascade',
+    }).index(),
     title: column.varchar(255),
     content: column.text(),
     createdAt: column.timestamp(),
@@ -78,3 +81,13 @@ await idb.update('users').set({ name: 'Alice in Wonderland' }).where('id', 1).ru
 // Delete data
 await idb.delete('users').where('id', 1).run();
 ```
+
+## 🎮 Demo Application
+
+Check out the [demo application](https://locality-idb-demo.vercel.app) for selective examples with basic CRUD, transactions, and database export/import and integrity tests.
+
+:::tip
+See the exact Locality code, then run it against a real database.
+
+👉 [**locality-idb-demo.vercel.app**](https://locality-idb-demo.vercel.app)
+:::

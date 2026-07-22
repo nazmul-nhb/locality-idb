@@ -1,6 +1,6 @@
 # Cursor Pagination & Streaming
 
-When working with large tables, loading all rows into memory at once can slow down the browser. Locality IDB offers cursor-based pagination and streaming.
+When working with large tables, loading all rows into memory at once can slow down the browser. `Locality IDB` offers cursor-based pagination and streaming.
 
 ## Cursor Pagination
 
@@ -26,7 +26,7 @@ console.log(page2.items); // Array of next 20 users
 ```
 
 :::warning[Pagination Constraints]
-- `page()` requires `sortByIndex()` to order items correctly using IndexedDB indices. It does not support in-memory `orderBy()`.
+- `page()` requires `sortByIndex()` to order items correctly using `IndexedDB` indices. It does not support in-memory `orderBy()`.
 - `page()` does not support combining `cursor` with `where(indexName, query)` filters at this time.
 - `nextCursor` will return `undefined` when there are no more records left to fetch.
 :::

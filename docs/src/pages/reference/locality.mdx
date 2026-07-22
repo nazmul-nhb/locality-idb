@@ -1,6 +1,6 @@
 # Locality Class Reference
 
-The main `Locality` class is the central coordinator for all interactions with your IndexedDB instance.
+The main `Locality` class is the central coordinator for all interactions with your `IndexedDB` instance.
 
 ## Constructor
 
@@ -34,7 +34,7 @@ Returns the database version.
 Returns an array of table (store) names defined in the schema.
 
 ### `dbList: Promise<IDBDatabaseInfo[]>`
-Asynchronously returns information about all IndexedDB databases matching the current origin.
+Asynchronously returns information about all `IndexedDB` databases matching the current origin.
 
 ## Relationships and refs
 
@@ -90,7 +90,7 @@ Deletes all records from the specified table.
 Closes connection and deletes the active database store.
 
 ### `close(): void`
-Closes the IndexedDB connection immediately.
+Closes the `IndexedDB` connection immediately.
 
 ### `getDBInstance(): Promise<IDBDatabase>`
 Returns the raw browser `IDBDatabase` connection.
@@ -114,12 +114,12 @@ Imports a backup payload using `merge`, `replace`, or `upsert` mode.
 Empties all tables in the active schema in a single transaction.
 
 ### `dropTable(table: string): Promise<void>`
-Drops a table store, incrementing the internal IndexedDB version.
+Drops a table store, incrementing the internal `IndexedDB` version.
 
 ## Static Methods
 
 ### `Locality.getDatabaseList(): Promise<IDBDatabaseInfo[]>`
-Retrieves a list of all existing IndexedDB databases in the origin.
+Retrieves a list of all existing `IndexedDB` databases in the origin.
 
 ```typescript
 import { Locality } from 'locality-idb';
@@ -128,7 +128,7 @@ const databases = await Locality.getDatabaseList();
 ```
 
 ### `Locality.deleteDatabase(name: string): Promise<void>`
-Deletes any IndexedDB database by name, without requiring a class instance.
+Deletes any `IndexedDB` database by name, without requiring a class instance.
 
 ```typescript
 await Locality.deleteDatabase('old-database');

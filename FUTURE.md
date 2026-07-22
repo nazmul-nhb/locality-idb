@@ -1,255 +1,139 @@
 # Future Considerations
 
-## 1. References ⭐⭐⭐⭐⭐
+This page details future feature considerations and architectural plans for `Locality IDB`.
 
-- [x] Implemented the `ref` method (2nd version of the example) for foreign key references.
+## 1. Better Relation Loading
 
-> [!NOTE]
-> Will be implemented later
+An API to easily load related resources:
 
-This would be #1 priority.
-
-Instead of
-
-```ts
-userId: column.int().index()
-```
-
-```ts
-userId: column
-  .int()
-  .references(() => schema.users.id, {
-    onDelete: 'cascade',
-    onUpdate: 'restrict',
-  })
-```
-
-or
-
-```ts
-userId: column
-  .ref('users.id', {
-    onDelete: 'cascade',
-    onUpdate: 'restrict',
-  })
-```
-
-Then Locality could
-
-- validate FK existence
-- cascade delete
-- set null
-- restrict deletion
-- no action
-
----
-
-## 2. Better relation loading
-
-Imagine
-
-```ts
+```typescript
 db.from('posts')
-.with({
-    user: true // or can select user properties here too
-})
+  .with({
+    user: true // Pull post author along with the post
+  })
 ```
 
-returns
+This would internally execute optimized index queries and return combined results:
 
-```ts
+```typescript
 {
-    id,
-    title,
-    user: {
-        ...
-    }
+  id: 1,
+  title: "Locality IDB is awesome",
+  user: {
+    id: 1,
+    name: "Alice"
+  }
 }
 ```
 
-Internally it can perform two indexed queries.
+## 2. Composite Indexes
 
----
+Allow defining indexes on multiple fields combined:
 
-## 3. Composite indexes
-
-Instead of
-
-```ts
-column.text().index()
-```
-
-allow
-
-```ts
+```typescript
 indexes: [
-    ['firstName', 'lastName'],
-    ['userId', 'createdAt']
+  ['firstName', 'lastName'],
+  ['userId', 'createdAt']
 ]
 ```
 
-Huge performance improvement.
+This will improve performance for queries filtering or sorting across multiple fields.
 
----
+## 3. Hooks
 
-## 4. Schema migrations
+Lifecycle hooks triggers for inserts, updates, and deletes:
 
-Currently versioning relies on IndexedDB upgrades.
-
-Expose something similar to Drizzle.
-
-```ts
-migrations: [
-    {
-        version: 2,
-        up(db) {
-            ...
-        }
-    }
-]
+```typescript
+.beforeInsert()
+.afterInsert()
+.beforeDelete()
+.afterDelete()
 ```
 
-Developers love explicit migrations.
+## 4. Async Validation
 
----
+Allow validations to execute asynchronously, useful for checking uniqueness or running remote format checks:
 
-## 5. Live queries
-
-This would be huge.
-
-```ts
-const unsubscribe = db
-  .from('notes')
-  .watch(notes => {
-    ...
-  })
-```
-
-Whenever another query changes `notes`, this fires.
-
-Perfect for React.
-
----
-
-## 6. React bindings
-
-Separate library.
-
-```ts
-@locality-idb/react
-```
-
-```ts
-const { data } = useQuery(
-    db.from('notes')
-)
-```
-
-or
-
-```ts
-const notes = useLiveQuery(
-    db.from('notes')
-)
-```
-
----
-
-## 7. Better projection
-
-Currently
-
-```ts
-.select({
-    name: true
+```typescript
+column.text().validate(async (value) => {
+  const exists = await db.from('users').where('username', value).exists();
+  return exists ? 'Username already taken' : null;
 })
 ```
 
-I'd also allow
+## 5. Better Projections
 
-```ts
+Allowing computed selection projections:
+
+```typescript
+// Computed select functions
 .select(row => ({
-    fullName: row.first + " " + row.last
+  fullName: row.first + " " + row.last
 }))
-```
 
-or
-
-```ts
+// Or combining fields
 .select({
-    id: true,
-    fullName: row =>
-        `${row.first} ${row.last}`
+  id: true,
+  fullName: row => `${row.first} ${row.last}`
 })
 ```
 
-Very ORM-like.
+## 6. Full-Text Search
 
----
+Built-in indexing and search across text fields:
 
-## 8. Full text search
-
-Optional.
-
-```ts
+```typescript
 .search('content', 'react')
 ```
 
----
+## 7. Live Queries
 
-## 9. Hooks
+Real-time database updates for reactive UI bindings:
 
-Instead of only validators
-
-```ts
-.beforeInsert()
-
-.afterInsert()
-
-.beforeDelete()
-
-.afterDelete()
-
-.beforeUpdate()
-
-.afterUpdate()
+```typescript
+const unsubscribe = db
+  .from('notes')
+  .watch(notes => {
+    // Triggers whenever 'notes' table changes
+  });
 ```
 
-or
+## 8. React Bindings
 
-```ts
-.before('...', (value) => void)
-.after('...', (value) => void)
+A standalone package (`@locality-idb/react`) containing custom hooks to fetch and watch query states:
+
+```typescript
+const { data } = useQuery(db.from('notes'));
+
+// Or using live queries
+const notes = useLiveQuery(db.from('notes'));
 ```
 
----
+## 9. Schema Migrations
 
-## 10. Query cancellation
+Providing explicit migration support for schema changes:
 
-```ts
-const controller = new AbortController()
+```typescript
+migrations: [
+  {
+    version: 2,
+    up(db) {
+      // Modify schema manually
+    }
+  }
+]
+```
+
+## 10. Query Cancellation
+
+Support for `AbortController` signals to cancel long-running cursor reads:
+
+```typescript
+const controller = new AbortController();
 
 await db
-.from("posts")
-.findAll({
+  .from("posts")
+  .findAll({
     signal: controller.signal
-})
+  });
 ```
-
----
-
-## 14. Async validation
-
-Current validation appears synchronous.
-
-Allow
-
-```ts
-.validate(async value => {
-    ...
-})
-```
-
-Useful for foreign key existence, uniqueness, etc.
-
----

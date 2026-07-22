@@ -1,6 +1,6 @@
 # Utility Functions
 
-Locality IDB exports several standalone utility functions for validation, ID generation, and low-level IndexedDB access.
+`Locality IDB` exports several standalone utility functions for validation, ID generation, and low-level `IndexedDB` access.
 
 ## ID & Date Generators
 
@@ -61,7 +61,7 @@ isURL('https://example.com'); // true
 ## Low-Level APIs
 
 ### `openDBWithStores(name, stores, version?)`
-Opens an IndexedDB connection with specified stores. Used internally by `Locality`.
+Opens an `IndexedDB` connection with specified stores. Used internally by `Locality`.
 ```typescript
 import { openDBWithStores } from 'locality-idb';
 
@@ -71,7 +71,7 @@ const idb = await openDBWithStores('custom-db', [
 ```
 
 ### `deleteDB(name)`
-Deletes any IndexedDB database in the browser by name.
+Deletes any `IndexedDB` database in the browser by name.
 ```typescript
 import { deleteDB } from 'locality-idb';
 
