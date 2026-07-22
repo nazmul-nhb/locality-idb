@@ -1,6 +1,5 @@
 import type { InferInsertType, InferSelectType } from 'locality';
 import { column, defineSchema, Locality } from 'locality';
-import { Chronos } from 'nhb-toolbox/chronos';
 
 // Test schema
 const testSchema = defineSchema({
@@ -8,21 +7,21 @@ const testSchema = defineSchema({
 		id: column.int().pk().auto(),
 		name: column.text(),
 		email: column.text().unique(),
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
+		createdAt: column.timestamp(),
 	},
 	posts: {
 		id: column.int().pk().auto(),
 		userId: column.int().index(),
 		title: column.text(),
 		content: column.text(),
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
+		createdAt: column.timestamp(),
 	},
 	comments: {
 		id: column.int().pk().auto(),
 		postId: column.int().index(),
 		userId: column.int().index(),
 		text: column.text(),
-		createdAt: column.timestamp().default(new Chronos().toLocalISOString()),
+		createdAt: column.timestamp(),
 	},
 });
 
