@@ -74,6 +74,8 @@ const dialog = requiredElement<HTMLDialogElement>('#confirmDialog');
 const dialogTitle = requiredElement<HTMLElement>('#dialogTitle');
 const dialogDescription = requiredElement<HTMLElement>('#dialogDescription');
 
+let activeWorkspace: 'interact' | 'tests' = 'interact';
+
 function escapeHtml(value: string) {
 	return value.replace(
 		/[&<>'"]/g,
@@ -230,6 +232,13 @@ function controlsFor(operation: Operation) {
 			return /* html*/ `<div class="control-card">${select('Table to clear', 'data-tables', 'maintenanceTable')}<button class="button button-danger" data-action="clear-table">Clear selected table</button><button class="button button-quiet" data-action="clear-all">Clear all tables</button></div>`;
 		case 'lifecycle':
 			return /* html*/ `<div class="control-card">${select('Database', 'data-databases', 'lifecycleDb')}<button class="button button-danger" data-action="delete-db">Delete selected database</button><button class="button button-quiet" disabled>dropTable() — documented above</button><button class="button button-quiet" disabled>close() — documented above</button></div>`;
+
+		case 'utilities':
+			return /* html */ `
+		<div class="control-card">
+			${run('Run validation & helpers')}
+		</div>
+	`;
 		default:
 			return '';
 	}
@@ -239,7 +248,25 @@ function renderApp() {
 	const op = currentOperation();
 	const fileNames = Object.keys(op.files);
 	if (!op.files[activeFile]) activeFile = fileNames[0];
-	app.innerHTML = /* html*/ `<main class="shell"><header class="topbar"><div class="brand"><div class="brand-mark"><img src="./locality-icon.png" /></div><div><h1>Locality IDB / API Lab</h1><p>Executable reference for the browser-native database toolkit</p></div></div><div class="status"><span class="dot"></span><span id="connectionState">Opening IndexedDB…</span></div></header><section class="hero"><div><p class="eyebrow">Interactive documentation</p><h2>See the exact Locality code, then run it against a real database.</h2><p class="hero-copy">Every control is paired with its implementation snippet. The lab uses indexes, schema validation, foreign-key-style refs, transaction contexts, backups, and lifecycle APIs—not a mock data layer.</p></div><div class="hero-stats"><div class="metric"><b id="metricTables">4</b><span>tables</span></div><div class="metric"><b id="metricVersion">v1</b><span>schema version</span></div><div class="metric"><b>2</b><span>workspaces</span></div></div></section><nav class="workspace-nav"><div class="tabs"><button class="main-tab active" data-workspace="interact">Interact From UI</button><button class="main-tab" data-workspace="tests">Tests</button></div><button class="button nav-action" data-action="console-tests">↗ Run transaction-export.ts in console</button></nav><section id="interactPanel" class="panel active"><div class="lab"><aside class="ops-sidebar"><div class="side-title">API surface · ${operations.length} examples</div><div class="operation-list">${groupedOperations()}</div></aside><section class="editor-pane"><div class="file-tabs">${fileNames.map((name) => `<button class="file-tab ${name === activeFile ? 'active' : ''}" data-file="${name}"><span class="ts-dot">${fileIcon(name)}</span>${name}</button>`).join('')}</div><div class="code-meta"><span><strong>${activeFile}</strong> · read only</span><span>CodeMirror</span></div><div class="editor" id="codeEditor"></div></section><aside class="detail-pane"><div class="sticky"><p class="detail-kicker">${op.group}</p><h3>${op.title}</h3><p class="detail-description">${op.description}</p>${controlsFor(op)}${op.note ? `<p class="detail-note">${op.note}</p>` : ''}<div class="result-card"><div class="result-head"><span>LIVE RESULT</span><button class="button button-quiet" data-action="copy-result">Copy</button></div><pre id="resultOutput" class="result-output">${escapeHtml(json(lastResult))}</pre></div></div></aside></div></section><section id="testsPanel" class="panel"><div class="lab test-lab"><section class="editor-pane"><div class="file-tabs">${Object.keys(
+	app.innerHTML = /* html*/ `<main class="shell"><header class="topbar"><div class="brand"><div class="brand-mark"><img src="./locality-icon.png" /></div><div><h1>Locality IDB / API Lab</h1><p>Executable reference for the browser-native database toolkit</p></div></div><div class="status"><span class="dot"></span><span id="connectionState">Opening IndexedDB…</span></div></header><section class="hero"><div><p class="eyebrow">Interactive documentation</p><h2>See the exact Locality code, then run it against a real database.</h2><p class="hero-copy">Every control is paired with its implementation snippet. The lab uses indexes, schema validation, foreign-key-style refs, transaction contexts, backups, and lifecycle APIs—not a mock data layer.</p></div><div class="hero-stats"><div class="metric"><b id="metricTables">4</b><span>tables</span></div><div class="metric"><b id="metricVersion">v1</b><span>version</span></div><div class="metric"><b>2</b><span>workspaces</span></div></div></section><nav class="workspace-nav"><div class="tabs"><button
+	class="main-tab ${activeWorkspace === 'interact' ? 'active' : ''}"
+	data-workspace="interact"
+>
+	Interact From UI
+</button>
+
+<button
+	class="main-tab ${activeWorkspace === 'tests' ? 'active' : ''}"
+	data-workspace="tests"
+>
+	Tests
+</button></div><button class="button nav-action" data-action="console-tests">↗ Run transaction-export.ts in console</button></nav><section
+	id="interactPanel"
+	class="panel ${activeWorkspace === 'interact' ? 'active' : ''}"
+><div class="lab"><aside class="ops-sidebar"><div class="side-title">API surface · ${operations.length} examples</div><div class="operation-list">${groupedOperations()}</div></aside><section class="editor-pane"><div class="file-tabs">${fileNames.map((name) => `<button class="file-tab ${name === activeFile ? 'active' : ''}" data-file="${name}"><span class="ts-dot">${fileIcon(name)}</span>${name}</button>`).join('')}</div><div class="code-meta"><span><strong>${activeFile}</strong> · read only</span><span>CodeMirror</span></div><div class="editor" id="codeEditor"></div></section><aside class="detail-pane"><div class="sticky"><p class="detail-kicker">${op.group}</p><h3>${op.title}</h3><p class="detail-description">${op.description}</p>${controlsFor(op)}${op.note ? `<p class="detail-note">${op.note}</p>` : ''}<div class="result-card"><div class="result-head"><span>LIVE RESULT</span><button class="button button-quiet" data-action="copy-result">Copy</button></div><pre id="resultOutput" class="result-output">${escapeHtml(json(lastResult))}</pre></div></div></aside></div></section><section
+	id="testsPanel"
+	class="panel ${activeWorkspace === 'tests' ? 'active' : ''}"
+><div class="lab test-lab"><section class="editor-pane"><div class="file-tabs">${Object.keys(
 		testFiles
 	)
 		.map(
@@ -773,25 +800,34 @@ document.addEventListener('click', (event) => {
 		return;
 	}
 	if (target.dataset.file) {
+		activeWorkspace = 'interact';
 		activeFile = target.dataset.file;
 		renderApp();
 		return;
 	}
 	if (target.dataset.testFile) {
+		activeWorkspace = 'tests';
 		activeTestFile = target.dataset.testFile;
 		renderApp();
 		return;
 	}
 	if (target.dataset.workspace) {
+		activeWorkspace = target.dataset.workspace as 'interact' | 'tests';
+
 		document.querySelectorAll('.main-tab').forEach((tab) => {
 			tab.classList.toggle('active', tab === target);
 		});
-		document
-			.querySelector('#interactPanel')!
-			.classList.toggle('active', target.dataset.workspace === 'interact');
-		document
-			.querySelector('#testsPanel')!
-			.classList.toggle('active', target.dataset.workspace === 'tests');
+
+		requiredElement('#interactPanel').classList.toggle(
+			'active',
+			target.dataset.workspace === 'interact'
+		);
+
+		requiredElement('#testsPanel').classList.toggle(
+			'active',
+			target.dataset.workspace === 'tests'
+		);
+
 		return;
 	}
 	const action = target.dataset.action;
