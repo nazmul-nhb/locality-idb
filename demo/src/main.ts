@@ -229,9 +229,9 @@ function controlsFor(operation: Operation) {
 		case 'import':
 			return /* html*/ `<div class="control-card"><label class="field">Import mode<select id="importMode"><option value="replace">replace</option><option value="upsert">upsert</option></select></label>${run('Round-trip current snapshot')}</div>`;
 		case 'maintenance':
-			return /* html*/ `<div class="control-card">${select('Table to clear', 'data-tables', 'maintenanceTable')}<button class="button button-danger" data-action="clear-table">Clear selected table</button><button class="button button-quiet" data-action="clear-all">Clear all tables</button></div>`;
+			return /* html*/ `<div class="control-card space-x-2 space-y-2">${select('Table to clear', 'data-tables', 'maintenanceTable')}<button class="button button-danger" data-action="clear-table">Clear selected table</button><button class="button button-quiet" data-action="clear-all">Clear all tables</button></div>`;
 		case 'lifecycle':
-			return /* html*/ `<div class="control-card">${select('Database', 'data-databases', 'lifecycleDb')}<button class="button button-danger" data-action="delete-db">Delete selected database</button><button class="button button-quiet" disabled>dropTable() — documented above</button><button class="button button-quiet" disabled>close() — documented above</button></div>`;
+			return /* html*/ `<div class="control-card space-x-2 space-y-2">${select('Database', 'data-databases', 'lifecycleDb')}<button class="button button-danger" data-action="delete-db">Delete selected database</button><button class="button button-quiet" disabled>dropTable() — documented above</button><button class="button button-quiet" disabled>close() — documented above</button></div>`;
 
 		case 'utilities':
 			return /* html */ `
@@ -867,10 +867,8 @@ document.addEventListener('change', (event) => {
 		});
 	}
 	if (target.id === 'deleteTable') {
-		document.querySelector<HTMLElement>('[data-delete-users]')!.hidden =
-			target.value !== 'users';
-		document.querySelector<HTMLElement>('[data-delete-posts]')!.hidden =
-			target.value !== 'posts';
+		requiredElement<HTMLElement>('[data-delete-users]').hidden = target.value !== 'users';
+		requiredElement<HTMLElement>('[data-delete-posts]').hidden = target.value !== 'posts';
 	}
 });
 
