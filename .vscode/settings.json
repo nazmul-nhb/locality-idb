@@ -26,19 +26,15 @@
 		"Qeto",
 		"refrefpath",
 		"Reto",
-		"scompatilbility",
 		"Seto",
 		"softprops",
-		"sspcific",
 		"taggerdate",
 		"Teto",
-		"transction",
 		"Ueto",
 		"varchar",
 		"Weto",
 		"Xeto",
 		"Yeto",
 		"Zeto"
-	],
-	"typescript.tsdk": "node_modules/typescript/lib"
+	]
 }
