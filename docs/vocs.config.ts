@@ -30,9 +30,11 @@ export default defineConfig({
 		type: 'github',
 
 		async fetch() {
-			const { data: releases } = await octokit.repos.listReleases(githubRepo);
+			const releases = await octokit.paginate(octokit.rest.repos.listReleases, {
+				...githubRepo,
+			});
 
-			return releases.map((release) => ({
+			return releases.slice(0, -2).map((release) => ({
 				version: release.tag_name,
 				title: release.name ?? release.tag_name,
 				date: release.published_at || '',

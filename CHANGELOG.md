@@ -4,6 +4,23 @@ All notable changes to **locality-idb** will be documented in this file.
 
 > Auto-generated from git history using [changelog-maker](https://github.com/nodejs/changelog-maker).
 
+## [v2.6.0](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.6.0) — 2026-07-24
+
+[Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.5.0...v2.6.0)
+
+* \[[`d761bf9bec`](https://github.com/nazmul-nhb/locality-idb/commit/d761bf9bec)] - `🛠️ chore:` updated pnpm config (Nazmul Hassan)
+* \[[`6506da3cd1`](https://github.com/nazmul-nhb/locality-idb/commit/6506da3cd1)] - `📚 docs:` updated tsdoc for some of the methods of `Locality` class (Nazmul Hassan)
+* \[[`2f7b1fafd0`](https://github.com/nazmul-nhb/locality-idb/commit/2f7b1fafd0)] - `🧹 cleanup:` cleaned node\_modules and pnpm lockfile (Nazmul Hassan)
+* \[[`e53d27c7ce`](https://github.com/nazmul-nhb/locality-idb/commit/e53d27c7ce)] - `✨ feat(utils):` added new utility: `getDatabaseList()` with docs (Nazmul Hassan)
+* \[[`3119ccd406`](https://github.com/nazmul-nhb/locality-idb/commit/3119ccd406)] - `✨ feat(utils):` added new utils: `formatBytes()` and `getStorageUsage()` with docs; fixed issues with converting values to quoted string (Nazmul Hassan)
+* \[[`d41b5524be`](https://github.com/nazmul-nhb/locality-idb/commit/d41b5524be)] - `📚 docs(future):` updated FUTURE.md (Nazmul Hassan)
+* \[[`ebbab9e750`](https://github.com/nazmul-nhb/locality-idb/commit/ebbab9e750)] - `🔧 update(docs):` re-arranged and renamed top level nav and sidebar items (Nazmul Hassan)
+* \[[`2aea6929d5`](https://github.com/nazmul-nhb/locality-idb/commit/2aea6929d5)] - `📚 docs:` updated FUTURE.md, CHANGELOG.md and vocs config (Nazmul Hassan)
+* \[[`ad655efe67`](https://github.com/nazmul-nhb/locality-idb/commit/ad655efe67)] - `📚 docs:` updated homepage card title and vocs config (Nazmul Hassan)
+* \[[`54d23b2fde`](https://github.com/nazmul-nhb/locality-idb/commit/54d23b2fde)] - `🔧 update(docs):` updated changelog generator with octokit (Nazmul Hassan)
+* \[[`56d6922bd4`](https://github.com/nazmul-nhb/locality-idb/commit/56d6922bd4)] - `📚 docs(home):` reverted the installation commands section with mdx extension (Nazmul Hassan)
+* \[[`92c641436b`](https://github.com/nazmul-nhb/locality-idb/commit/92c641436b)] - `🔧 update(docs):` updated the homepage contents (Nazmul Hassan)
+
 ## [v2.5.0](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.5.0) — 2026-07-23
 
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.4.1...v2.5.0)
@@ -377,13 +394,3 @@ _No notable changes._
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v0.0.5-b...v0.1.0)
 
 * \[[`d6ec7acb49`](https://github.com/nazmul-nhb/locality-idb/commit/d6ec7acb49)] - `✨ feat(locality):` implemented core logic of `Locality` (Nazmul Hassan)
-
-## [v0.0.5-b](https://github.com/nazmul-nhb/locality-idb/releases/tag/v0.0.5-b) — 2026-01-25
-
-[Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v0.0.4...v0.0.5-b)
-
-* \[[`aa9108e0bc`](https://github.com/nazmul-nhb/locality-idb/commit/aa9108e0bc)] - `🚀 ci(releases):` test (Nazmul Hassan)
-
-## [v0.0.4](https://github.com/nazmul-nhb/locality-idb/releases/tag/v0.0.4) — 2026-01-25
-
-* \[[`6c34f3d9de`](https://github.com/locality-idb/locality-idb/commit/6c34f3d9de)] - `🚀 init:` initialized with tsdown (Nazmul Hassan)

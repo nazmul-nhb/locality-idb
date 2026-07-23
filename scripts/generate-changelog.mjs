@@ -117,39 +117,11 @@ async function main() {
 
 	const tags = tagsRaw.split('\n').filter(Boolean);
 
-	// Check for unreleased commits (commits after the latest tag)
-	// const latestTag = tags[0];
-	// const unreleasedCommits = await runShell(
-	// 	`git rev-list --count "${latestTag}..HEAD" 2>/dev/null`
-	// );
-	// const hasUnreleased = Number.parseInt(unreleasedCommits, 10) > 0;
-
 	/** @type {string[]} */
 	const sections = [];
 
-	// ── Unreleased section ──────────────────────────────────────────────────
-	// if (hasUnreleased) {
-	// const firstAfter = await runShell(
-	// 	`git rev-list --reverse "${latestTag}..HEAD" | head -n 1`
-	// );
-	// if (firstAfter) {
-	// 	const notes = await runShell(
-	// 		`npx changelog-maker --markdown --group --filter-release --start-ref "${firstAfter}" ${REPO_OWNER} ${REPO_NAME}`
-	// 	);
-	// 	if (notes) {
-	// 		sections.push(
-	// 			[
-	// 				`## [Unreleased](${REPO_URL}/compare/${latestTag}...HEAD)`,
-	// 				'',
-	// 				notes,
-	// 			].join('\n')
-	// 		);
-	// 	}
-	// }
-	// }
-
-	// ── Release sections (newest → oldest) ──────────────────────────────────
-	for (let i = 0; i < tags.length; i++) {
+	// ── Release sections (newest → oldest, skip first 2 demo releases) ───────────
+	for (let i = 0; i < tags.length - 2; i++) {
 		const currentTag = tags[i];
 		const previousTag = tags[i + 1]; // older tag (or undefined for the first ever)
 		const date = await getTagDate(currentTag);
