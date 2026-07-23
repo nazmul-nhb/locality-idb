@@ -150,10 +150,10 @@ function cleanupReleaseBody(body: Uncertain<string>, tagName: string): string {
 	return (
 		body
 			// Remove the package title (## 📦 locality-idb v1.5.8, # 📦..., etc.)
-			.replace(/^#{1,6}\s*📦\s*locality-idb\s+v[^\n]*\n+/gim, `## ${tagName}`)
+			.replace(/^#{1,6}\s*.*locality-idb\s+v[^\n]*\n+/gim, `## ${tagName}`)
 
 			// Remove the "Release Notes" heading.
-			.replace(/^#{1,6}\s*🆕\s*Release Notes\s*\n+/gim, '')
+			.replace(/^#{1,6}\s*.*Release Notes\s*\n+/gim, '')
 
 			// Remove commit hashes.
 			.replace(/\[[a-f0-9]{7,40}\]\s*-\s*/gi, '')
