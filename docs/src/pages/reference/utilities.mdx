@@ -13,6 +13,10 @@ const id = uuidV4();      // "550e8400-e29b-41d4-a716-446655440000"
 const upperId = uuidV4(true); // "550E8400-E29B-41D4-A716-446655440000"
 ```
 
+:::tip
+  For generating different versions please use [`uuid()` from toolbox-x ](https://toolbox-x.nazmul-nhb.dev/docs/utils/hash/uuid)
+:::
+
 ### `getTimestamp(value?: string | number | Date)`
 Generates or parses a timestamp and returns an ISO 8601 string. If no value is provided, or the input is invalid, it falls back to the current date and time.
 ```typescript
@@ -21,6 +25,10 @@ import { getTimestamp } from 'locality-idb';
 const now = getTimestamp(); // "2026-01-29T12:34:56.789Z"
 const ts = getTimestamp(1704067200000); // From unix milliseconds
 ```
+
+:::tip
+  For more different formats please use [`getTimestamp()` from toolbox-x ](https://toolbox-x.nazmul-nhb.dev/docs/utils/date-time/get-timestamp)
+:::
 
 ## Type Guards & Validators
 
@@ -34,13 +42,17 @@ isTimestamp('2026-01-29');              // false
 ```
 
 ### `isUUID(value: unknown): value is UUID`
-Checks if the value is a valid UUID string (v1, v4, or v5).
+Checks if the value is a valid UUID string (`v1`-`v8`).
 ```typescript
 import { isUUID } from 'locality-idb';
 
 isUUID('550e8400-e29b-41d4-a716-446655440000'); // true
 isUUID('invalid-uuid');                         // false
 ```
+
+:::tip
+  Imported from [toolbox-x ](https://toolbox-x.nazmul-nhb.dev/docs/guards/misc/string-format#isuuid)
+:::
 
 ### `isEmail(value: unknown): value is EmailString`
 Checks if the value is a valid email format.
@@ -50,6 +62,10 @@ import { isEmail } from 'locality-idb';
 isEmail('user@example.com'); // true
 ```
 
+:::tip
+  Imported from [toolbox-x ](https://toolbox-x.nazmul-nhb.dev/docs/guards/misc/string-format#isemail)
+:::
+
 ### `isURL(value: unknown): value is URLString`
 Checks if the value is a valid URL format (can be successfully parsed by the `URL` constructor).
 ```typescript
@@ -57,6 +73,10 @@ import { isURL } from 'locality-idb';
 
 isURL('https://example.com'); // true
 ```
+
+:::tip
+  Imported from [toolbox-x ](https://toolbox-x.nazmul-nhb.dev/docs/guards/misc/string-format#isurl)
+:::
 
 ## Low-Level APIs
 
@@ -76,4 +96,79 @@ Deletes any `IndexedDB` database in the browser by name.
 import { deleteDB } from 'locality-idb';
 
 await deleteDB('temp-database');
+```
+
+## Storage and Data Size Utilities
+
+`Locality IDB` provides utility functions to measure storage usage and format data sizes.
+
+### `formatBytes(bytes: number): string`
+
+Formats a byte size into a human-readable string with appropriate units (e.g., KB, MB, GB).
+
+```typescript
+import { formatBytes } from 'locality-idb';
+const size = formatBytes(1024); // "1 KB"
+const sizeWithDecimals = formatBytes(123456789, 2); // "117.74 MB"
+```
+
+:::info[Remarks]
+  - This function uses logarithmic calculations to determine the appropriate unit for the given byte value.
+  - If the byte value is `0`, it returns `'0 B'`.
+  - The function supports formatting up to gigabytes (GB).
+  - The formatted value is rounded to two decimal places.
+  - If the input is not a finite number, it throws a `TypeError`.
+:::
+
+### `getStorageUsage(formatter?)`
+
+Get the storage usage & quota of the browser's [available storage](https://developer.mozilla.org/docs/Web/API/StorageManager).
+
+```ts
+function getStorageUsage<T = number>(formatter?: FormatByte<T>): Promise<StorageUsage<T>>
+```
+
+```typescript
+import { getStorageUsage, formatBytes } from 'locality-idb';
+
+const storage = await getStorageUsage(formatBytes);
+console.log(storage);
+// Output:
+// {
+//   usage: "1.23 MB",
+//   quota: "5.00 GB",
+// }
+```
+
+```typescript
+// Without formatter, returns raw bytes
+const storageRaw = await getStorageUsage();
+console.log(storageRaw);
+// Output:
+// {
+//   usage: 1234567,
+//   quota: 5000000000,
+// }
+```
+
+:::info[Remarks]
+  - This function uses the [`navigator.storage.estimate()`](https://developer.mozilla.org/docs/Web/API/StorageManager/estimate) API to retrieve storage information.
+	- If the API is not available or an error occurs, it returns default values of `0` for both `quota` and `used`.
+ 	- The `formatter` function can be used to convert the byte values into a more readable format.
+ 	- If no formatter is provided, the raw byte values will be returned.
+:::
+
+#### Type Definitions
+
+```typescript
+/** Type for a function that formats bytes into a specific type */
+type FormatByte<T> = (bytes: number) => T;
+
+/** Interface representing browser's storage usage information, with optional formatting. */
+interface StorageUsage<Format = number> {
+	/** Total storage quota available */
+	quota: Format;
+	/** Total storage used */
+	used: Format;
+}
 ```

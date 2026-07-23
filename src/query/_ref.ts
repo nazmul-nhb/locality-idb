@@ -1,5 +1,5 @@
-import { isString } from 'toolbox-x/guards';
 import type { Column } from '../core';
+import { _toString } from '../helpers';
 import { ColumnType, IsNullable, IsOptional, IsPrimaryKey, RefMeta } from '../symbols';
 import type { GenericObject, Maybe, RefOptions, SchemaDefinition } from '../types';
 
@@ -338,10 +338,8 @@ export async function applyInsertRefWorkflow(
 			const relatedRows = await getRowsByValue(trx, targetTable, targetColumn, value);
 
 			if (relatedRows.length === 0) {
-				const strVal = `'${isString(value) ? value : JSON.stringify(value)}'`;
-
 				throw new ReferenceError(
-					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' references '${targetTable}.${targetColumn}' value ${strVal} that does not exist.`
+					`Cannot insert row into '${tableName}' because '${tableName}.${columnName}' references '${targetTable}.${targetColumn}' value ${_toString(value)} that does not exist.`
 				);
 			}
 		}

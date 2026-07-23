@@ -1,11 +1,22 @@
+import { clampNumber } from 'toolbox-x';
 import {
+	isFunction,
 	isNonEmptyString,
+	isNumber,
 	isValidEmail,
 	isValidURL,
 	isUUID as isValidUUID,
 } from 'toolbox-x/guards';
-import { _ensureIndexedDB, _formatUUID, _getDBList } from './helpers';
-import type { Email, Timestamp, URLString, UUID, UUIDVersion } from './types';
+import { _ensureIndexedDB, _formatUUID, _getDBList, _toString } from './helpers';
+import type {
+	Email,
+	FormatByte,
+	StorageUsage,
+	Timestamp,
+	URLString,
+	UUID,
+	UUIDVersion,
+} from './types';
 
 /**
  * * Generate a random UUID v4 string
@@ -123,4 +134,86 @@ export function isURL(value: unknown): value is URLString {
  */
 export function isUUID(value: unknown): value is UUID<UUIDVersion> {
 	return isValidUUID(value);
+}
+
+/**
+ * * Get the storage usage & quota of the browser's {@link https://developer.mozilla.org/docs/Web/API/StorageManager available storage}.
+ *
+ * @template T The type of the formatted values (default is `number`).
+ * @param formatter Optional function to format the byte values (e.g., to convert to KB, MB, etc.).
+ * @returns A promise that resolves to an object containing the `quota` and `used` storage values.
+ *
+ * @remarks This function uses the {@link https://developer.mozilla.org/docs/Web/API/StorageManager/estimate navigator.storage.estimate()} API to retrieve storage information.
+ * - If the API is not available or an error occurs, it returns default values of `0` for both `quota` and `used`.
+ * - The `formatter` function can be used to convert the byte values into a more readable format.
+ * - If no formatter is provided, the raw byte values will be returned.
+ *
+ * @example
+ * ```ts
+ * const storage = await getStorageUsage(formatBytes);
+ * console.log(`Quota: ${storage.quota}, Used: ${storage.used}`);
+ * ```
+ * @example
+ * ```ts
+ * const storage = await getStorageUsage();
+ * console.log(`Quota: ${storage.quota}, Used: ${storage.used}`);
+ * ```
+ */
+export async function getStorageUsage<T = number>(
+	formatter?: FormatByte<T>
+): Promise<StorageUsage<T>> {
+	const usage = { quota: 0, used: 0 } as StorageUsage<T>;
+
+	const _useFormatter = (value: number) => {
+		return isFunction(formatter) ? formatter(value) : (value as T);
+	};
+
+	try {
+		if (navigator && 'storage' in navigator && 'estimate' in navigator.storage) {
+			const estimate = await navigator.storage.estimate();
+
+			usage.quota = _useFormatter(estimate.quota ?? 0);
+			usage.used = _useFormatter(estimate.usage ?? 0);
+		}
+	} catch {
+		return usage;
+	}
+
+	return usage;
+}
+
+/**
+ * * Format a byte value into a human-readable string with appropriate units (B, KB, MB, GB).
+ *
+ * @param bytes The byte value to format.
+ * @returns A formatted string representing the byte value in appropriate units.
+ *
+ * @remarks This function uses logarithmic calculations to determine the appropriate unit for the given byte value.
+ * - If the byte value is `0`, it returns `'0 B'`.
+ * - The function supports formatting up to gigabytes (GB).
+ * - The formatted value is rounded to two decimal places.
+ * - If the input is not a finite number, it throws a `TypeError`.
+ *
+ * @example
+ * ```ts
+ * console.log(formatBytes(1024)); // "1.00 KB"
+ * console.log(formatBytes(1048576)); // "1.00 MB"
+ * console.log(formatBytes(1073741824)); // "1.00 GB"
+ * console.log(formatBytes(0)); // "0 B"
+ * ```
+ */
+export function formatBytes(bytes: number): string {
+	if (!isNumber(bytes)) {
+		throw new TypeError(
+			`Expected a finite number for bytes, but received ${_toString(bytes)} of type ${typeof bytes}`
+		);
+	}
+
+	if (bytes === 0) return '0 B';
+
+	const units = ['B', 'KB', 'MB', 'GB'];
+
+	const i = clampNumber(Math.floor(Math.log(bytes) / Math.log(1024)), 0, units.length - 1);
+
+	return `${(bytes / 1024 ** i).toFixed(2)} ${units[i]}`;
 }

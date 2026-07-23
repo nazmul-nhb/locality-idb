@@ -16,6 +16,7 @@ import {
 	isUUID,
 } from 'toolbox-x/guards';
 import type { Column } from './core';
+import { _toString } from './helpers';
 import {
 	ColumnType,
 	DefaultValue,
@@ -45,7 +46,7 @@ export function validateColumnType<T extends TypeName>(
 	type: T,
 	value: unknown
 ): Nullable<string> {
-	const strVal = `'${isString(value) ? value : JSON.stringify(value)}'`;
+	const strVal = _toString(value);
 
 	switch (type) {
 		case 'int':

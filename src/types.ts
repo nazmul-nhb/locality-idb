@@ -618,3 +618,14 @@ export type ValidateRefs<S extends ColumnRecord> =
 		: {
 				Error: `Invalid reference(s) found in table ${Extract<keyof S, string>}`;
 			};
+
+/** Type for a function that formats bytes into a specific type */
+export type FormatByte<T> = (bytes: number) => T;
+
+/** Interface representing browser's storage usage information, with optional formatting. */
+export interface StorageUsage<Format = number> {
+	/** Total storage quota available */
+	quota: Format;
+	/** Total storage used */
+	used: Format;
+}

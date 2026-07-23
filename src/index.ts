@@ -20,5 +20,15 @@ export {
 } from './symbols';
 
 export type * from './types';
-export { deleteDB, getTimestamp, isEmail, isTimestamp, isURL, isUUID, uuidV4 } from './utils';
+export {
+	deleteDB,
+	formatBytes,
+	getStorageUsage,
+	getTimestamp,
+	isEmail,
+	isTimestamp,
+	isURL,
+	isUUID,
+	uuidV4,
+} from './utils';
 export { validateColumnType } from './validators';

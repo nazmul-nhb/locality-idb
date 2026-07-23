@@ -1,4 +1,11 @@
-import { isNotEmptyObject, isObjectWithKeys, isString } from 'toolbox-x/guards';
+import {
+	isBigInt,
+	isNormalPrimitive,
+	isNotEmptyObject,
+	isObjectWithKeys,
+	isString,
+	isSymbol,
+} from 'toolbox-x/guards';
 import type { Nullable, RejectFn, UUID, UUIDVersion } from './types';
 
 /** Ensure UUID variant is RFC4122 compliant */
@@ -63,4 +70,24 @@ export function _resolveNestedKey(obj: unknown, path: string): unknown {
 			return undefined;
 		}, obj);
 	}
+}
+
+/**
+ * Convert a value to a string representation, handling various types.
+ *
+ * @param value - The value to convert
+ * @returns A string representation of the value or JSON stringified for objects/arrays with quotes.
+ */
+export function _toString(value: unknown): string {
+	let result = '';
+
+	if (isNormalPrimitive(value) || isSymbol(value)) {
+		result = String(value);
+	} else if (isBigInt(value)) {
+		result = `${String(value)}n`;
+	} else {
+		result = JSON.stringify(value);
+	}
+
+	return `'${result}'`;
 }

@@ -108,7 +108,7 @@ export default defineConfig({
 				{ text: 'Delete Records', link: '/guide/delete' },
 				{ text: 'Transactions', link: '/guide/transactions' },
 				{ text: 'Export & Import', link: '/guide/import-export' },
-				{ text: 'Cursor Pagination & Streaming', link: '/guide/pagination-streaming' },
+				{ text: 'Pagination & Streaming', link: '/guide/pagination-streaming' },
 				{ text: 'Database Maintenance', link: '/guide/maintenance' },
 			],
 		},

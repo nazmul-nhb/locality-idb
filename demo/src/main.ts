@@ -6,6 +6,8 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import {
 	type Email,
+	formatBytes,
+	getStorageUsage,
 	getTimestamp,
 	type ImportMode,
 	isEmail,
@@ -514,7 +516,7 @@ async function runCurrentOperation() {
 					uuid,
 					timestamp,
 					isEmail: isEmail('ada@locality.dev'),
-					isURL: isURL('https://locality.dev'),
+					isURL: isURL('https://locality.nazmul-nhb.dev'),
 					isUUID: isUUID(uuid),
 					isTimestamp: isTimestamp(timestamp),
 				};
@@ -1006,5 +1008,14 @@ document.addEventListener('change', (event) => {
 		requiredElement<HTMLElement>('[data-delete-posts]').hidden = target.value !== 'posts';
 	}
 });
+
+try {
+	const storage = await getStorageUsage(formatBytes);
+
+	console.info(storage);
+	// console.info(formatBytes(777));
+} catch (error) {
+	console.error(error);
+}
 
 renderApp();
