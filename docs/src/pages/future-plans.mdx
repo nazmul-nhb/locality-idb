@@ -42,13 +42,15 @@ This will improve performance for queries filtering or sorting across multiple f
 
 ## 3. Hooks
 
-Lifecycle hooks triggers for inserts, updates, and deletes:
+Lifecycle hooks for inserts, updates, and deletes:
 
 ```typescript
 .beforeInsert()
 .afterInsert()
 .beforeDelete()
 .afterDelete()
+.beforeUpdate()
+.afterUpdate()
 ```
 
 ## 4. Async Validation
