@@ -82,8 +82,7 @@
 		"fix": "biome check --write --diagnostic-level=info",
 		"format": "biome format --write --diagnostic-level=info",
 		"future": "pnpm --filter locality-docs future",
-		"changelog": "node scripts/generate-changelog.mjs",
-		"changelog:docs": "pnpm --filter locality-docs changelog"
+		"changelog": "node scripts/generate-changelog.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.5",

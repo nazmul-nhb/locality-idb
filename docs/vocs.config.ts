@@ -149,7 +149,7 @@ function cleanupReleaseBody(body: Uncertain<string>, tagName: string): string {
 
 	return (
 		body
-			// Remove the package title (## 📦 locality-idb v1.5.8, # 📦..., etc.)
+			// Replace the package title (## 📦 locality-idb v2.5.0, # 📦..., etc.) with tag (v2.5.0)
 			.replace(/^#{1,6}\s*.*locality-idb\s+v[^\n]*\n+/gim, `## ${tagName}`)
 
 			// Remove the "Release Notes" heading.
@@ -172,7 +172,10 @@ function cleanupReleaseBody(body: Uncertain<string>, tagName: string): string {
 			.replace(/\scompatilbility\s/g, ' compatibility ')
 			.replace(/\ssplitted\s/g, ' split ')
 			.replace(/transction/g, 'transaction')
-			.replace('luteral genericl uodated docs', 'literal generics; updated docs')
+			.replace(
+				'luteral genericl uodated docs',
+				'literal generic type for default value; updated docs'
+			)
 
 			// Normalize whitespace.
 			.replace(/\n{3,}/g, '\n\n')

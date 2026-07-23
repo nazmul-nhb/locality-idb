@@ -27,7 +27,7 @@ Install the package via your preferred package manager:
 
 ```bash
 # npm
-npm install locality-idb
+npm i locality-idb
 
 # pnpm
 pnpm add locality-idb

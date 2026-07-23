@@ -4,6 +4,35 @@ All notable changes to **locality-idb** will be documented in this file.
 
 > Auto-generated from git history using [changelog-maker](https://github.com/nodejs/changelog-maker).
 
+## [v2.5.0](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.5.0) — 2026-07-23
+
+[Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.4.1...v2.5.0)
+
+* \[[`7a8b7b4440`](https://github.com/nazmul-nhb/locality-idb/commit/7a8b7b4440)] - `🔧 update(docs):` updated documentation, README.md, and FUTURE.md (Nazmul Hassan)
+* \[[`b14089ee5a`](https://github.com/nazmul-nhb/locality-idb/commit/b14089ee5a)] - Merge pull request #2 from nazmul-nhb/feat/ref (Nazmul Hassan)
+* \[[`d01379b32b`](https://github.com/nazmul-nhb/locality-idb/commit/d01379b32b)] - `🧼 refactor(ref):` reuse common code blocks; updated some logs in the demo app (Nazmul Hassan)
+* \[[`e88361c727`](https://github.com/nazmul-nhb/locality-idb/commit/e88361c727)] - `🧼 refactor(demo):` refactored the html template strings and removed bun and deno commands from docs homepage (Nazmul Hassan)
+* \[[`565828925d`](https://github.com/nazmul-nhb/locality-idb/commit/565828925d)] - `🐛 fix(demo):` fixed spacing and linting issues (Nazmul Hassan)
+* \[[`3a982cdade`](https://github.com/nazmul-nhb/locality-idb/commit/3a982cdade)] - `🐛 fix(demo):` fixed issues with tabs and modals (Nazmul Hassan)
+* \[[`d3c4fc5b18`](https://github.com/nazmul-nhb/locality-idb/commit/d3c4fc5b18)] - `🐛 fix(ref):` fixed getting related table name issue and other issues (Nazmul Hassan)
+* \[[`40eaac2547`](https://github.com/nazmul-nhb/locality-idb/commit/40eaac2547)] - `🔧 update(demo):` updated ui, refactored code and added icons (Nazmul Hassan)
+* \[[`c9058b922e`](https://github.com/nazmul-nhb/locality-idb/commit/c9058b922e)] - `🧼 refactor(demo):` completely redesigned the demo app (Nazmul Hassan)
+* \[[`6b679b89ef`](https://github.com/nazmul-nhb/locality-idb/commit/6b679b89ef)] - `🛠️ chore:` optimized deps for docs and demo (Nazmul Hassan)
+* \[[`8d3f406cfd`](https://github.com/nazmul-nhb/locality-idb/commit/8d3f406cfd)] - `🔧 update(demo):` improved the demo app (Nazmul Hassan)
+* \[[`c722e76d4e`](https://github.com/nazmul-nhb/locality-idb/commit/c722e76d4e)] - `✨ feat(column):` added default value callback param and removed the literal generic type for default value; updated docs (Nazmul Hassan)
+* \[[`0784dd160e`](https://github.com/nazmul-nhb/locality-idb/commit/0784dd160e)] - `🔧 update(docs+demo):` updated docs for ref and redesigned the demo app (Nazmul Hassan)
+* \[[`9400559459`](https://github.com/nazmul-nhb/locality-idb/commit/9400559459)] - `🔧 update:` updated docs and refactored some validations (Nazmul Hassan)
+* \[[`101d8d7fb1`](https://github.com/nazmul-nhb/locality-idb/commit/101d8d7fb1)] - `🧼 refactor(query):` created common base query to optimize the bundle size (Nazmul Hassan)
+* \[[`77b2477af6`](https://github.com/nazmul-nhb/locality-idb/commit/77b2477af6)] - `✨ feat(ref):` added rf validation for insert query (Nazmul Hassan)
+* \[[`c17d745028`](https://github.com/nazmul-nhb/locality-idb/commit/c17d745028)] - `🧼 refactor(ref):` optimized variable names and syntax (Nazmul Hassan)
+* \[[`7977c34e0a`](https://github.com/nazmul-nhb/locality-idb/commit/7977c34e0a)] - `🧹 cleanup:` removed plans file (Nazmul Hassan)
+* \[[`82ef94afe5`](https://github.com/nazmul-nhb/locality-idb/commit/82ef94afe5)] - `✨ feat(ref):` implemented ref in update and delete queries (Nazmul Hassan)
+* \[[`98776ebe26`](https://github.com/nazmul-nhb/locality-idb/commit/98776ebe26)] - `✨ feat(ref):` added column modifier `ref()` with proper type inference with `defineSchema()` (Nazmul Hassan)
+* \[[`cbdd7dc6c4`](https://github.com/nazmul-nhb/locality-idb/commit/cbdd7dc6c4)] - `📦 deps:` updated deps and configs (Nazmul Hassan)
+* \[[`845111d5df`](https://github.com/nazmul-nhb/locality-idb/commit/845111d5df)] - `🐛 fix(docs):` updated library list using tailwind css (Nazmul Hassan)
+* \[[`76caf0cd79`](https://github.com/nazmul-nhb/locality-idb/commit/76caf0cd79)] - `🔧 update(docs):` added reference to related libraries (Nazmul Hassan)
+* \[[`cb054fb007`](https://github.com/nazmul-nhb/locality-idb/commit/cb054fb007)] - `🔧 update(docs):` updated examples and callouts (Nazmul Hassan)
+
 ## [v2.4.1](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.4.1) — 2026-07-13
 
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.4.0...v2.4.1)

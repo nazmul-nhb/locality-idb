@@ -6,12 +6,13 @@ This page details future feature considerations and architectural plans for `Loc
 
 An API to easily load related resources:
 
-```typescript
-db.from('posts')
-  .with({
-    user: true // Pull post author along with the post
-  })
-```
+- Pull post author along with the post
+
+  ```typescript
+  db.from('posts').with({  user: true })
+  ```
+
+> `with()` method should be available only if there are refs and allows only the columns marked with `ref()`
 
 This would internally execute optimized index queries and return combined results:
 
@@ -67,7 +68,7 @@ Allowing computed selection projections:
 
 ```typescript
 // Computed select functions
-.select(row => ({
+.select((row) => ({
   fullName: row.first + " " + row.last
 }))
 
@@ -76,6 +77,8 @@ Allowing computed selection projections:
   id: true,
   fullName: row => `${row.first} ${row.last}`
 })
+
+// Implementing this version would be complex to maintain type safety
 ```
 
 ## 6. Full-Text Search

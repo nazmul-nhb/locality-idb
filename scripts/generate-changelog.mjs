@@ -204,7 +204,11 @@ async function main() {
 					.replace(/\sspcific\s/g, ' specific ')
 					.replace(/\scompatilbility\s/g, ' compatibility ')
 					.replace(/\ssplitted\s/g, ' split ')
-					.replace(/transction/g, 'transaction')}\n`
+					.replace(/transction/g, 'transaction')
+					.replace(
+						'luteral genericl uodated docs',
+						'literal generic type for default value; updated docs'
+					)}\n`
 		),
 	].join('\n');
 
