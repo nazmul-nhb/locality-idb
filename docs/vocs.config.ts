@@ -43,8 +43,9 @@ export default defineConfig({
 	}),
 	description: 'SQL-like query builder for IndexedDB with a chainable API',
 	topNav: [
-		{ text: 'Guide', link: '/intro/getting-started' },
-		{ text: 'API Reference', link: '/reference/locality' },
+		{ text: 'Overview', link: '/intro' },
+		{ text: 'Examples', link: '/guide' },
+		{ text: 'API Reference', link: '/reference' },
 		{
 			text: `v${version}`,
 			items: [
@@ -78,7 +79,7 @@ export default defineConfig({
 			text: 'Introduction',
 			collapsed: false,
 			items: [
-				{ text: 'Getting Started', link: '/intro/getting-started' },
+				{ text: 'Getting Started', link: '/intro' },
 				{ text: 'Key Features', link: '/intro/features' },
 				{
 					text: 'Why Locality IDB?',
@@ -97,10 +98,10 @@ export default defineConfig({
 			],
 		},
 		{
-			text: 'Usage Guide',
+			text: 'Usage Guide & Examples',
 			collapsed: false,
 			items: [
-				{ text: 'Initialization', link: '/guide/init' },
+				{ text: 'Initialization', link: '/guide' },
 				{ text: 'Insert Records', link: '/guide/insert' },
 				{ text: 'Query Records', link: '/guide/query' },
 				{ text: 'Update Records', link: '/guide/update' },
@@ -115,7 +116,7 @@ export default defineConfig({
 			text: 'API Reference',
 			collapsed: false,
 			items: [
-				{ text: 'Locality Class', link: '/reference/locality' },
+				{ text: 'Locality Class', link: '/reference' },
 				{ text: 'Schema Functions', link: '/reference/schema-fns' },
 				{ text: 'Column Modifiers', link: '/reference/modifiers' },
 				{ text: 'Query Builders', link: '/reference/queries' },
