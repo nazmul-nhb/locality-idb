@@ -17,7 +17,7 @@ export class InsertQuery<
 	#dataToInsert: Ins[] = [];
 	#columns?: ColumnDefinition;
 	#schema?: SchemaDefinition;
-	// TODO: Handle multiple primary keys later
+
 	#keyPath?: string;
 
 	#trx?: IDBTransaction;

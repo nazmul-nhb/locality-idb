@@ -661,7 +661,11 @@ async function runCurrentOperation() {
 				const table = getValueOf('deleteTable');
 				const isUser = table === 'users';
 				const id = Number(getValueOf(isUser ? 'deleteUser' : 'deletePost'));
-				if (!id) throw new Error('Seed records before choosing a delete target.');
+
+				if (!id) {
+					throw new Error('Seed records before choosing a delete target.');
+				}
+
 				const ok = await confirmAction(
 					`Delete ${table} row?`,
 					isUser

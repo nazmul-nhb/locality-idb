@@ -69,8 +69,6 @@ export class Locality<
 > {
 	readonly #name: DBName;
 	readonly #schema: Schema;
-	// TODO: Handle multiple primary keys later
-	// readonly #keyPath?: string;
 
 	readonly #keyPaths: Record<TName, Maybe<string>>;
 
@@ -87,7 +85,6 @@ export class Locality<
 
 		const store = this.#buildStoresConfig();
 
-		// TODO: Handle multiple primary keys later
 		this.#keyPaths = store.reduce(
 			(acc, { name, keyPath }) => {
 				acc[name as TName] = keyPath;
@@ -179,7 +176,7 @@ export class Locality<
 		return Array.from(this.#db.objectStoreNames) as LooseLiteral<TName>[];
 	}
 
-	/** @instance Get the list of existing `IndexedDB` databases. */
+	/** @instance Get the list of existing `IndexedDB` databases for the current origin. */
 	get dbList(): Promise<IDBDatabaseInfo[]> {
 		return Locality.getDatabaseList();
 	}
@@ -191,21 +188,17 @@ export class Locality<
 
 	/**
 	 * @instance Select records from a table.
-	 * @param table Table name.
+	 * @param table Table name to select data from.
 	 * @returns Select query builder for the table.
 	 */
 	from<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
-		return new SelectQuery<Row, null, Schema[T]>(
-			table,
-			() => this.#db,
-			this.#readyPromise
-			// this.#keyPaths[table]
-		);
+		return new SelectQuery<Row, null, Schema[T]>(table, () => this.#db, this.#readyPromise);
 	}
 
 	/**
 	 * @instance Insert records into a table.
-	 * @param table Table name.
+	 * @param table Table name to insert data into.
+	 * @returns Insert query builder for the table.
 	 */
 	insert<
 		T extends TName,
@@ -226,7 +219,8 @@ export class Locality<
 
 	/**
 	 * @instance Update records in a table.
-	 * @param table Table name.
+	 * @param table Table name to update data in.
+	 * @returns Update query builder for the table.
 	 */
 	update<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new UpdateQuery<Row, Schema[T]>(
@@ -241,7 +235,8 @@ export class Locality<
 
 	/**
 	 * @instance Delete records from a table.
-	 * @param table Table name.
+	 * @param table Table name to delete data from.
+	 * @returns Delete query builder for the table.
 	 */
 	delete<T extends TName, Row extends $InferRow<Schema[T]['columns']>>(table: T) {
 		return new DeleteQuery<Row, keyof Row, Schema[T]>(
@@ -589,6 +584,9 @@ export class Locality<
 	/**
 	 * @instance Import data into the database.
 	 *
+	 * @param data The data to import, either as an {@link ExportData} object.
+	 * @param options Optional import configuration, including mode and specific tables to import.
+	 *
 	 * @remarks
 	 * - Accepts either an {@link ExportData} object or raw table data {@link ExportedTableData}.
 	 * - Supports merge, replace, and upsert modes.
@@ -600,6 +598,9 @@ export class Locality<
 
 	/**
 	 * @instance Import data into the database.
+	 *
+	 * @param data The data to import, either as raw table data {@link ExportedTableData}.
+	 * @param options Optional import configuration, including mode and specific tables to import.
 	 *
 	 * @remarks
 	 * - Accepts either raw table data {@link ExportedTableData} or an {@link ExportData} object.
@@ -711,6 +712,8 @@ export class Locality<
 	/**
 	 * @instance Drop a table (object store) by name.
 	 *
+	 * @param table The name of the table to drop.
+	 *
 	 * @remarks
 	 * - This increments the database version internally.
 	 * - You should re-instantiate `Locality` with an updated schema after dropping.
@@ -740,7 +743,7 @@ export class Locality<
 		await this.#readyPromise;
 	}
 
-	/** @static Get the list of existing `IndexedDB` databases. */
+	/** @static Get the list of existing `IndexedDB` databases for the current origin. */
 	static async getDatabaseList(): Promise<IDBDatabaseInfo[]> {
 		_ensureIndexedDB();
 

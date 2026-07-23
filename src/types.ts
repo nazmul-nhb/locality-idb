@@ -421,9 +421,8 @@ export interface IndexConfig {
 
 /** Store configuration type for `IndexedDB` */
 export interface StoreConfig {
-	/** Store name */
+	/** Store (table) name */
 	name: string;
-	// TODO: Handle multiple primary keys later
 	/** Primary key path(s) */
 	keyPath?: string;
 	/** Whether the primary key is auto-incrementing */
