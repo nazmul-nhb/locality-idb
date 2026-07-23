@@ -110,6 +110,22 @@ export async function deleteDB(name: string): Promise<void> {
 }
 
 /**
+ * * Get the list of existing IndexedDB databases for the current origin
+ *
+ * @returns A promise that resolves to an array of database info objects
+ *
+ * @throws Error if `IndexedDB` is not supported in the current environment
+ *
+ * @remarks This function uses the `indexedDB.databases()` method, which may not be supported in all browsers.
+ * 			If not supported, it returns an empty array.
+ */
+export function getDatabaseList(): Promise<IDBDatabaseInfo[]> {
+	_ensureIndexedDB();
+
+	return _getDBList();
+}
+
+/**
  * * Check if a value is a valid Email string
  * @param value The value to check
  * @returns `true` if the value is a valid Email, otherwise `false`

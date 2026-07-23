@@ -90,6 +90,25 @@ const idb = await openDBWithStores('custom-db', [
 ], 1);
 ```
 
+### `getDatabaseList()`
+Returns a list of all `IndexedDB` database objects in the browser for the current origin.
+
+```typescript
+import { getDatabaseList } from 'locality-idb';
+const dbList = await getDatabaseList();
+console.log(dbList); // Output: [{ name: 'my-database', version: 1 }, { name: 'another-db', version: 2 }]
+```
+
+:::tip
+  Equivalent to using [Locality.getDatabaseList()](/reference/#localitygetdatabaselist-promiseidbdatabaseinfo) but can be used without importing `Locality` class.
+:::
+
+:::info[Remarks]
+  - This function uses the [`indexedDB.databases()`](https://developer.mozilla.org/docs/Web/API/IDBFactory/databases) API to retrieve the list of databases.
+  - If the API is not available or an error occurs, it returns an empty array.
+  - Each database object contains the `name` and `version` properties if available.
+:::
+
 ### `deleteDB(name)`
 Deletes any `IndexedDB` database in the browser by name.
 ```typescript

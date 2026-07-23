@@ -257,7 +257,7 @@ export class Locality<
 	 * @instance Clears all records from a specific store (table).
 	 * @param table Name of the table (store) to clear.
 	 */
-	async clearTable<T extends TName>(table: T) {
+	async clearTable<T extends TName>(table: T): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			const transaction = this.#db.transaction(table, 'readwrite');
 			const store = transaction.objectStore(table);
@@ -271,14 +271,14 @@ export class Locality<
 	}
 
 	/** @instance Closes and deletes the entire database. */
-	async deleteDB() {
+	async deleteDB(): Promise<void> {
 		this.#db.close();
 
 		await deleteDB(this.#name);
 	}
 
 	/** @instance Closes the current database connection. */
-	close() {
+	close(): void {
 		this.#db.close();
 	}
 
@@ -378,7 +378,7 @@ export class Locality<
 	async transaction<Tables extends TName[]>(
 		tables: Tables,
 		callback: TransactionCallback<Schema, TName, Tables>
-	) {
+	): Promise<void> {
 		await this.#readyPromise;
 
 		const transaction = this.#db.transaction(tables, 'readwrite');
@@ -678,7 +678,7 @@ export class Locality<
 	}
 
 	/** @instance Clear all records from all tables. */
-	async clearAll() {
+	async clearAll(): Promise<void> {
 		await this.#readyPromise;
 
 		const tables = Object.keys(this.#schema) as TName[];
@@ -715,7 +715,7 @@ export class Locality<
 	 * - This increments the database version internally.
 	 * - You should re-instantiate `Locality` with an updated schema after dropping.
 	 */
-	async dropTable<T extends TName>(table: T) {
+	async dropTable<T extends TName>(table: T): Promise<void> {
 		await this.#readyPromise;
 
 		if (!(table in this.#schema)) {
@@ -741,7 +741,7 @@ export class Locality<
 	}
 
 	/** @static Get the list of existing `IndexedDB` databases. */
-	static async getDatabaseList() {
+	static async getDatabaseList(): Promise<IDBDatabaseInfo[]> {
 		_ensureIndexedDB();
 
 		return await _getDBList();
