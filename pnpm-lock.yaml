@@ -83,10 +83,10 @@ importers:
         version: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
       vocs:
         specifier: ^2.6.2
-        version: 2.6.2(@types/react@19.2.17)(@vue/compiler-sfc@3.5.40)(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(rolldown@1.2.0)(rollup@4.62.2)(supports-color@8.1.1)(typescript@6.0.3)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(waku@1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22))
+        version: 2.6.2(@types/react@19.2.17)(@vue/compiler-sfc@3.5.40)(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(rolldown@1.2.0)(rollup@4.62.2)(supports-color@8.1.1)(typescript@6.0.3)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(waku@1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23))
       waku:
         specifier: 1.0.0-beta.6
-        version: 1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
+        version: 1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
     devDependencies:
       dotenv:
         specifier: ^17.4.2
@@ -519,26 +519,26 @@ packages:
     peerDependencies:
       vue: ^3.2.0
 
-  '@hono/node-server@1.19.14':
-    resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
+  '@hono/node-server@1.19.17':
+    resolution: {integrity: sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
 
-  '@hono/node-server@2.0.11':
-    resolution: {integrity: sha512-bjD221KPLoJTWUwso1J6fGKiTXEUFedG/s0visavY4zakFPkeGURMRNly+FhBHs7T8Dz4qHaZIMX9ZoJHSJtKA==}
+  '@hono/node-server@2.0.12':
+    resolution: {integrity: sha512-eWpQYr67tqJLeaSUl0Q+TquuYfUdTibpOJlUMV2FfUP7+KqCC5TufnwnlXL6mobZBJbGAYRd7ZvEBDCbLInjhg==}
     engines: {node: '>=20'}
     peerDependencies:
       hono: ^4
 
-  '@iconify-json/lucide@1.2.118':
-    resolution: {integrity: sha512-JBnK4YOq6K/lA0JP//27QxFxJ4120TjvfXAzGZZIGjCcXcRRRFxl1rcV7+IWdcVCe90KXdqVaAwLaLf6G3HELw==}
+  '@iconify-json/lucide@1.2.120':
+    resolution: {integrity: sha512-4ECF24fxag1n5tZlPGrbWuCGqhkwD0rvAzfCXretqQb4KEC8Y6ja3khF8qmvpR1Mk0NQDhBTRK3Fr/YoV8QyJw==}
 
   '@iconify-json/ri@1.2.10':
     resolution: {integrity: sha512-WWMhoncVVM+Xmu9T5fgu2lhYRrKTEWhKk3Com0KiM111EeEsRLiASjpsFKnC/SrB6covhUp95r2mH8tGxhgd5Q==}
 
-  '@iconify-json/simple-icons@1.2.91':
-    resolution: {integrity: sha512-plQJHZxzpkIXaeYjJF0Sc9nkzYF32EDX9olx7j1hcKYFaiTrQXbcngZmvzuV0pG6uZPU3ZuA/GIsgxSHOm6jrQ==}
+  '@iconify-json/simple-icons@1.2.92':
+    resolution: {integrity: sha512-hR0ozxR97t1dzWw+esoxFijZ15gagt7EIgF3CNifu2yICXhS7gnun4Y+j+odJQtNSl7wvqMdoLbViIShwe/fdw==}
 
   '@iconify-json/vscode-icons@1.2.67':
     resolution: {integrity: sha512-/fObxEkBtqK2e1qf1IRjuZ4drWknAnzykdT2ngGAKESf35tCcj0Lx3MdsxYBneE5YbgvsUfOl0hbZ59R5s19vw==}
@@ -1833,130 +1833,130 @@ packages:
   '@xtuc/long@4.2.2':
     resolution: {integrity: sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==}
 
-  '@yuku-codegen/binding-darwin-arm64@0.7.4':
-    resolution: {integrity: sha512-fjkATm+fg4r6Ss8o82u3j33PfIqhSs4A0WEEw9kOwhMx/ui/RQ0ZAsCtF6e7UG2CWGOGXAJspLlfk2tr3rjjKQ==}
+  '@yuku-codegen/binding-darwin-arm64@0.8.0':
+    resolution: {integrity: sha512-7cSJH6PaKLRBdCfiB4pM6EukvgOk5xV4tyuLOIOEqrHsbnV7brtyff7CjhZbeGozdIHoOnKOi5R7rrmCWN3QSw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@yuku-codegen/binding-darwin-x64@0.7.4':
-    resolution: {integrity: sha512-Hj0KvHpS1RJY/bgM3BADzmXXkKO3+bq3M8bMq4b0j0LsVi1SeWYpD/hJLJFwHeNMS+jO4vlZ343yjb4DEb9XXQ==}
+  '@yuku-codegen/binding-darwin-x64@0.8.0':
+    resolution: {integrity: sha512-mhooLL+L5ytMxgz4ueXCIirU796X2xj97d4KSQW1HxZGzX6h8wOk5bIAhGqcmOL2bqAmMZ+UkBTbPC9VpzKb/g==}
     cpu: [x64]
     os: [darwin]
 
-  '@yuku-codegen/binding-freebsd-x64@0.7.4':
-    resolution: {integrity: sha512-GLKBZvqVFvC1bvNPoPZRj0UxUaAZZKCzb8IPNyvRhXesOk+Af9UbhbVPwx9Do4o2AVf6R5FPzyRWWIihQdCp+A==}
+  '@yuku-codegen/binding-freebsd-x64@0.8.0':
+    resolution: {integrity: sha512-MHLOAlgGhdOh0ZfnWWnno4ljlFB04/Lox/7MIGYIvISMKFvejfC9Atb1t9G7pTVBvy+l5uqxzHGBSJUsDOOkTA==}
     cpu: [x64]
     os: [freebsd]
 
-  '@yuku-codegen/binding-linux-arm-gnu@0.7.4':
-    resolution: {integrity: sha512-CAjbJexBJUqHgIPgOCJO7EYRnFluNLt5VD3jNS40wmsNZqa04HbewVVcgfmzfzuBhjX6ookntLDG3lWieyTAVw==}
+  '@yuku-codegen/binding-linux-arm-gnu@0.8.0':
+    resolution: {integrity: sha512-Ur3Awo45Sc5/Fglr8WN5XIf4IwAsq8wLd917Du8ow6mStxsBTHqFiH+tT7d5jV0FqcJnwy8EHVczmgde0zTo1A==}
     cpu: [arm]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-codegen/binding-linux-arm-musl@0.7.4':
-    resolution: {integrity: sha512-HQMuKBltnKFUqhUh8wNiivd76coRwDngdCxbcAULlatAlc2OXo8L6jLTkVnNeUuOw9JYzSq9LY2/7zvrg63Ddg==}
+  '@yuku-codegen/binding-linux-arm-musl@0.8.0':
+    resolution: {integrity: sha512-FIy7Ttx8oeUCd/8Y6IjnOsu+lRc6En+V/H67BlVphOeCySZAo5LU8VWrb4tv0DvjaSOzdm3DmdmRzmzN7NCqWQ==}
     cpu: [arm]
     os: [linux]
     libc: [musl]
 
-  '@yuku-codegen/binding-linux-arm64-gnu@0.7.4':
-    resolution: {integrity: sha512-cnU7ZVxK/Oq/TIS2iq56rouy1dqnLYgWR2puWcrxGCtmbdxiMISANYhI5t2tMLzTGZMyhawM2zYlyI+gnpBupQ==}
+  '@yuku-codegen/binding-linux-arm64-gnu@0.8.0':
+    resolution: {integrity: sha512-s+25wl1TLvf+7LzasPEi1RR1sDfVAU0i1QH601mn3vj+HudFYBYNZtUBKFaZvl645QR6vcaDaGHnOaMZhBR3ig==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-codegen/binding-linux-arm64-musl@0.7.4':
-    resolution: {integrity: sha512-NyuabTumcxPtZv/Q+pMVvrcKxLn1SPcpdBGtekVJz7JwI36SuExTq4IG4EZsk7YDmFKP8wDEvmKYOpV/a8Lwhw==}
+  '@yuku-codegen/binding-linux-arm64-musl@0.8.0':
+    resolution: {integrity: sha512-pRha3Cjm4AnA5wEuhpg+8XXoGfwz5X61/9a/VNxeau47+kH6xjJspkEloIy/HbHgUnvVRqVHoEHczdGZT2J9NA==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@yuku-codegen/binding-linux-x64-gnu@0.7.4':
-    resolution: {integrity: sha512-w3EnCLPD2vpJw0F+0qVV/1KSOAw4SgzjbGUbbwXUh9w5Kxo1Hdc3mN+/Nvk50oA6cCbSOCEaILnPHXPCauArvg==}
+  '@yuku-codegen/binding-linux-x64-gnu@0.8.0':
+    resolution: {integrity: sha512-GySXmiw5Dw99Ba3GMV2ExQVckihuangnrIpSJagPx8RFUNtwfmzpr2ibf8k31eEAE4YUofV7mEfJN5tN6+POnQ==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-codegen/binding-linux-x64-musl@0.7.4':
-    resolution: {integrity: sha512-FXKQlFjDM8FxqJ/TncAni7e7JyaXIB3Hv6boApxSs5ZUlvqP4TbrjYVk3mYDQt6xQAE/kEHplxM6m5SKx5sfRg==}
+  '@yuku-codegen/binding-linux-x64-musl@0.8.0':
+    resolution: {integrity: sha512-8YFfcPZz44v8YyekWVKkNz/cD4t6DW62/dr03OVtMfwUtHfmo/8wpby0JKMleAOXbgWItSGw81LtwqM4I9oS0A==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@yuku-codegen/binding-win32-arm64@0.7.4':
-    resolution: {integrity: sha512-rWr899KEvZIWMx9yUXQl4i90OGIs4gaw4X1UsS2rxsI3qnp8acLIVKI3N5WDqaertkW10crDRZvIxxyw7kTMTQ==}
+  '@yuku-codegen/binding-win32-arm64@0.8.0':
+    resolution: {integrity: sha512-YhENbgkuzjsil+zDNV35oU3PQMDg2RXh8BPt915WCNAbIIHcqgYupHJF3564206+DbPkZtcDvcoa34Wb5B8tbQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@yuku-codegen/binding-win32-x64@0.7.4':
-    resolution: {integrity: sha512-3Olgmkd5rDrIN9g7wJFMRRC9jub5zAwiQOtwOVhvNe/nZE/rSufFRa7vrFupqSCQml+Zxbcy9npzo3Qne3rA2A==}
+  '@yuku-codegen/binding-win32-x64@0.8.0':
+    resolution: {integrity: sha512-qvzSRABXe6/ndubx+RNwgbFVbs7Pqroz/q/UR6vm++xsmfcpkMF43B23jgNl2xi2IUrEt8C/L1bBslXp+LtgnA==}
     cpu: [x64]
     os: [win32]
 
-  '@yuku-parser/binding-darwin-arm64@0.7.4':
-    resolution: {integrity: sha512-rUetRGukIlPOkDCy+Fo0YTee66n9A04XRQMONptbemWSU27CCV6RDj56+4ne4eSE4gJ0139RWUfbqMtt744pWQ==}
+  '@yuku-parser/binding-darwin-arm64@0.8.0':
+    resolution: {integrity: sha512-04AakSJhI4mPrqhZzXdFyaEDh0YkfeqbnyYY3aCrmxeWfR/Xr8+kFn5sh+wZYN/5HatPniELKHixJuUCUyfBvg==}
     cpu: [arm64]
     os: [darwin]
 
-  '@yuku-parser/binding-darwin-x64@0.7.4':
-    resolution: {integrity: sha512-9bHrGQUot2vWTg0YTdyIBHGd38fy2BSQH1WaqUDVuNqSn7HffrTUzWOgbaWRNd5GTOvDdrt9SDZIG7nfqzeBtg==}
+  '@yuku-parser/binding-darwin-x64@0.8.0':
+    resolution: {integrity: sha512-BQJGI9bDeyb/X2rwhtXoBTQ9EtbkJtteX6C7cZ9jow0pqqmoOufgHPP2+m65GLk2eVNCBcfl3xlTGpJ7RFcviw==}
     cpu: [x64]
     os: [darwin]
 
-  '@yuku-parser/binding-freebsd-x64@0.7.4':
-    resolution: {integrity: sha512-159565OJ/LR6cCP781nH8DxB5GqlqqWk3uyOLZIznQhsj9zeht4X7+jz9IQH1l/TUio+ojEXf8yt2+DJrN+QVw==}
+  '@yuku-parser/binding-freebsd-x64@0.8.0':
+    resolution: {integrity: sha512-04hmgnU152wya88raI+RQhxZPgwXcHbfdNZLu3x5ggKnJVHLD8xZZLcWIKSs59CiEXL6PKVX1/cx8GoTYlaCaQ==}
     cpu: [x64]
     os: [freebsd]
 
-  '@yuku-parser/binding-linux-arm-gnu@0.7.4':
-    resolution: {integrity: sha512-j3s3LJxEbOyP58hmzuXpJlKzgxaswuOTu8nAbDpE119b5W3gP1SW+HndLscGUOACpyMdH5WJ6gBHRxq0HCRVBw==}
+  '@yuku-parser/binding-linux-arm-gnu@0.8.0':
+    resolution: {integrity: sha512-+cuJWUK13lwce721XGRjz7izSr2Q1U0RlHkDzdkohWpRWlttTqRdxNnaW13nDc47GBDrNsXMHx+KLcebeOeeGg==}
     cpu: [arm]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-parser/binding-linux-arm-musl@0.7.4':
-    resolution: {integrity: sha512-PUpHPmvWIDxhYTS5oah08RQ28t6dlFBxRPJcftS6HgquiPsm/e0gL5vKwPJpyjaPBHzRH61IAUDDfrRe8iFs8g==}
+  '@yuku-parser/binding-linux-arm-musl@0.8.0':
+    resolution: {integrity: sha512-rOVPRqt9cm1YP/wPV+yyZh0FYr6UR/wm/BXslvLuge0LDewVvDrm/AxcDrwWuPAu61Nzdg2rMVfcNnrplCbC1w==}
     cpu: [arm]
     os: [linux]
     libc: [musl]
 
-  '@yuku-parser/binding-linux-arm64-gnu@0.7.4':
-    resolution: {integrity: sha512-Hi3w0et5mu3i7S+qE0UgOev4RqJ/U9DW8xn79t4nttiICYCx3NveC0Goo78uqzxttsDI3hfRY43lrrF26svqcw==}
+  '@yuku-parser/binding-linux-arm64-gnu@0.8.0':
+    resolution: {integrity: sha512-pAoIozKr6E+ptpaQz4CZv1O7cay2f4m7kbd+DSQug5MKdUBTZZ18GdWSPvq0fwQYraH9hZlyLqrMaeP5W/ncrA==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-parser/binding-linux-arm64-musl@0.7.4':
-    resolution: {integrity: sha512-i073u4ENL9DJeWBRKioRCz8i5hg6EmUcH89eH1lts9f9AFPA1GphODwK6OXOXUbpi2AwZ1deFIUWgLGP2mdmmA==}
+  '@yuku-parser/binding-linux-arm64-musl@0.8.0':
+    resolution: {integrity: sha512-JCAg50ahXuYlrsIi1jmymX9X/9B0JYBRroAHnYttN44tAvCo1PFqukHrw1up6HvEOoLA0OjlM0Zwh60u3Gc/Zg==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@yuku-parser/binding-linux-x64-gnu@0.7.4':
-    resolution: {integrity: sha512-j5pt0LyDGxCzfoqRTR3cmMG21+bgSxIufAzJXFOWXkbg/22Ih51eGEsbInnSD5Q9FvJ3ooIn/jfok0dBdhudnA==}
+  '@yuku-parser/binding-linux-x64-gnu@0.8.0':
+    resolution: {integrity: sha512-tEeVQ14etp7lpUqXzq+X5AlQzFH+m3TVDiCKIq17zxnxJ117DOVvoveWSkSMt/lj68z48SvZUMHe7xLvqtO1lg==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@yuku-parser/binding-linux-x64-musl@0.7.4':
-    resolution: {integrity: sha512-RR1hNhrSpv3FanLM6u5uD+9CYA9IM8U3uGscgvKKV77gtj7ttO4UubpwN7vcx1KknoEIQHKJFPVKoeVy+avf6w==}
+  '@yuku-parser/binding-linux-x64-musl@0.8.0':
+    resolution: {integrity: sha512-+UGRYnF37nnbZNMsMjSGDXKUTIxYUmbbk3Lzib88sLK7kg2y80vjchYYoYsDUK9kAgqPWyA9hKGURHy/Kk9Few==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@yuku-parser/binding-win32-arm64@0.7.4':
-    resolution: {integrity: sha512-1xhYwOLo9TjppHHwNYi3X/dGgOvnj9xh62jpgP4U8nEtTGA70NtJDCkN45pRQdU3B6/U7oQj1T4esP3aFJg6BA==}
+  '@yuku-parser/binding-win32-arm64@0.8.0':
+    resolution: {integrity: sha512-l+7Va9/sX1ccRjzjJj6MR0arKsvHB5b419+pKbwzn+/18A/xfccWqmxXrn0C0NyVLlbEb3AV9Is+AbF72O85yA==}
     cpu: [arm64]
     os: [win32]
 
-  '@yuku-parser/binding-win32-x64@0.7.4':
-    resolution: {integrity: sha512-HonZAapmSKusxLZPnU9WrMzAUdPSBJliGw3CSkA9Er/aq15STEOEy9SOsVGvj4maBv95EmWxt2LThHXnFnGfNg==}
+  '@yuku-parser/binding-win32-x64@0.8.0':
+    resolution: {integrity: sha512-dolKDTJv2xrWowDBEkvSaDvCsVFZOA7DCUuD+7DatglS68WbuxS4LudU5bzSeAOL5vgPpyGm82469cMLnL+6vQ==}
     cpu: [x64]
     os: [win32]
 
-  '@yuku-toolchain/types@0.7.4':
-    resolution: {integrity: sha512-iUFXr+UnUJjzVLNI6GIv07poi9NwcG5hTBJSheJh3SdpkYpIjCl9kAGe7dbJMHn5sXeceCL4H12pKa0b6pkouQ==}
+  '@yuku-toolchain/types@0.8.0':
+    resolution: {integrity: sha512-hL/raFM5V9UT2lVE/lIWDTWvANqSB8TvMVp+PgICehBa96KhTl/UpGm370JXaacukR+QnaHM2Yv6O/UcrzAFGg==}
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -2463,8 +2463,8 @@ packages:
     resolution: {integrity: sha512-9Be3ZoN4LmYR90tUoVu2te2BsbzHfhJyfEiAVfz7N5/zv+jduIfLrV2xdQXOHbaD6KgpGdO9PRPM1Y4Q9QkPkA==}
     engines: {node: ^18.19.0 || >=20.5.0}
 
-  express-rate-limit@8.6.0:
-    resolution: {integrity: sha512-XKJXDsASUOo0LLtFwW5hCcQGH0N4WQc/Rn8/Pvoia+TJFOkkFPvrtW9lZOeeNcxQJspvOIERMwiRLsVFlhHEkA==}
+  express-rate-limit@8.6.1:
+    resolution: {integrity: sha512-0D493aP61w0TJ2A0wy27riRsO7FMQ7FK+KUHOKCSfPvYo0R55aiC6emCVgFUeShH0fq0ICPVzNcgoS+BsbXQCA==}
     engines: {node: '>= 16'}
     peerDependencies:
       express: '>= 4.11'
@@ -2682,8 +2682,8 @@ packages:
     resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
     engines: {node: '>=12.0.0'}
 
-  hono@4.12.31:
-    resolution: {integrity: sha512-zJIHFrl6bq3RDd2YusFNCDlM8qUprxKswyi/OPzPyzKDdyBXDqWx8bZlZ7R+saTdSTatUmb3O7K4SspGPaEOQg==}
+  hono@4.12.32:
+    resolution: {integrity: sha512-XcuyW9qE2kJn07PkecMOBd5Vq/hMy7mmGw+idz1yblbg9N17ijJODrvPkn7/dwL3Kulj8LcRJ69DLOWf91dRUg==}
     engines: {node: '>=16.9.0'}
 
   hookable@6.1.1:
@@ -2747,8 +2747,8 @@ packages:
     resolution: {integrity: sha512-fn4bQ0Xq8FTej09YC/jqKZwtijpvARlRp6wxL5WTA6yPe2YWSJ5RJh7Nm79rK2qB0wr6iDQzH60XGq5V/7u8YQ==}
     deprecated: The Intersection Observer polyfill is no longer needed and can safely be removed. Intersection Observer has been Baseline since 2019.
 
-  ip-address@10.2.0:
-    resolution: {integrity: sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==}
+  ip-address@10.3.1:
+    resolution: {integrity: sha512-1e9d3kb97NHJTIJDZW9rKqW2h6+dFa50Dy0fpPSMQp2ADje5gvKsXmdiK6dwY5t76TaTt5+P5N1Y/LoToIxP6g==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -3136,8 +3136,8 @@ packages:
   mdast-util-to-string@4.0.0:
     resolution: {integrity: sha512-0H44vDimn51F0YwvxSJSm0eCDOJTRlmN0R1yBh4HLj9wiV1Dn0QoXGbvFAWj2hSItVTlCmBF1hqKlIyUBVFLPg==}
 
-  media-typer@1.1.0:
-    resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
+  media-typer@1.1.1:
+    resolution: {integrity: sha512-yz3xRaG20c6/BOzvYoDaGtPmGscs7YivItZEEqe6GbwNfHuxu9YNmvnEkMzKldAGY4/80pRcQRZSEnhquk9XuQ==}
     engines: {node: '>= 0.8'}
 
   merge-descriptors@2.0.0:
@@ -3383,8 +3383,8 @@ packages:
     resolution: {integrity: sha512-9qny7Z9DsQU8Ou39ERsPU4OZQlSTP47ShQzuKZ6PRXpYLtIFgl/DEBYEXKlvcEa+9tHVcK8CF81Y2V72qaZhWA==}
     engines: {node: '>=18'}
 
-  nuqs@2.9.1:
-    resolution: {integrity: sha512-xctOTExJ/M2lV9NBXTkLMb3vnGBLk/eMuZyiXSbj0jA24H6ie2d7/LJiaA0C30p5XCIWaDTZl5DEF/N2Yo1LCw==}
+  nuqs@2.9.2:
+    resolution: {integrity: sha512-SUrBU5PfLckv2SAquHkYs76s603vbjl2OLEc+jlL3sITwvJDbE/fg3vN7l9Rdp4WIUs6E0QD+m3DfH9QUQfLkg==}
     peerDependencies:
       '@remix-run/react': '>=2'
       '@tanstack/react-router': ^1
@@ -3524,6 +3524,10 @@ packages:
 
   postcss@8.5.22:
     resolution: {integrity: sha512-KBDEIpLrvpv16pp3K0Fw+UCoZfopFjjgeB+0tA/aaThfEE74kKDLrgg603YvOWJyg3+WYtyq3xYsQWsIyZlPqQ==}
+    engines: {node: ^10 || ^12 || >=14}
+
+  postcss@8.5.23:
+    resolution: {integrity: sha512-g50586zr4bZmwFiTlflMu8E0bDTb5I5gertgwAKmsdUlTQIhZtunzUlD1WSzwcVWPoAVpsrA6vlfCD7oXvRwgg==}
     engines: {node: ^10 || ^12 || >=14}
 
   pretty-ms@9.3.0:
@@ -3699,8 +3703,8 @@ packages:
     engines: {node: 20 || >=22}
     hasBin: true
 
-  rolldown-plugin-dts@0.27.13:
-    resolution: {integrity: sha512-DeVZJbbB0ajp5q6vABqC8ZCJzxftlxbiV60Bk96GFdQaysGVpgTTVjQu0lUt4Lb+aRCtejfOixtQKDRol7IuVQ==}
+  rolldown-plugin-dts@0.27.14:
+    resolution: {integrity: sha512-ZvuDDwoIpRK9RPxDXratCpklFO9QZZWndf/sd0VBFb4LEj0jj07UcHK9OCh7V4XiFz2Z89ziyBC2K6tJiDjrbw==}
     engines: {node: ^22.18.0 || >=24.11.0}
     peerDependencies:
       '@typescript/native-preview': '*'
@@ -4376,18 +4380,18 @@ packages:
     engines: {node: '>= 14.6'}
     hasBin: true
 
-  yoctocolors@2.1.2:
-    resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
+  yoctocolors@2.2.0:
+    resolution: {integrity: sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg==}
     engines: {node: '>=18'}
 
-  yuku-ast@0.7.4:
-    resolution: {integrity: sha512-Pn6e7uZOBczeJ+JIiPGtD4aw6eRflzKrZJmAdeg092RxM9tQtvAkZAbEoknNgYmsB6dGYESvXPQcUE7Nu8ai7Q==}
+  yuku-ast@0.8.0:
+    resolution: {integrity: sha512-trBzFsSa6k32vzNUCH6pFhAoTzWD/NifSYOIQ/6v14vXKh7TRhd2vDNIwRguGdXvcyfBNEEGcsfxFHrnJbS+FQ==}
 
-  yuku-codegen@0.7.4:
-    resolution: {integrity: sha512-bLdC5yzvn507PtU7+kB4CMBLfnvKW1N2m26Vpl1q4Os+FLROnkKTThM7g+clVb+9tHaOlcc6gqQ+rNBY8L/Dxw==}
+  yuku-codegen@0.8.0:
+    resolution: {integrity: sha512-f82SDo8moLRymtdYN7/cz2yRbWE6Pmbmph+mLj24QkIR8ASG/c2nETdHzBhV/3rR/r8K+qmy7+JqQV3thHAm8g==}
 
-  yuku-parser@0.7.4:
-    resolution: {integrity: sha512-HveMyhZPQQfR4z3xskXv5hHJW9g0KIESZW6JvUZv7Jn52FfMFUhCYL77KHBtnWGFti0KrKeTHMZVTY5AUVgFAA==}
+  yuku-parser@0.8.0:
+    resolution: {integrity: sha512-obrazyE8Cyh79xTQS9wv44khnhvkXG1CDSSy0bg+Pjjla+iXkKXK2b6+LTYXSN3qvVfQxc0MN5qhNKYr9sl3Zw==}
 
   zod-to-json-schema@3.25.2:
     resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
@@ -4868,15 +4872,15 @@ snapshots:
       '@tanstack/vue-virtual': 3.13.34(vue@3.5.40(typescript@6.0.3))
       vue: 3.5.40(typescript@6.0.3)
 
-  '@hono/node-server@1.19.14(hono@4.12.31)':
+  '@hono/node-server@1.19.17(hono@4.12.32)':
     dependencies:
-      hono: 4.12.31
+      hono: 4.12.32
 
-  '@hono/node-server@2.0.11(hono@4.12.31)':
+  '@hono/node-server@2.0.12(hono@4.12.32)':
     dependencies:
-      hono: 4.12.31
+      hono: 4.12.32
 
-  '@iconify-json/lucide@1.2.118':
+  '@iconify-json/lucide@1.2.120':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -4884,7 +4888,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/simple-icons@1.2.91':
+  '@iconify-json/simple-icons@1.2.92':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -5028,7 +5032,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(supports-color@8.1.1)(zod@4.4.3)':
     dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.31)
+      '@hono/node-server': 1.19.17(hono@4.12.32)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -5037,8 +5041,8 @@ snapshots:
       eventsource: 3.0.7
       eventsource-parser: 3.1.0
       express: 5.2.1(supports-color@8.1.1)
-      express-rate-limit: 8.6.0(express@5.2.1(supports-color@8.1.1))(supports-color@8.1.1)
-      hono: 4.12.31
+      express-rate-limit: 8.6.1(express@5.2.1(supports-color@8.1.1))(supports-color@8.1.1)
+      hono: 4.12.32
       jose: 6.2.4
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -6047,7 +6051,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
 
-  '@vitejs/plugin-rsc@0.5.30(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))':
+  '@vitejs/plugin-rsc@0.5.30(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       es-module-lexer: 2.3.1
@@ -6061,7 +6065,7 @@ snapshots:
       vite: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
       vitefu: 1.1.3(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
     optionalDependencies:
-      react-server-dom-webpack: 19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22))
+      react-server-dom-webpack: 19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23))
 
   '@vue/compiler-core@3.5.40':
     dependencies:
@@ -6238,73 +6242,73 @@ snapshots:
 
   '@xtuc/long@4.2.2': {}
 
-  '@yuku-codegen/binding-darwin-arm64@0.7.4':
+  '@yuku-codegen/binding-darwin-arm64@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-darwin-x64@0.7.4':
+  '@yuku-codegen/binding-darwin-x64@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-freebsd-x64@0.7.4':
+  '@yuku-codegen/binding-freebsd-x64@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-linux-arm-gnu@0.7.4':
+  '@yuku-codegen/binding-linux-arm-gnu@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-linux-arm-musl@0.7.4':
+  '@yuku-codegen/binding-linux-arm-musl@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-linux-arm64-gnu@0.7.4':
+  '@yuku-codegen/binding-linux-arm64-gnu@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-linux-arm64-musl@0.7.4':
+  '@yuku-codegen/binding-linux-arm64-musl@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-linux-x64-gnu@0.7.4':
+  '@yuku-codegen/binding-linux-x64-gnu@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-linux-x64-musl@0.7.4':
+  '@yuku-codegen/binding-linux-x64-musl@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-win32-arm64@0.7.4':
+  '@yuku-codegen/binding-win32-arm64@0.8.0':
     optional: true
 
-  '@yuku-codegen/binding-win32-x64@0.7.4':
+  '@yuku-codegen/binding-win32-x64@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-darwin-arm64@0.7.4':
+  '@yuku-parser/binding-darwin-arm64@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-darwin-x64@0.7.4':
+  '@yuku-parser/binding-darwin-x64@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-freebsd-x64@0.7.4':
+  '@yuku-parser/binding-freebsd-x64@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-linux-arm-gnu@0.7.4':
+  '@yuku-parser/binding-linux-arm-gnu@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-linux-arm-musl@0.7.4':
+  '@yuku-parser/binding-linux-arm-musl@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-linux-arm64-gnu@0.7.4':
+  '@yuku-parser/binding-linux-arm64-gnu@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-linux-arm64-musl@0.7.4':
+  '@yuku-parser/binding-linux-arm64-musl@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-linux-x64-gnu@0.7.4':
+  '@yuku-parser/binding-linux-x64-gnu@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-linux-x64-musl@0.7.4':
+  '@yuku-parser/binding-linux-x64-musl@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-win32-arm64@0.7.4':
+  '@yuku-parser/binding-win32-arm64@0.8.0':
     optional: true
 
-  '@yuku-parser/binding-win32-x64@0.7.4':
+  '@yuku-parser/binding-win32-x64@0.8.0':
     optional: true
 
-  '@yuku-toolchain/types@0.7.4': {}
+  '@yuku-toolchain/types@0.8.0': {}
 
   accepts@2.0.0:
     dependencies:
@@ -6771,13 +6775,13 @@ snapshots:
       pretty-ms: 9.3.0
       signal-exit: 4.1.0
       strip-final-newline: 4.0.0
-      yoctocolors: 2.1.2
+      yoctocolors: 2.2.0
 
-  express-rate-limit@8.6.0(express@5.2.1(supports-color@8.1.1))(supports-color@8.1.1):
+  express-rate-limit@8.6.1(express@5.2.1(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       express: 5.2.1(supports-color@8.1.1)
-      ip-address: 10.2.0
+      ip-address: 10.3.1
     transitivePeerDependencies:
       - supports-color
 
@@ -7135,7 +7139,7 @@ snapshots:
 
   highlight.js@11.11.1: {}
 
-  hono@4.12.31: {}
+  hono@4.12.32: {}
 
   hookable@6.1.1: {}
 
@@ -7184,7 +7188,7 @@ snapshots:
 
   intersection-observer@0.10.0: {}
 
-  ip-address@10.2.0: {}
+  ip-address@10.3.1: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -7610,7 +7614,7 @@ snapshots:
     dependencies:
       '@types/mdast': 4.0.4
 
-  media-typer@1.1.0: {}
+  media-typer@1.1.1: {}
 
   merge-descriptors@2.0.0: {}
 
@@ -7918,17 +7922,17 @@ snapshots:
 
   minimist@1.2.8: {}
 
-  minimizer-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)):
+  minimizer-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.49.0
-      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)
+      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)
     optionalDependencies:
       esbuild: 0.28.1
       lightningcss: 1.33.0
-      postcss: 8.5.22
+      postcss: 8.5.23
 
   minipass@7.1.3: {}
 
@@ -7987,7 +7991,7 @@ snapshots:
       path-key: 4.0.0
       unicorn-magic: 0.3.0
 
-  nuqs@2.9.1(react@19.2.8):
+  nuqs@2.9.2(react@19.2.8):
     dependencies:
       '@standard-schema/spec': 1.1.0
       react: 19.2.8
@@ -8104,6 +8108,12 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  postcss@8.5.23:
+    dependencies:
+      nanoid: 3.3.16
+      picocolors: 1.1.1
+      source-map-js: 1.2.1
+
   pretty-ms@9.3.0:
     dependencies:
       parse-ms: 4.0.0
@@ -8174,13 +8184,13 @@ snapshots:
 
   react-is@17.0.2: {}
 
-  react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)):
+  react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)):
     dependencies:
       acorn-loose: 8.5.2
       neo-async: 2.6.2
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)
+      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)
       webpack-sources: 3.5.1
 
   react@19.2.8: {}
@@ -8376,15 +8386,15 @@ snapshots:
       glob: 13.0.6
       package-json-from-dist: 1.0.1
 
-  rolldown-plugin-dts@0.27.13(rolldown@1.2.0)(typescript@6.0.3):
+  rolldown-plugin-dts@0.27.14(rolldown@1.2.0)(typescript@6.0.3):
     dependencies:
       dts-resolver: 3.0.0
       get-tsconfig: 5.0.0-beta.5
       obug: 2.1.4
       rolldown: 1.2.0
-      yuku-ast: 0.7.4
-      yuku-codegen: 0.7.4
-      yuku-parser: 0.7.4
+      yuku-ast: 0.8.0
+      yuku-codegen: 0.8.0
+      yuku-parser: 0.8.0
     optionalDependencies:
       typescript: 6.0.3
     transitivePeerDependencies:
@@ -8739,7 +8749,7 @@ snapshots:
       obug: 2.1.4
       picomatch: 4.0.5
       rolldown: 1.2.0
-      rolldown-plugin-dts: 0.27.13(rolldown@1.2.0)(typescript@6.0.3)
+      rolldown-plugin-dts: 0.27.14(rolldown@1.2.0)(typescript@6.0.3)
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
       tree-kill: 1.2.2
@@ -8783,7 +8793,7 @@ snapshots:
   type-is@2.1.0:
     dependencies:
       content-type: 2.0.0
-      media-typer: 1.1.0
+      media-typer: 1.1.1
       mime-types: 3.0.2
 
   type@2.7.3: {}
@@ -8826,10 +8836,10 @@ snapshots:
 
   undici-types@8.3.0: {}
 
-  unhead@3.2.3(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)):
+  unhead@3.2.3(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)):
     dependencies:
       hookable: 6.1.1
-      unplugin: 3.3.0(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22))
+      unplugin: 3.3.0(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23))
     optionalDependencies:
       vite: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
     transitivePeerDependencies:
@@ -8922,7 +8932,7 @@ snapshots:
       picomatch: 4.0.5
       webpack-virtual-modules: 0.6.2
 
-  unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)):
+  unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)):
     dependencies:
       '@jridgewell/remapping': 2.3.5
       picomatch: 4.0.5
@@ -8932,7 +8942,7 @@ snapshots:
       rolldown: 1.2.0
       rollup: 4.62.2
       vite: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)
+      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)
 
   update-browserslist-db@1.2.3(browserslist@4.28.7):
     dependencies:
@@ -8975,7 +8985,7 @@ snapshots:
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.5
-      postcss: 8.5.22
+      postcss: 8.5.23
       rolldown: 1.1.5
       tinyglobby: 0.2.17
     optionalDependencies:
@@ -8991,14 +9001,14 @@ snapshots:
     optionalDependencies:
       vite: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
 
-  vocs@2.6.2(@types/react@19.2.17)(@vue/compiler-sfc@3.5.40)(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(rolldown@1.2.0)(rollup@4.62.2)(supports-color@8.1.1)(typescript@6.0.3)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(waku@1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)):
+  vocs@2.6.2(@types/react@19.2.17)(@vue/compiler-sfc@3.5.40)(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(rolldown@1.2.0)(rollup@4.62.2)(supports-color@8.1.1)(typescript@6.0.3)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(waku@1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)):
     dependencies:
       '@base-ui/react': 1.6.0(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@codesandbox/sandpack-react': 2.20.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@hono/node-server': 2.0.11(hono@4.12.31)
-      '@iconify-json/lucide': 1.2.118
+      '@hono/node-server': 2.0.12(hono@4.12.32)
+      '@iconify-json/lucide': 1.2.120
       '@iconify-json/ri': 1.2.10
-      '@iconify-json/simple-icons': 1.2.91
+      '@iconify-json/simple-icons': 1.2.92
       '@iconify-json/vscode-icons': 1.2.67
       '@iconify/types': 2.0.0
       '@iconify/utils': 3.1.4
@@ -9021,7 +9031,7 @@ snapshots:
       '@takumi-rs/image-response': 0.62.8
       '@takumi-rs/wasm': 0.62.8
       '@vitejs/plugin-react': 6.0.4(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
-      '@vitejs/plugin-rsc': 0.5.30(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@vitejs/plugin-rsc': 0.5.30(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
       cac: 6.7.14
       cva: class-variance-authority@0.7.1
       debug: 4.4.3(supports-color@8.1.1)
@@ -9031,7 +9041,7 @@ snapshots:
       estree-util-visit: 2.0.0
       extend: 3.0.2
       github-slugger: 2.0.0
-      hono: 4.12.31
+      hono: 4.12.32
       image-size: 2.0.2
       lz-string: 1.5.0
       magic-string: 0.30.21
@@ -9043,7 +9053,7 @@ snapshots:
       mdast-util-to-string: 4.0.0
       micromark-extension-gfm: 3.0.0
       minisearch: 7.2.0
-      nuqs: 2.9.1(react@19.2.8)
+      nuqs: 2.9.2(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
       react-error-boundary: 6.1.2(react@19.2.8)
@@ -9064,7 +9074,7 @@ snapshots:
       tailwindcss-logical: 4.2.0(tailwindcss@4.3.3)
       tsx: 4.23.1
       twoslash: 0.3.9(supports-color@8.1.1)(typescript@6.0.3)
-      unhead: 3.2.3(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22))
+      unhead: 3.2.3(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23))
       unified: 11.0.5
       unist-util-visit: 5.1.0
       unplugin-icons: 22.5.0(@svgr/core@8.1.0(supports-color@8.1.1)(typescript@6.0.3))(@vue/compiler-sfc@3.5.40)(supports-color@8.1.1)
@@ -9076,7 +9086,7 @@ snapshots:
       zod: 4.4.3
     optionalDependencies:
       vite: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-      waku: 1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
+      waku: 1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@cfworker/json-schema'
       - '@date-fns/tz'
@@ -9137,18 +9147,18 @@ snapshots:
 
   w3c-keyname@2.2.8: {}
 
-  waku@1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0):
+  waku@1.0.0-beta.6(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0):
     dependencies:
-      '@hono/node-server': 2.0.11(hono@4.12.31)
+      '@hono/node-server': 2.0.12(hono@4.12.32)
       '@vitejs/plugin-react': 6.0.4(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
-      '@vitejs/plugin-rsc': 0.5.30(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)))(react@19.2.8)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@vitejs/plugin-rsc': 0.5.30(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)))(react@19.2.8)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
       dotenv: 17.4.2
-      hono: 4.12.31
+      hono: 4.12.32
       magic-string: 0.30.21
       picocolors: 1.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      react-server-dom-webpack: 19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22))
+      react-server-dom-webpack: 19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23))
       rsc-html-stream: 0.0.7
       vite: 8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
     transitivePeerDependencies:
@@ -9179,7 +9189,7 @@ snapshots:
 
   webpack-virtual-modules@0.6.2: {}
 
-  webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22):
+  webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23):
     dependencies:
       '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
@@ -9197,7 +9207,7 @@ snapshots:
       graceful-fs: 4.2.11
       loader-runner: 4.3.2
       mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.22))
+      minimizer-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.23))
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
@@ -9232,44 +9242,44 @@ snapshots:
 
   yaml@2.9.0: {}
 
-  yoctocolors@2.1.2: {}
+  yoctocolors@2.2.0: {}
 
-  yuku-ast@0.7.4:
+  yuku-ast@0.8.0:
     dependencies:
-      '@yuku-toolchain/types': 0.7.4
+      '@yuku-toolchain/types': 0.8.0
 
-  yuku-codegen@0.7.4:
+  yuku-codegen@0.8.0:
     dependencies:
-      '@yuku-toolchain/types': 0.7.4
+      '@yuku-toolchain/types': 0.8.0
     optionalDependencies:
-      '@yuku-codegen/binding-darwin-arm64': 0.7.4
-      '@yuku-codegen/binding-darwin-x64': 0.7.4
-      '@yuku-codegen/binding-freebsd-x64': 0.7.4
-      '@yuku-codegen/binding-linux-arm-gnu': 0.7.4
-      '@yuku-codegen/binding-linux-arm-musl': 0.7.4
-      '@yuku-codegen/binding-linux-arm64-gnu': 0.7.4
-      '@yuku-codegen/binding-linux-arm64-musl': 0.7.4
-      '@yuku-codegen/binding-linux-x64-gnu': 0.7.4
-      '@yuku-codegen/binding-linux-x64-musl': 0.7.4
-      '@yuku-codegen/binding-win32-arm64': 0.7.4
-      '@yuku-codegen/binding-win32-x64': 0.7.4
+      '@yuku-codegen/binding-darwin-arm64': 0.8.0
+      '@yuku-codegen/binding-darwin-x64': 0.8.0
+      '@yuku-codegen/binding-freebsd-x64': 0.8.0
+      '@yuku-codegen/binding-linux-arm-gnu': 0.8.0
+      '@yuku-codegen/binding-linux-arm-musl': 0.8.0
+      '@yuku-codegen/binding-linux-arm64-gnu': 0.8.0
+      '@yuku-codegen/binding-linux-arm64-musl': 0.8.0
+      '@yuku-codegen/binding-linux-x64-gnu': 0.8.0
+      '@yuku-codegen/binding-linux-x64-musl': 0.8.0
+      '@yuku-codegen/binding-win32-arm64': 0.8.0
+      '@yuku-codegen/binding-win32-x64': 0.8.0
 
-  yuku-parser@0.7.4:
+  yuku-parser@0.8.0:
     dependencies:
-      '@yuku-toolchain/types': 0.7.4
-      yuku-ast: 0.7.4
+      '@yuku-toolchain/types': 0.8.0
+      yuku-ast: 0.8.0
     optionalDependencies:
-      '@yuku-parser/binding-darwin-arm64': 0.7.4
-      '@yuku-parser/binding-darwin-x64': 0.7.4
-      '@yuku-parser/binding-freebsd-x64': 0.7.4
-      '@yuku-parser/binding-linux-arm-gnu': 0.7.4
-      '@yuku-parser/binding-linux-arm-musl': 0.7.4
-      '@yuku-parser/binding-linux-arm64-gnu': 0.7.4
-      '@yuku-parser/binding-linux-arm64-musl': 0.7.4
-      '@yuku-parser/binding-linux-x64-gnu': 0.7.4
-      '@yuku-parser/binding-linux-x64-musl': 0.7.4
-      '@yuku-parser/binding-win32-arm64': 0.7.4
-      '@yuku-parser/binding-win32-x64': 0.7.4
+      '@yuku-parser/binding-darwin-arm64': 0.8.0
+      '@yuku-parser/binding-darwin-x64': 0.8.0
+      '@yuku-parser/binding-freebsd-x64': 0.8.0
+      '@yuku-parser/binding-linux-arm-gnu': 0.8.0
+      '@yuku-parser/binding-linux-arm-musl': 0.8.0
+      '@yuku-parser/binding-linux-arm64-gnu': 0.8.0
+      '@yuku-parser/binding-linux-arm64-musl': 0.8.0
+      '@yuku-parser/binding-linux-x64-gnu': 0.8.0
+      '@yuku-parser/binding-linux-x64-musl': 0.8.0
+      '@yuku-parser/binding-win32-arm64': 0.8.0
+      '@yuku-parser/binding-win32-x64': 0.8.0
 
   zod-to-json-schema@3.25.2(zod@4.4.3):
     dependencies:
