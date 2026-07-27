@@ -1,6 +1,6 @@
 # Why Locality IDB?
 
-:::note
+:::tip
 `IndexedDB` is a powerful browser-native database that supports storing significant amounts of structured data, including files and blobs. However, the raw browser `IndexedDB` API is low-level, verbose, and uses event-driven listeners instead of promises or modern control flows.
 :::
 
@@ -18,11 +18,29 @@ If you are weighing whether to use `Locality IDB` or write raw `IndexedDB` API c
 
 ## Comparisons
 
-| Feature                | Raw `IndexedDB`                 | `Locality IDB`                              |
-| :--------------------- | :------------------------------ | :------------------------------------------ |
+| Feature                | Raw `IndexedDB`                  | `Locality IDB`                               |
+| :--------------------- | :------------------------------- | :------------------------------------------- |
 | **Type Safety**        | ✘ Manual casting                | ✓ Full TypeScript inference                 |
 | **Query Syntax**       | ✘ Complex event loop / cursors  | ✓ SQL-like chainable builder                |
 | **Schema Validation**  | ✘ Hand-written logic            | ✓ Automatic type checks & custom validators |
 | **Reference Handling** | ✘ Manual foreign key management | ✓ Automatic foreign key constraints         |
 | **Transactions**       | ✘ Verbose state management      | ✓ Simple callbacks with auto-rollback       |
 | **Data Import/Export** | ✘ Manual serialization          | ✓ Built-in `$export()` and `$import()`      |
+
+## Choosing the Right Tool
+
+The IndexedDB ecosystem offers several excellent libraries, each with a different design philosophy and target use case.
+
+| Library         | Best For                                                                            |
+| :-------------- | :---------------------------------------------------------------------------------- |
+| `Raw IndexedDB` | Maximum control with no abstraction.                                                |
+| `idb-keyval`    | Simple key-value storage with a tiny Promise-based API.                             |
+| `idb`           | A lightweight Promise wrapper around the native IndexedDB API.                      |
+| `Dexie.js`      | A mature, feature-rich IndexedDB wrapper with a large ecosystem and plugin support. |
+| `Locality IDB`  | A schema-first, type-safe, SQL-like developer experience inspired by modern ORMs.   |
+
+:::tip[Design Philosophy]
+`Locality IDB` is **not intended to replace** other IndexedDB libraries. Instead, it focuses on providing a familiar ORM-style workflow for developers who prefer a declarative, schema-first approach with strong type inference and built-in validation.
+
+If you already use tools like **Drizzle ORM** or **Prisma** on the backend and want a similar development experience for browser-side persistence, `Locality IDB` is designed with that workflow in mind.
+:::

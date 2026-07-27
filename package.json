@@ -41,7 +41,12 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"files": ["dist", "LICENSE", "README.md", "package.json"],
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"package.json"
+	],
 	"keywords": [
 		"indexeddb",
 		"indexed-db",
@@ -89,7 +94,7 @@
 		"@octokit/rest": "^22.0.1",
 		"@types/node": "^26.1.1",
 		"nhb-scripts": "^1.9.2",
-		"toolbox-x": "^2.6.16",
+		"toolbox-x": "^2.6.17",
 		"tsdown": "^0.22.14",
 		"typescript": "^6.0.3"
 	},

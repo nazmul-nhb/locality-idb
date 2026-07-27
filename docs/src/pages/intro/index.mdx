@@ -38,7 +38,7 @@ deno add npm:locality-idb
 
 Here is a quick look at how you can define a schema, initialize the database, and run basic CRUD operations:
 
-```typescript
+```typescript twoslash
 import { Locality, defineSchema, column } from 'locality-idb';
 
 // Define your schema
@@ -46,7 +46,7 @@ const mySchema = defineSchema({
   users: {
     id: column.int().pk().auto(),
     name: column.text(),
-    email: column.text().unique(),
+    email: column.email().unique(),
     createdAt: column.timestamp(),
   },
   posts: {
@@ -80,6 +80,7 @@ await idb.update('users').set({ name: 'Alice in Wonderland' }).where('id', 1).ru
 
 // Delete data
 await idb.delete('users').where('id', 1).run();
+//                               ^|
 ```
 
 ## 🎮 Demo Application

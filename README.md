@@ -52,7 +52,7 @@ const mySchema = defineSchema({
   users: {
     id: column.int().pk().auto(),
     name: column.text(),
-    email: column.text().unique(),
+    email: column.email().unique(),
     createdAt: column.timestamp(),
   },
   posts: {
