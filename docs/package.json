@@ -13,7 +13,6 @@
 	"dependencies": {
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
-		"locality-idb": "workspace:*",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
 		"vite": "^8.1.5",
