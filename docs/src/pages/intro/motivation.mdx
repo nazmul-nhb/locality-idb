@@ -31,16 +31,15 @@ If you are weighing whether to use `Locality IDB` or write raw `IndexedDB` API c
 
 The IndexedDB ecosystem offers several excellent libraries, each with a different design philosophy and target use case.
 
-| Library         | Best For                                                                            |
-| :-------------- | :---------------------------------------------------------------------------------- |
-| `Raw IndexedDB` | Maximum control with no abstraction.                                                |
-| `idb-keyval`    | Simple key-value storage with a tiny Promise-based API.                             |
-| `idb`           | A lightweight Promise wrapper around the native IndexedDB API.                      |
-| `Dexie.js`      | A mature, feature-rich IndexedDB wrapper with a large ecosystem and plugin support. |
-| `Locality IDB`  | A schema-first, type-safe, SQL-like developer experience inspired by modern ORMs.   |
+| Library         | Best For                                                                                                          |
+| :-------------- | :---------------------------------------------------------------------------------------------------------------- |
+| `Raw IndexedDB` | Applications that need maximum control with minimal abstraction.                                                  |
+| `idb-keyval`    | Simple key-value storage, such as preferences, settings, or small caches.                                         |
+| `idb`           | Projects that want a lightweight Promise-based wrapper while staying close to the native `IndexedDB` API.         |
+| `Dexie.js`      | Developers looking for a mature `IndexedDB` wrapper with a flexible API and extensive plugin ecosystem.           |
+| `Locality IDB`  | Developers who prefer a declarative, schema-first, SQL-like workflow with built-in validation and type inference. |
 
-:::tip[Design Philosophy]
-`Locality IDB` is **not intended to replace** other IndexedDB libraries. Instead, it focuses on providing a familiar ORM-style workflow for developers who prefer a declarative, schema-first approach with strong type inference and built-in validation.
+:::tip[When to Use Locality IDB]
+`Locality IDB` is **not intended to replace** libraries like `idb` or `Dexie.js`. Instead, it provides a different developer experience for those who prefer a declarative, schema-first, SQL-like approach to working with `IndexedDB`. Its goal is to bring a familiar ORM-style workflow with strong type inference and built-in validation to `IndexedDB`, the browser's native database.
 
-If you already use tools like **Drizzle ORM** or **Prisma** on the backend and want a similar development experience for browser-side persistence, `Locality IDB` is designed with that workflow in mind.
-:::
+If you already use tools like **Drizzle ORM** or **Prisma** on the backend and want a familiar ORM-style workflow for `IndexedDB`, `Locality IDB` is designed with that workflow in mind.:::
