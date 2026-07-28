@@ -28,7 +28,7 @@ const db = new Locality({
 Returns the database name.
 
 ### `version: number`
-Returns the database version.
+Returns the database version directly from `IndexedDB`. Falls back to instance or config version.
 
 ### `tableList: string[]`
 Returns an array of table (store) names defined in the schema.

@@ -18,6 +18,7 @@ import {
 	uuidV4,
 	validateColumnType,
 } from 'locality';
+import { version } from '../../package.json';
 import { type Operation, operations, testFiles } from './codes';
 import { db, getRows, schema, type TableName } from './db';
 import {
@@ -288,7 +289,7 @@ function renderApp() {
 			<div class="brand">
 				<div class="brand-mark"><img src="./locality-icon.png" /></div>
 				<div>
-					<h1>Locality IDB / API Lab</h1>
+					<h1>Locality IDB / API Lab (v${version})</h1>
 					<p>Executable reference for the browser-native database toolkit</p>
 				</div>
 			</div>

@@ -165,6 +165,7 @@ export class Locality<
 		return this.#name;
 	}
 
+	/** @instance Get the current database version directly from `IndexedDB`. Falls back to instance or config version. */
 	get version(): LooseLiteral<Version> {
 		return (this.#db?.version ??
 			this.#version ??
@@ -173,7 +174,7 @@ export class Locality<
 
 	/** @instance Get all table (store) names in the current database. */
 	get tableList(): LooseLiteral<TName>[] {
-		return Array.from(this.#db.objectStoreNames) as LooseLiteral<TName>[];
+		return [...this.#db.objectStoreNames] as LooseLiteral<TName>[];
 	}
 
 	/** @instance Get the list of existing `IndexedDB` databases for the current origin. */
