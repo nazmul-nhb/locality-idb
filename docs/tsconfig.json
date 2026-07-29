@@ -8,7 +8,9 @@
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"jsx": "react-jsx",
+		"allowJs": true,
+		"noEmit": true,
 		"resolveJsonModule": true
 	},
-	"include": ["vocs.config.ts", "src"]
+	"include": ["vocs.config.ts", "src", "../scripts"]
 }

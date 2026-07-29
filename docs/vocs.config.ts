@@ -1,21 +1,8 @@
-import { Octokit } from '@octokit/rest';
-import dotenv from 'dotenv';
-import type { Uncertain } from 'toolbox-x/types';
 import { Changelog, defineConfig } from 'vocs/config';
 import { version } from '../package.json';
+import { getReleases, getStars } from '../scripts/github.mjs';
 
-const githubRepo = {
-	owner: 'nazmul-nhb',
-	repo: 'locality-idb',
-};
-
-dotenv.config({ quiet: true });
-
-const octokit = new Octokit({
-	auth: process.env.GITHUB_TOKEN,
-});
-
-const { data: repo } = await octokit.repos.get(githubRepo);
+const stars = await getStars();
 
 export default defineConfig({
 	title: 'Locality IDB',
@@ -30,17 +17,7 @@ export default defineConfig({
 		type: 'github',
 
 		async fetch() {
-			const releases = await octokit.paginate(octokit.rest.repos.listReleases, {
-				...githubRepo,
-			});
-
-			return releases.slice(0, -2).map((release) => ({
-				version: release.tag_name,
-				title: release.name ?? release.tag_name,
-				date: release.published_at || '',
-				body: cleanupReleaseBody(release.body, release.tag_name),
-				url: release.html_url,
-			}));
+			return await getReleases();
 		},
 	}),
 	description: 'SQL-like query builder for IndexedDB with a chainable API',
@@ -59,7 +36,7 @@ export default defineConfig({
 				},
 				{
 					external: true,
-					text: `GitHub: ${repo.stargazers_count} ★`,
+					text: `GitHub: ${stars} ★`,
 					link: 'https://github.com/nazmul-nhb/locality-idb',
 				},
 			],
@@ -143,46 +120,3 @@ export default defineConfig({
 		},
 	],
 });
-
-/**
- * Cleans a GitHub release body for rendering in the documentation site.
- */
-function cleanupReleaseBody(body: Uncertain<string>, tagName: string): string {
-	if (!body) return '';
-
-	return (
-		body
-			// Replace the package title (## 📦 locality-idb v2.5.0, # 📦..., etc.) with tag (v2.5.0)
-			.replace(/^#{1,6}\s*.*locality-idb\s+v[^\n]*\n+/gim, `## ${tagName}`)
-
-			// Remove the "Release Notes" heading.
-			.replace(/^#{1,6}\s*.*Release Notes\s*\n+/gim, '')
-
-			// Remove commit hashes.
-			.replace(/\[[a-f0-9]{7,40}\]\s*-\s*/gi, '')
-
-			// Remove author names at the end of list items.
-			.replace(/\s+\([^()]+\)$/gm, '')
-
-			// Remove the Compare Changes section.
-			.replace(/\n+\*\*Compare Changes:\*\*[\s\S]*?(?=\n---|\s*$)/i, '')
-
-			// Remove footer.
-			.replace(/\n*---\s*\n+\*\*\[Docs\][\s\S]*?\[NPM\][\s\S]*?\*\*\s*$/i, '')
-
-			// Fix spelling issues
-			.replace(/\ssplitted\s/g, ' split ')
-			.replace('spcific', 'specific')
-			.replace('compatilbility', 'compatibility')
-			.replace('transction', 'transaction')
-			.replace('toops', 'loops')
-			.replace(
-				'luteral genericl uodated docs',
-				'literal generic type for default value; updated docs'
-			)
-
-			// Normalize whitespace.
-			.replace(/\n{3,}/g, '\n\n')
-			.trim()
-	);
-}

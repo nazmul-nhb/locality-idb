@@ -3,157 +3,67 @@
 // @ts-check
 
 /**
- * @fileoverview Generates a professional CHANGELOG.md from all git version tags.
+ * @fileoverview Generates CHANGELOG.md using GitHub Releases.
  *
- * Uses `changelog-maker` to produce markdown-formatted commit logs between
- * consecutive tags. The output is deterministic — running this script with
- * the same set of tags always produces the same CHANGELOG.md.
+ * This script fetches release data from the GitHub API and formats it
+ * into a professional markdown changelog, similar to the main CHANGELOG.md.
  *
  * Usage:
  *   node scripts/generate-changelog.mjs
  *   pnpm changelog
  *
  * Environment:
- *   GITHUB_TOKEN — Optional. Enables PR metadata resolution via GitHub API.
- *                  Auto-available in GitHub Actions; set manually for local use.
+ *   GITHUB_TOKEN — Required to fetch releases from GitHub API.
  */
 
-import { exec } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 import { estimator } from 'nhb-scripts';
-
-const execAsync = promisify(exec);
+import { getReleases, githubRepo } from './github.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const CHANGELOG_PATH = resolve(ROOT, 'CHANGELOG.md');
 
-const REPO_OWNER = 'nazmul-nhb';
-const REPO_NAME = 'locality-idb';
-const REPO_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Run a shell command and return trimmed stdout.
- * @param {string} cmd
- * @returns {Promise<string>}
- */
-async function runShell(cmd) {
-	try {
-		const { stdout } = await execAsync(cmd, {
-			cwd: ROOT,
-			maxBuffer: 10 * 1024 * 1024,
-		});
-		return stdout.trim();
-	} catch {
-		return '';
-	}
-}
-
-/**
- * Get the ISO date string (YYYY-MM-DD) for a given git ref.
- * @param {string} ref
- * @returns {Promise<string>}
- */
-async function getTagDate(ref) {
-	// For annotated tags, use taggerdate; for lightweight, use committerdate.
-	const date =
-		(await runShell(`git log -1 --format=%ai "${ref}"`)) ||
-		(await runShell(`git log -1 --format=%ci "${ref}"`));
-	return date ? date.slice(0, 10) : 'unknown';
-}
-
-/**
- * Generate changelog entries between two refs using changelog-maker.
- * @param {string} startRef
- * @param {string} endRef
- * @returns {Promise<string>}
- */
-async function generateNotes(startRef, endRef) {
-	// Get the first commit AFTER startRef (mirroring the publish workflow logic)
-	const firstAfter = await runShell(
-		`git rev-list --reverse "${startRef}..${endRef}" | head -n 1`
-	);
-
-	if (!firstAfter) return '';
-
-	const notes = await runShell(
-		`npx changelog-maker --markdown --group --filter-release --start-ref "${firstAfter}" --end-ref "${endRef}" ${REPO_OWNER} ${REPO_NAME}`
-	);
-
-	return notes;
-}
-
-/**
- * Generate changelog entries for the very first tag (from repo beginning).
- * @param {string} endRef
- * @returns {Promise<string>}
- */
-async function generateNotesFromBeginning(endRef) {
-	const notes = await runShell(
-		`npx changelog-maker --markdown --group --filter-release --end-ref "${endRef}" --all ${REPO_OWNER} ${REPO_NAME}`
-	);
-
-	return notes;
-}
+const REPO_URL = `https://github.com/${githubRepo.owner}/${githubRepo.repo}`;
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-	// Ensure we have all tags
-	await runShell('git fetch --tags --prune 2>/dev/null || true');
+	const releases = await getReleases();
 
-	// Get all version tags sorted newest → oldest
-	const tagsRaw = await runShell("git tag -l 'v*' --sort=-v:refname");
-
-	if (!tagsRaw) {
-		console.error('✗ No version tags found.');
+	if (!releases || releases.length === 0) {
+		console.error('✗ No releases found.');
 		process.exit(1);
 	}
-
-	const tags = tagsRaw.split('\n').filter(Boolean);
 
 	/** @type {string[]} */
 	const sections = [];
 
-	// ── Release sections (newest → oldest, skip first 2 demo releases) ───────────
-	for (let i = 0; i < tags.length - 2; i++) {
-		const currentTag = tags[i];
-		const previousTag = tags[i + 1]; // older tag (or undefined for the first ever)
-		const date = await getTagDate(currentTag);
-
-		let notes;
-		if (previousTag) {
-			notes = await generateNotes(previousTag, currentTag);
-		} else {
-			// First ever tag — generate from the beginning of the repo
-			notes = await generateNotesFromBeginning(currentTag);
-		}
+	for (let i = 0; i < releases.length; i++) {
+		const release = releases[i];
+		const previousRelease = releases[i + 1];
+		const date = release.date ? release.date.slice(0, 10) : 'unknown';
 
 		/** @type {string[]} */
 		const sectionParts = [];
 
 		// Section header with link to release
-		sectionParts.push(
-			`## [${currentTag}](${REPO_URL}/releases/tag/${currentTag}) — ${date}`
-		);
+		sectionParts.push(`## [${release.version}](${release.url}) — ${date}`);
 		sectionParts.push('');
 
-		// Compare link (only if there's a previous tag)
-		if (previousTag) {
+		// Compare link (only if there's a previous release)
+		if (previousRelease) {
 			sectionParts.push(
-				`[Compare changes](${REPO_URL}/compare/${previousTag}...${currentTag})`
+				`[Compare changes](${REPO_URL}/compare/${previousRelease.version}...${release.version})`
 			);
 			sectionParts.push('');
 		}
 
-		// Commit entries
-		if (notes) {
-			sectionParts.push(notes);
+		// Release body (already cleaned up by getReleases)
+		if (release.body) {
+			sectionParts.push(release.body.replace(/^#{1,6}\s*.+(?:\r?\n|$)/gm, ''));
 		} else {
 			sectionParts.push('_No notable changes._');
 		}
@@ -161,35 +71,23 @@ async function main() {
 		sections.push(sectionParts.join('\n'));
 	}
 
-	// ── Assemble the final CHANGELOG.md ─────────────────────────────────────
+	// ── Assemble the final CHANGELOG.md ───────────────────────────────────
 
 	const changelog = [
 		'# Changelog',
 		'',
-		'All notable changes to **locality-idb** will be documented in this file.',
+		'All notable changes to **locality-idb** will be documented here.',
 		'',
-		`> Auto-generated from git history using [changelog-maker](https://github.com/nodejs/changelog-maker).`,
+		`> Auto-generated from [GitHub Releases](${REPO_URL}/releases).`,
 		'',
-		...sections.map(
-			(s) =>
-				`${s
-					.replace(/\ssplitted\s/g, ' split ')
-					.replace('spcific', 'specific')
-					.replace('compatilbility', 'compatibility')
-					.replace('transction', 'transaction')
-					.replace('toops', 'loops')
-					.replace(
-						'luteral genericl uodated docs',
-						'literal generic type for default value; updated docs'
-					)}\n`
-		),
+		...sections.map((s) => `${s}\n`),
 	].join('\n');
 
 	writeFileSync(CHANGELOG_PATH, changelog, 'utf-8');
 }
 
 try {
-	await estimator(main(), 'Updating CHANGELOG.md');
+	await estimator(main(), 'Generating CHANGELOG.md from GitHub Releases');
 } catch (error) {
 	const message = error instanceof Error ? error.message : 'Failed to update the changelog!';
 	console.error(message);
