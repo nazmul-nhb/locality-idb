@@ -4,6 +4,13 @@ All notable changes to **locality-idb** will be documented in this file.
 
 > Auto-generated from git history using [changelog-maker](https://github.com/nodejs/changelog-maker).
 
+## [v2.6.3](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.6.3) — 2026-07-29
+
+[Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.6.1...v2.6.3)
+
+* \[[`f0be5d5239`](https://github.com/nazmul-nhb/locality-idb/commit/f0be5d5239)] - `🔧 update(scripts):` updated changelog generator (Nazmul Hassan)
+* \[[`ff0ad7a7c6`](https://github.com/nazmul-nhb/locality-idb/commit/ff0ad7a7c6)] - `🐛 fix(select):` optimized `SelectQuery.page()` (Nazmul Hassan)
+
 ## [v2.6.1](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.6.1) — 2026-07-29
 
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.6.0...v2.6.1)

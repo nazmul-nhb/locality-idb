@@ -99,7 +99,7 @@ For advanced usages and a complete reference, please visit the documentation web
 `Locality IDB` comes packed with features designed to make `IndexedDB` **simple**, **type-safe**, and highly **performant**:
 
 - 🎯 **Type-Safe**: Full TypeScript support with automatic type inference.
-- 🔍 **SQL-like Queries**: Familiar query syntax inspired by Drizzle ORM.
+- 🔍 **SQL-like Queries**: Familiar query syntax inspired by modern ORMs (especially `Drizzle`).
 - 🔒 **Transactions**: Execute multiple operations across tables with automatic rollback on failure.
 - 🗄️ **Foreign Key References**: Define relationships between tables with foreign key references.
 - 🚀 **Modern API**: Clean and intuitive interface for `IndexedDB` operations.
