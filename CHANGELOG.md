@@ -8,7 +8,7 @@ All notable changes to **locality-idb** will be documented in this file.
 
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.6.0...v2.6.1)
 
-* \[[`5f53eb2c39`](https://github.com/nazmul-nhb/locality-idb/commit/5f53eb2c39)] - `🧼 refactor(iterables):` optimized toops for `DOMStringList` and updated docs (Nazmul Hassan)
+* \[[`5f53eb2c39`](https://github.com/nazmul-nhb/locality-idb/commit/5f53eb2c39)] - `🧼 refactor(iterables):` optimized loops for `DOMStringList` and updated docs (Nazmul Hassan)
 * \[[`7115be76d1`](https://github.com/nazmul-nhb/locality-idb/commit/7115be76d1)] - `📚 docs(intro):` updated comparison table (Nazmul Hassan)
 * \[[`7f8ec6d122`](https://github.com/nazmul-nhb/locality-idb/commit/7f8ec6d122)] - `🧹 cleanup(docs):` removed twoslash (Nazmul Hassan)
 * \[[`ac6bcac9e4`](https://github.com/nazmul-nhb/locality-idb/commit/ac6bcac9e4)] - `🔧 update(docs):` added twoslash support and added a comparison table (Nazmul Hassan)

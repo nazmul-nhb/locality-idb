@@ -171,10 +171,11 @@ function cleanupReleaseBody(body: Uncertain<string>, tagName: string): string {
 			.replace(/\n*---\s*\n+\*\*\[Docs\][\s\S]*?\[NPM\][\s\S]*?\*\*\s*$/i, '')
 
 			// Fix spelling issues
-			.replace(/\sspcific\s/g, ' specific ')
-			.replace(/\scompatilbility\s/g, ' compatibility ')
 			.replace(/\ssplitted\s/g, ' split ')
-			.replace(/transction/g, 'transaction')
+			.replace('spcific', 'specific')
+			.replace('compatilbility', 'compatibility')
+			.replace('transction', 'transaction')
+			.replace('toops', 'loops')
 			.replace(
 				'luteral genericl uodated docs',
 				'literal generic type for default value; updated docs'
