@@ -173,10 +173,11 @@ async function main() {
 		...sections.map(
 			(s) =>
 				`${s
-					.replace(/\sspcific\s/g, ' specific ')
-					.replace(/\scompatilbility\s/g, ' compatibility ')
 					.replace(/\ssplitted\s/g, ' split ')
-					.replace(/transction/g, 'transaction')
+					.replace('spcific', 'specific')
+					.replace('compatilbility', 'compatibility')
+					.replace('transction', 'transaction')
+					.replace('toops', 'loops')
 					.replace(
 						'luteral genericl uodated docs',
 						'literal generic type for default value; updated docs'

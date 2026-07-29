@@ -4,6 +4,17 @@ All notable changes to **locality-idb** will be documented in this file.
 
 > Auto-generated from git history using [changelog-maker](https://github.com/nodejs/changelog-maker).
 
+## [v2.6.1](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.6.1) — 2026-07-29
+
+[Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.6.0...v2.6.1)
+
+* \[[`5f53eb2c39`](https://github.com/nazmul-nhb/locality-idb/commit/5f53eb2c39)] - `🧼 refactor(iterables):` optimized toops for `DOMStringList` and updated docs (Nazmul Hassan)
+* \[[`7115be76d1`](https://github.com/nazmul-nhb/locality-idb/commit/7115be76d1)] - `📚 docs(intro):` updated comparison table (Nazmul Hassan)
+* \[[`7f8ec6d122`](https://github.com/nazmul-nhb/locality-idb/commit/7f8ec6d122)] - `🧹 cleanup(docs):` removed twoslash (Nazmul Hassan)
+* \[[`ac6bcac9e4`](https://github.com/nazmul-nhb/locality-idb/commit/ac6bcac9e4)] - `🔧 update(docs):` added twoslash support and added a comparison table (Nazmul Hassan)
+* \[[`c043646bbd`](https://github.com/nazmul-nhb/locality-idb/commit/c043646bbd)] - `📚 docs(list):` fixed list rendering issue (Nazmul Hassan)
+* \[[`a7b96d5cc6`](https://github.com/nazmul-nhb/locality-idb/commit/a7b96d5cc6)] - `🔧 update(changelog):` updated changelog: include all the releases except the very first 2 demo ones (Nazmul Hassan)
+
 ## [v2.6.0](https://github.com/nazmul-nhb/locality-idb/releases/tag/v2.6.0) — 2026-07-24
 
 [Compare changes](https://github.com/nazmul-nhb/locality-idb/compare/v2.5.0...v2.6.0)

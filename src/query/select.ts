@@ -350,6 +350,8 @@ export class SelectQuery<
 				return;
 			}
 
+			const { limit = this.#limitCount, cursor } = options;
+
 			if (options.cursor != null && this.$whereIndexQuery != null) {
 				reject(
 					new Error(
@@ -359,8 +361,7 @@ export class SelectQuery<
 				return;
 			}
 
-			const limit = options.limit ?? this.#limitCount;
-			if (limit !== undefined && limit < 0) {
+			if (limit != null && limit < 0) {
 				reject(new RangeError('page() limit must be a non-negative number.'));
 				return;
 			}
@@ -368,7 +369,7 @@ export class SelectQuery<
 			if (limit === 0) {
 				resolve({
 					items: [] as Row[],
-					nextCursor: options.cursor ?? null,
+					nextCursor: cursor,
 				} as PageResult<Row, Selection>);
 				return;
 			}
@@ -394,11 +395,11 @@ export class SelectQuery<
 
 			const direction = this.#orderByDir === 'desc' ? 'prev' : 'next';
 
-			if (options.cursor != null) {
+			if (cursor != null) {
 				range =
 					direction === 'prev'
-						? IDBKeyRange.upperBound(options.cursor, true)
-						: IDBKeyRange.lowerBound(options.cursor, true);
+						? IDBKeyRange.upperBound(cursor, true)
+						: IDBKeyRange.lowerBound(cursor, true);
 			}
 
 			const request = source.openCursor(range ?? null, direction);
@@ -410,9 +411,9 @@ export class SelectQuery<
 
 				if (!cursor) {
 					resolve({
-						items: items as PageResult<Row, Selection>['items'],
+						items: items,
 						nextCursor: undefined,
-					});
+					} as PageResult<Row, Selection>);
 					return;
 				}
 
@@ -428,9 +429,9 @@ export class SelectQuery<
 
 				if (limit && count >= limit) {
 					resolve({
-						items: items as PageResult<Row, Selection>['items'],
+						items: items,
 						nextCursor: cursor.key,
-					});
+					} as PageResult<Row, Selection>);
 					return;
 				}
 
@@ -741,7 +742,7 @@ export class SelectQuery<
 		try {
 			const rows = await this.#getFilteredRows();
 
-			const result = rows.map((it) => it[column as keyof Row]);
+			const result = rows.map((it) => it[column]);
 
 			return removeDuplicates(result);
 		} catch (error) {
