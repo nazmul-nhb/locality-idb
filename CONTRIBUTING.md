@@ -83,7 +83,7 @@ There are currently no automated tests. Please validate changes by:
 
 ### Optional Developer Tools
 
-> [toolbox-x](https://toolbox-x.nazmul-nhb.dev/) is a collection of utility functions and classes for any JavaScript/TypeScript project. `locality-idb` uses a few helpers and utility types internally, and the build bundles only the needed pieces (tree-shaken) into `dist/` for published builds.
+> [toolbox-x](https://toolbox-x.vercel.app/) is a collection of utility functions and classes for any JavaScript/TypeScript project. `locality-idb` uses a few helpers and utility types internally, and the build bundles only the needed pieces (tree-shaken) into `dist/` for published builds.
 
 These scripts use [nhb-scripts](https://www.npmjs.com/package/nhb-scripts), `Biome` for code quality and developer experience:
 

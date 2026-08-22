@@ -517,7 +517,7 @@ async function runCurrentOperation() {
 					uuid,
 					timestamp,
 					isEmail: isEmail('ada@locality.dev'),
-					isURL: isURL('https://locality.nazmul-nhb.dev'),
+					isURL: isURL('https://locality-idb.vercel.app'),
 					isUUID: isUUID(uuid),
 					isTimestamp: isTimestamp(timestamp),
 				};

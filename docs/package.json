@@ -11,12 +11,12 @@
 		"future": "node scripts/copy-future-plans.mjs"
 	},
 	"dependencies": {
-		"@types/react": "^19.2.17",
-		"@types/react-dom": "^19.2.3",
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.4",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
-		"vite": "^8.1.5",
-		"vocs": "^2.6.2",
+		"vite": "^8.2.2",
+		"vocs": "^2.8.5",
 		"waku": "1.0.0-beta.6"
 	},
 	"devDependencies": {

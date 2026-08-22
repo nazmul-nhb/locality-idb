@@ -157,4 +157,4 @@ jobs:
             **Compare Changes:** [${{ env.LATEST_TAG }} vs v${{ env.VERSION }}](https://github.com/${{ github.repository }}/compare/${{ env.LATEST_TAG }}...v${{ env.VERSION }})
 
             ---
-            **[Docs](https://locality.nazmul-nhb.dev) • [NPM](https://www.npmjs.com/package/locality-idb/v/${{ env.VERSION }})**
+            **[Docs](https://locality-idb.dev) • [NPM](https://www.npmjs.com/package/locality-idb/v/${{ env.VERSION }})**
